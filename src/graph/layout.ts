@@ -47,7 +47,7 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
     for (const p of n.parents) {
       if (!nodeMap.has(p)) continue; // skip refs to commits not in the set
       childrenOf.set(p, [...(childrenOf.get(p) ?? []), n.hash]);
-      inDegree.set(p, (inDegree.get(p) ?? 0)); // ensure parent has an entry
+      inDegree.set(p, inDegree.get(p) ?? 0); // ensure parent has an entry
     }
   }
 

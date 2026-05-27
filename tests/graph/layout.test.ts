@@ -3,11 +3,7 @@ import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
 import type { GraphNode } from '$graph/types';
 
 // Helper to build a minimal GraphNode
-function makeNode(
-  hash: string,
-  parents: string[],
-  overrides: Partial<GraphNode> = {},
-): GraphNode {
+function makeNode(hash: string, parents: string[], overrides: Partial<GraphNode> = {}): GraphNode {
   return {
     hash,
     parents,
@@ -82,8 +78,8 @@ describe('computeLayout – linear chain', () => {
 describe('computeLayout – branching', () => {
   // root → A (main) and root → C (feature branch from root)
   const root = makeNode('root', []);
-  const A = makeNode('A', ['root']);    // main continues
-  const C = makeNode('C', ['root']);    // branch off root
+  const A = makeNode('A', ['root']); // main continues
+  const C = makeNode('C', ['root']); // branch off root
 
   it('assigns different lanes to branching commits', () => {
     const { nodes } = computeLayout([root, A, C]);

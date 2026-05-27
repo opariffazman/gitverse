@@ -70,7 +70,7 @@ File content is auto-generated placeholder text. No free-form editing — mutati
 
 ```typescript
 type Blob = {
-  hash: string;      // short hash, e.g. "a1b2c3d"
+  hash: string; // short hash, e.g. "a1b2c3d"
   content: string;
 };
 
@@ -81,21 +81,21 @@ type Tree = {
 
 type Commit = {
   hash: string;
-  tree: string;       // tree hash
-  parents: string[];   // parent commit hashes
+  tree: string; // tree hash
+  parents: string[]; // parent commit hashes
   message: string;
   timestamp: number;
 };
 
 type Ref = {
-  name: string;        // "main", "feat/login", "v1.0"
-  target: string;      // commit hash
+  name: string; // "main", "feat/login", "v1.0"
+  target: string; // commit hash
   type: 'branch' | 'tag';
 };
 
 type HEAD = {
   attached: boolean;
-  target: string;      // branch name (attached) or commit hash (detached)
+  target: string; // branch name (attached) or commit hash (detached)
 };
 ```
 
@@ -118,25 +118,25 @@ Working Directory (VFS)  →  Staging Index  →  Committed Tree
 
 ### 3.4 Supported Commands (v1)
 
-| Command | Behavior |
-|---|---|
-| `git init` | Initialize repo state (auto-runs on sandbox creation) |
-| `git add <path>` / `git add .` | Stage files from working directory to index |
-| `git commit -m "msg"` | Create commit from index |
-| `git status` | Diff working/index/HEAD, show file states |
-| `git log [--oneline] [--graph]` | Traverse and display commit DAG |
-| `git diff` | Show simulated diffs (working vs index vs HEAD) |
-| `git branch` / `git branch <name>` | List/create/delete branches |
-| `git checkout <branch/commit>` / `git switch` | Move HEAD, update working directory |
-| `git merge <branch>` | Three-way merge with simulated conflict markers |
-| `git rebase <branch>` | Replay commits onto target |
-| `git reset --soft/--mixed/--hard` | Move HEAD, optionally reset index/working dir |
-| `git stash` / `git stash pop/list/drop` | Save/restore working state |
-| `git tag <name> [commit]` | Create lightweight tags |
-| `git rm <path>` | Remove from working directory and index |
-| `git mv <old> <new>` | Rename/move file, update index |
-| `git cherry-pick <commit>` | Apply specific commit to current branch |
-| `git revert <commit>` | Create inverse commit |
+| Command                                       | Behavior                                              |
+| --------------------------------------------- | ----------------------------------------------------- |
+| `git init`                                    | Initialize repo state (auto-runs on sandbox creation) |
+| `git add <path>` / `git add .`                | Stage files from working directory to index           |
+| `git commit -m "msg"`                         | Create commit from index                              |
+| `git status`                                  | Diff working/index/HEAD, show file states             |
+| `git log [--oneline] [--graph]`               | Traverse and display commit DAG                       |
+| `git diff`                                    | Show simulated diffs (working vs index vs HEAD)       |
+| `git branch` / `git branch <name>`            | List/create/delete branches                           |
+| `git checkout <branch/commit>` / `git switch` | Move HEAD, update working directory                   |
+| `git merge <branch>`                          | Three-way merge with simulated conflict markers       |
+| `git rebase <branch>`                         | Replay commits onto target                            |
+| `git reset --soft/--mixed/--hard`             | Move HEAD, optionally reset index/working dir         |
+| `git stash` / `git stash pop/list/drop`       | Save/restore working state                            |
+| `git tag <name> [commit]`                     | Create lightweight tags                               |
+| `git rm <path>`                               | Remove from working directory and index               |
+| `git mv <old> <new>`                          | Rename/move file, update index                        |
+| `git cherry-pick <commit>`                    | Apply specific commit to current branch               |
+| `git revert <commit>`                         | Create inverse commit                                 |
 
 Each command is a pure function: `(engine, args, opts) => CommandResult`.
 
@@ -155,15 +155,15 @@ type CommandResult = {
 
 Minimal set — no pipes, no redirection, no shell parsing. Pattern-matched commands.
 
-| Command | Behavior |
-|---|---|
-| `ls [dir]` | List files in working directory or subdirectory |
-| `cat <file>` | Print file content |
-| `touch <file>` | Create empty file with auto-generated content |
-| `rm <file>` | Delete file from working directory |
-| `mv <src> <dst>` | Move/rename file in working directory |
-| `clear` | Clear terminal output |
-| `help` | List available commands |
+| Command             | Behavior                                                                                                                                                                            |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ls [dir]`          | List files in working directory or subdirectory                                                                                                                                     |
+| `cat <file>`        | Print file content                                                                                                                                                                  |
+| `touch <file>`      | Create empty file with auto-generated content                                                                                                                                       |
+| `rm <file>`         | Delete file from working directory                                                                                                                                                  |
+| `mv <src> <dst>`    | Move/rename file in working directory                                                                                                                                               |
+| `clear`             | Clear terminal output                                                                                                                                                               |
+| `help`              | List available commands                                                                                                                                                             |
 | `sim change [file]` | Simulate modifications to tracked file(s). Outputs which file was changed and what kind of change (line added/removed/modified). If no file specified, picks a random tracked file. |
 
 ### 4.2 Command Router
@@ -188,6 +188,7 @@ Colored, segment-based prompt reflecting repo state:
 ```
 
 **Segments:**
+
 - **Path** — `~/gitverse`, dimmed/muted color
 - **Branch icon** — `` (git branch symbol)
 - **Branch name** — colored by state:
@@ -310,17 +311,17 @@ Integrated into terminal panel (not a separate sidebar):
 
 Safe terminal shortcuts only (no browser-intercepted keys):
 
-| Shortcut | Action |
-|---|---|
-| `Up` / `Down` | Navigate command history |
-| `Tab` | Autocomplete |
-| `Ctrl+C` | Cancel/interrupt current input |
-| `Ctrl+L` | Clear terminal |
-| `Ctrl+A` | Move cursor to start of line |
-| `Ctrl+E` | Move cursor to end of line |
-| `Ctrl+U` | Clear line before cursor |
-| `Ctrl+K` | Clear line after cursor |
-| `Ctrl+R` | Reverse search history |
+| Shortcut        | Action                                 |
+| --------------- | -------------------------------------- |
+| `Up` / `Down`   | Navigate command history               |
+| `Tab`           | Autocomplete                           |
+| `Ctrl+C`        | Cancel/interrupt current input         |
+| `Ctrl+L`        | Clear terminal                         |
+| `Ctrl+A`        | Move cursor to start of line           |
+| `Ctrl+E`        | Move cursor to end of line             |
+| `Ctrl+U`        | Clear line before cursor               |
+| `Ctrl+K`        | Clear line after cursor                |
+| `Ctrl+R`        | Reverse search history                 |
 | `Alt+Backspace` | Delete word backward (replaces Ctrl+W) |
 
 **Excluded** (browser intercepts): `Ctrl+W`, `Ctrl+N`, `Ctrl+T`, `Ctrl+Q`.
@@ -364,38 +365,38 @@ Storage via `idb-keyval` (6.2.4):
 
 ### 9.1 Dependencies
 
-| Package | Version | Purpose |
-|---|---|---|
-| `svelte` | `5.55.9` | UI framework |
-| `@sveltejs/vite-plugin-svelte` | `7.1.2` | Vite integration |
-| `d3-dag` | `1.2.1` | DAG layout algorithms |
-| `d3-hierarchy` | `3.1.2` | Tree layout utilities |
-| `idb-keyval` | `6.2.4` | IndexedDB wrapper |
-| `unocss` | `66.7.0` | Atomic CSS engine |
+| Package                        | Version  | Purpose               |
+| ------------------------------ | -------- | --------------------- |
+| `svelte`                       | `5.55.9` | UI framework          |
+| `@sveltejs/vite-plugin-svelte` | `7.1.2`  | Vite integration      |
+| `d3-dag`                       | `1.2.1`  | DAG layout algorithms |
+| `d3-hierarchy`                 | `3.1.2`  | Tree layout utilities |
+| `idb-keyval`                   | `6.2.4`  | IndexedDB wrapper     |
+| `unocss`                       | `66.7.0` | Atomic CSS engine     |
 
 ### 9.2 Dev Dependencies
 
-| Package | Version | Purpose |
-|---|---|---|
-| `vite` | `8.0.14` | Build tool |
-| `typescript` | `6.0.3` | Type system |
-| `vitest` | `4.1.7` | Unit/integration tests |
-| `@playwright/test` | `1.60.0` | E2E browser tests |
-| `eslint` | `10.4.0` | Linter |
-| `prettier` | `3.8.3` | Formatter |
-| `prettier-plugin-svelte` | `4.0.1` | Svelte formatting |
-| `eslint-plugin-svelte` | `3.17.1` | Svelte linting |
-| `vite-plugin-pwa` | `1.3.0` | PWA generation |
-| `wrangler` | `4.95.0` | Cloudflare Workers CLI |
-| `workbox-precaching` | `7.4.1` | Service worker caching |
+| Package                  | Version  | Purpose                |
+| ------------------------ | -------- | ---------------------- |
+| `vite`                   | `8.0.14` | Build tool             |
+| `typescript`             | `6.0.3`  | Type system            |
+| `vitest`                 | `4.1.7`  | Unit/integration tests |
+| `@playwright/test`       | `1.60.0` | E2E browser tests      |
+| `eslint`                 | `10.4.0` | Linter                 |
+| `prettier`               | `3.8.3`  | Formatter              |
+| `prettier-plugin-svelte` | `4.0.1`  | Svelte formatting      |
+| `eslint-plugin-svelte`   | `3.17.1` | Svelte linting         |
+| `vite-plugin-pwa`        | `1.3.0`  | PWA generation         |
+| `wrangler`               | `4.95.0` | Cloudflare Workers CLI |
+| `workbox-precaching`     | `7.4.1`  | Service worker caching |
 
 ### 9.3 GitHub Actions (SHA-Pinned)
 
-| Action | SHA | Version |
-|---|---|---|
-| `actions/checkout` | `de0fac2e4500dabe0009e67214ff5f5447ce83dd` | v6.0.2 |
-| `actions/setup-node` | `48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e` | v6.4.0 |
-| `cloudflare/wrangler-action` | `ebbaa1584979971c8614a24965b4405ff95890e0` | v4.0.0 |
+| Action                       | SHA                                        | Version |
+| ---------------------------- | ------------------------------------------ | ------- |
+| `actions/checkout`           | `de0fac2e4500dabe0009e67214ff5f5447ce83dd` | v6.0.2  |
+| `actions/setup-node`         | `48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e` | v6.4.0  |
+| `cloudflare/wrangler-action` | `ebbaa1584979971c8614a24965b4405ff95890e0` | v4.0.0  |
 
 ---
 

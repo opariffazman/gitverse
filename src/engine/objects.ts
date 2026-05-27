@@ -15,7 +15,7 @@ export type Blob = { hash: string; content: string };
 export type Tree = { hash: string; entries: Map<string, string> }; // filename → blob hash
 export type Commit = {
   hash: string;
-  tree: string;       // tree hash
+  tree: string; // tree hash
   parents: string[];
   message: string;
   timestamp: number;
@@ -141,7 +141,7 @@ export class ObjectStore {
   }
 
   allCommits(): Commit[] {
-    return [...this.commits.values()].map(c => ({ ...c, parents: [...c.parents] }));
+    return [...this.commits.values()].map((c) => ({ ...c, parents: [...c.parents] }));
   }
 
   // -------------------------------------------------------------------------

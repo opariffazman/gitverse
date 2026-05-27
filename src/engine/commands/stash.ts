@@ -105,9 +105,7 @@ export function cmdStash(
         return { output: '', exitCode: 0 };
       }
 
-      const lines = stashStack.map(
-        (entry, i) => `stash@{${i}}: ${entry.message}`,
-      );
+      const lines = stashStack.map((entry, i) => `stash@{${i}}: ${entry.message}`);
       return {
         output: lines.join('\n'),
         exitCode: 0,

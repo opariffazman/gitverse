@@ -43,7 +43,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 
   // --- git completions ---
   if (trimmed === 'git') {
-    return GIT_SUBCOMMANDS.map(s => `git ${s}`);
+    return GIT_SUBCOMMANDS.map((s) => `git ${s}`);
   }
 
   if (trimmed.startsWith('git ')) {
@@ -53,7 +53,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
     // Completing the subcommand itself
     if (parts.length === 1) {
       const partial = parts[0];
-      return GIT_SUBCOMMANDS.filter(s => s.startsWith(partial)).map(s => `git ${s}`);
+      return GIT_SUBCOMMANDS.filter((s) => s.startsWith(partial)).map((s) => `git ${s}`);
     }
 
     // Completing argument to a subcommand
@@ -85,18 +85,8 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 
   // --- top-level command completion ---
   if (!trimmed.includes(' ')) {
-    const allCommands = [
-      'git',
-      'ls',
-      'cat',
-      'touch',
-      'rm',
-      'mv',
-      'clear',
-      'help',
-      'sim',
-    ];
-    return allCommands.filter(c => c.startsWith(trimmed) && c !== trimmed);
+    const allCommands = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help', 'sim'];
+    return allCommands.filter((c) => c.startsWith(trimmed) && c !== trimmed);
   }
 
   return [];
@@ -110,8 +100,8 @@ function completeBranches(engine: GitEngine, prefix: string, partial: string): s
     const result = engine.execute('git branch');
     const branches = result.output
       .split('\n')
-      .map(line => line.replace(/^\*?\s+/, '').trim())
-      .filter(b => b.length > 0);
+      .map((line) => line.replace(/^\*?\s+/, '').trim())
+      .filter((b) => b.length > 0);
 
     // Also include HEAD's detached commit if relevant
     const candidates = branches;
@@ -119,9 +109,7 @@ function completeBranches(engine: GitEngine, prefix: string, partial: string): s
       candidates.push(head.target.slice(0, 7));
     }
 
-    return candidates
-      .filter(b => b.startsWith(partial))
-      .map(b => `${prefix}${b}`);
+    return candidates.filter((b) => b.startsWith(partial)).map((b) => `${prefix}${b}`);
   } catch {
     return [];
   }
@@ -133,11 +121,11 @@ function completeFilePaths(engine: GitEngine, prefix: string, partial: string): 
     const allPaths = vfs.allFilePaths();
     const dirEntries = vfs.listDir(); // includes "dir/" markers
 
-    const candidates = [...allPaths, ...dirEntries.filter(e => e.endsWith('/'))];
+    const candidates = [...allPaths, ...dirEntries.filter((e) => e.endsWith('/'))];
 
     return [...new Set(candidates)]
-      .filter(p => p.startsWith(partial))
-      .map(p => `${prefix}${p}`);
+      .filter((p) => p.startsWith(partial))
+      .map((p) => `${prefix}${p}`);
   } catch {
     return [];
   }

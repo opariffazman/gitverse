@@ -38,15 +38,20 @@
 
   function statusIcon(status: FileStatus['status']): string {
     switch (status) {
-      case 'staged': return '✓';
-      case 'modified': return '●';
-      case 'untracked': return '○';
-      case 'deleted': return '✗';
+      case 'staged':
+        return '✓';
+      case 'modified':
+        return '●';
+      case 'untracked':
+        return '○';
+      case 'deleted':
+        return '✗';
     }
   }
 
   function chipClass(status: FileStatus['status']): string {
-    const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border font-mono shrink-0';
+    const base =
+      'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border font-mono shrink-0';
     switch (status) {
       case 'staged':
         return `${base} bg-terminal-green/20 text-terminal-green border-terminal-green/40`;

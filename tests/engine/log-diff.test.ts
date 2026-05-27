@@ -86,7 +86,7 @@ describe('git log – --oneline format', () => {
   it('shows one line per commit', () => {
     const result = engine.execute('git log --oneline');
     expect(result.exitCode).toBe(0);
-    const lines = result.output.split('\n').filter(l => l.trim() !== '');
+    const lines = result.output.split('\n').filter((l) => l.trim() !== '');
     expect(lines).toHaveLength(2);
   });
 
@@ -99,7 +99,7 @@ describe('git log – --oneline format', () => {
 
   it('shows commit message on same line as hash', () => {
     const result = engine.execute('git log --oneline');
-    const lines = result.output.split('\n').filter(l => l.trim() !== '');
+    const lines = result.output.split('\n').filter((l) => l.trim() !== '');
     // Each line should contain hash + message
     for (const line of lines) {
       expect(line).toMatch(/\w{7}.*commit/);

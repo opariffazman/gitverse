@@ -79,9 +79,7 @@ export function cmdCheckout(
 
   // Determine target name
   const bFlag = opts.get('-b');
-  const targetName = createAndSwitch
-    ? (bFlag && bFlag.length > 0 ? bFlag[0] : args[0])
-    : args[0];
+  const targetName = createAndSwitch ? (bFlag && bFlag.length > 0 ? bFlag[0] : args[0]) : args[0];
 
   if (!targetName) {
     return {

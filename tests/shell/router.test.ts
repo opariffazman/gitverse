@@ -44,7 +44,7 @@ describe('ShellRouter – git commands', () => {
   it('routes invalid git subcommand and returns error', () => {
     const r = router.execute('git frobnicate');
     expect(r.exitCode).toBe(1);
-    expect(r.output).toContain("not a git command");
+    expect(r.output).toContain('not a git command');
   });
 });
 

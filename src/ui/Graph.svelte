@@ -17,10 +17,13 @@
     }
 
     const headHash = (() => {
-      try { return eng.getHEAD().attached
-        ? eng.allBranches().get(eng.getHEAD().target) ?? ''
-        : eng.getHEAD().target;
-      } catch { return ''; }
+      try {
+        return eng.getHEAD().attached
+          ? (eng.allBranches().get(eng.getHEAD().target) ?? '')
+          : eng.getHEAD().target;
+      } catch {
+        return '';
+      }
     })();
 
     // Build commit → branches map
@@ -113,12 +116,12 @@
             text-anchor="middle"
             font-family="monospace"
             font-size="9"
-            fill="#0d1117"
-          >{branch}</text>
+            fill="#0d1117">{branch}</text
+          >
         {/each}
 
         <!-- Tag labels below node -->
-        {#each (node.tags ?? []) as tag, ti (tag)}
+        {#each node.tags ?? [] as tag, ti (tag)}
           <rect
             x={node.x - 20}
             y={node.y + NODE_RADIUS + 4 + ti * 18}
@@ -134,8 +137,8 @@
             text-anchor="middle"
             font-family="monospace"
             font-size="8"
-            fill="#0d1117"
-          >{tag}</text>
+            fill="#0d1117">{tag}</text
+          >
         {/each}
 
         <!-- Commit circle -->
@@ -162,8 +165,8 @@
           font-family="monospace"
           font-size="8"
           fill="#0d1117"
-          pointer-events="none"
-        >{node.hash.slice(0, 4)}</text>
+          pointer-events="none">{node.hash.slice(0, 4)}</text
+        >
       {/each}
     </svg>
   {/if}

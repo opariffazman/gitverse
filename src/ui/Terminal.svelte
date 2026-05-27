@@ -157,15 +157,9 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="flex flex-col h-full overflow-hidden font-mono text-sm"
-  onclick={focusInput}
->
+<div class="flex flex-col h-full overflow-hidden font-mono text-sm" onclick={focusInput}>
   <!-- Scrollable output area -->
-  <div
-    bind:this={scrollEl}
-    class="flex-1 overflow-y-auto p-3 space-y-0.5"
-  >
+  <div bind:this={scrollEl} class="flex-1 overflow-y-auto p-3 space-y-0.5">
     {#each $terminalLines as line (line.id)}
       {#if line.prompt !== undefined}
         <div class="flex flex-wrap items-baseline leading-6">
@@ -177,7 +171,9 @@
           class="leading-6 whitespace-pre-wrap break-all"
           class:text-terminal-red={line.isError}
           class:text-terminal-fg={!line.isError}
-        >{line.output}</div>
+        >
+          {line.output}
+        </div>
       {/if}
     {/each}
   </div>

@@ -127,7 +127,8 @@ function buildHunks(diffLines: DiffLine[]): Hunk[] {
 
   // Build each hunk
   for (const [hStart, hEnd] of hunkRanges) {
-    void oldLine; void newLine; // suppress unused warning
+    void oldLine;
+    void newLine; // suppress unused warning
     const slice = positioned.slice(hStart, hEnd + 1);
 
     const hunkOldStart = slice[0].oldPos;
@@ -205,19 +206,11 @@ export function generateDiff(path: string, oldContent: string, newContent: strin
   const hunks = buildHunks(diffLines);
   if (hunks.length === 0) return '';
 
-  const parts: string[] = [
-    `diff --git a/${path} b/${path}`,
-    `--- a/${path}`,
-    `+++ b/${path}`,
-  ];
+  const parts: string[] = [`diff --git a/${path} b/${path}`, `--- a/${path}`, `+++ b/${path}`];
 
   for (const hunk of hunks) {
-    const oldRange = hunk.oldCount === 1
-      ? `${hunk.oldStart}`
-      : `${hunk.oldStart},${hunk.oldCount}`;
-    const newRange = hunk.newCount === 1
-      ? `${hunk.newStart}`
-      : `${hunk.newStart},${hunk.newCount}`;
+    const oldRange = hunk.oldCount === 1 ? `${hunk.oldStart}` : `${hunk.oldStart},${hunk.oldCount}`;
+    const newRange = hunk.newCount === 1 ? `${hunk.newStart}` : `${hunk.newStart},${hunk.newCount}`;
     parts.push(`@@ -${oldRange} +${newRange} @@`);
     for (const line of hunk.lines) {
       parts.push(line);

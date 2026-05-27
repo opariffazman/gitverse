@@ -69,8 +69,8 @@ describe('round-trip: simple repo', () => {
     expect(restoredCommits).toHaveLength(2);
 
     // Find "second" commit in both and verify parent match
-    const origSecond = origCommits.find(c => c.message === 'second')!;
-    const restoredSecond = restoredCommits.find(c => c.message === 'second')!;
+    const origSecond = origCommits.find((c) => c.message === 'second')!;
+    const restoredSecond = restoredCommits.find((c) => c.message === 'second')!;
     expect(restoredSecond).toBeDefined();
     expect(restoredSecond.parents).toEqual(origSecond.parents);
   });

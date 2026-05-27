@@ -29,11 +29,7 @@ const MUTATIONS = [
 /**
  * Execute a shell builtin command against the engine's VFS.
  */
-export function executeBuiltin(
-  engine: GitEngine,
-  command: string,
-  args: string[],
-): ShellResult {
+export function executeBuiltin(engine: GitEngine, command: string, args: string[]): ShellResult {
   const vfs = engine.getVFS();
 
   switch (command) {

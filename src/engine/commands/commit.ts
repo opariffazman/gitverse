@@ -20,7 +20,7 @@ export function cmdCommit(
   const messageArgs = opts.get('-m');
   if (!messageArgs || messageArgs.length === 0) {
     return {
-      output: 'error: switch `m\' requires a value',
+      output: "error: switch `m' requires a value",
       exitCode: 128,
     };
   }

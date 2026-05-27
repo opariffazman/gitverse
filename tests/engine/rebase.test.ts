@@ -52,7 +52,7 @@ describe('git rebase', () => {
     // The rebased commits' parent chain should end at mainTip
     // Walk to find all commit hashes reachable from feature tip
     const tipCommit = commits[0];
-    const parentCommit = commits.find(c => c.hash === tipCommit.parents[0]);
+    const parentCommit = commits.find((c) => c.hash === tipCommit.parents[0]);
     expect(parentCommit).toBeDefined();
     // Parent of tip should trace back to mainTip
     expect(parentCommit!.parents[0]).toBe(mainTip);
@@ -96,7 +96,7 @@ describe('git rebase', () => {
     engine.execute('git rebase main');
 
     const commits = engine.log();
-    const messages = commits.map(c => c.message);
+    const messages = commits.map((c) => c.message);
     expect(messages).toContain('my feature message');
   });
 

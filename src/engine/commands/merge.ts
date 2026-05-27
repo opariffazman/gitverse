@@ -12,11 +12,7 @@ import type { VirtualFileSystem } from '../vfs';
  * following parent links (i.e. `candidateAncestor` is an ancestor of, or
  * equal to, `descendant`).
  */
-function isAncestor(
-  candidateAncestor: string,
-  descendant: string,
-  objects: ObjectStore,
-): boolean {
+function isAncestor(candidateAncestor: string, descendant: string, objects: ObjectStore): boolean {
   if (candidateAncestor === descendant) return true;
 
   const visited = new Set<string>();

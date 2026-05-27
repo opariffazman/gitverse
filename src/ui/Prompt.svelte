@@ -14,4 +14,6 @@
   };
 </script>
 
-<span class="font-mono">{#each segments as seg}<span class={colorClassMap[seg.color]}>{seg.text}</span>{/each}</span>
+<span class="font-mono"
+  >{#each segments as seg}<span class={colorClassMap[seg.color]}>{seg.text}</span>{/each}</span
+>

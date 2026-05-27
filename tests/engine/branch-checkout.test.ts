@@ -40,8 +40,11 @@ describe('git branch – list', () => {
     engine.execute('git branch zebra');
     engine.execute('git branch apple');
     const result = engine.execute('git branch');
-    const lines = result.output.split('\n').map(l => l.trim()).filter(Boolean);
-    const names = lines.map(l => l.replace(/^\*\s*/, ''));
+    const lines = result.output
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean);
+    const names = lines.map((l) => l.replace(/^\*\s*/, ''));
     expect(names).toEqual([...names].sort());
   });
 });

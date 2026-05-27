@@ -90,8 +90,18 @@ describe('ObjectStore - commits', () => {
   it('commit with parents stores and returns parents', () => {
     const store = new ObjectStore();
     const treeHash = store.writeTree(new Map());
-    const parent1 = store.writeCommit({ tree: treeHash, parents: [], message: 'parent1', timestamp: 1 });
-    const parent2 = store.writeCommit({ tree: treeHash, parents: [], message: 'parent2', timestamp: 2 });
+    const parent1 = store.writeCommit({
+      tree: treeHash,
+      parents: [],
+      message: 'parent1',
+      timestamp: 1,
+    });
+    const parent2 = store.writeCommit({
+      tree: treeHash,
+      parents: [],
+      message: 'parent2',
+      timestamp: 2,
+    });
     const mergeHash = store.writeCommit({
       tree: treeHash,
       parents: [parent1, parent2],
@@ -137,7 +147,7 @@ describe('ObjectStore - commits', () => {
     const h2 = store.writeCommit({ tree: treeHash, parents: [h1], message: 'c2', timestamp: 2 });
     const all = store.allCommits();
     expect(all).toHaveLength(2);
-    const hashes = all.map(c => c.hash);
+    const hashes = all.map((c) => c.hash);
     expect(hashes).toContain(h1);
     expect(hashes).toContain(h2);
   });
@@ -176,7 +186,13 @@ describe('ObjectStore - serialization helpers', () => {
     store.restoreTree('def5678', entries);
     expect(store.readTree('def5678').get('file.txt')).toBe('abc1234');
 
-    const commit = { hash: '1234567', tree: 'def5678', parents: [], message: 'restored', timestamp: 99 };
+    const commit = {
+      hash: '1234567',
+      tree: 'def5678',
+      parents: [],
+      message: 'restored',
+      timestamp: 99,
+    };
     store.restoreCommit(commit);
     expect(store.readCommit('1234567').message).toBe('restored');
   });

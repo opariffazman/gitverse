@@ -61,10 +61,9 @@ export function serialize(engine: GitEngine): string {
   }
 
   // Object store contents
-  const wireTrees: [string, [string, string][]][] = engine._allTrees().map(([hash, entries]) => [
-    hash,
-    [...entries.entries()],
-  ]);
+  const wireTrees: [string, [string, string][]][] = engine
+    ._allTrees()
+    .map(([hash, entries]) => [hash, [...entries.entries()]]);
 
   const wireObjects: WireObjects = {
     blobs: engine._allBlobs(),

@@ -14,8 +14,8 @@
   <button
     class="absolute right-2 top-2 text-terminal-dim hover:text-terminal-fg transition-colors"
     onclick={onclose}
-    aria-label="Close"
-  >✕</button>
+    aria-label="Close">✕</button
+  >
 
   <!-- Hash -->
   <div class="mb-2 text-yellow-400 font-bold text-sm">
@@ -54,7 +54,8 @@
     <div class="mt-2 text-terminal-dim">
       <span class="opacity-60">parents: </span>
       {#each node.parents as parent, i (parent)}
-        <span class="opacity-50">{parent.slice(0, 7)}{i < node.parents.length - 1 ? ', ' : ''}</span>
+        <span class="opacity-50">{parent.slice(0, 7)}{i < node.parents.length - 1 ? ', ' : ''}</span
+        >
       {/each}
     </div>
   {/if}

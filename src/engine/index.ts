@@ -161,13 +161,8 @@ export class GitEngine {
         break;
 
       case 'commit':
-        result = cmdCommit(
-          args,
-          opts,
-          this.objects,
-          this.refs,
-          this.index,
-          () => this.getCommittedTree(),
+        result = cmdCommit(args, opts, this.objects, this.refs, this.index, () =>
+          this.getCommittedTree(),
         );
         break;
 
@@ -183,66 +178,28 @@ export class GitEngine {
         break;
 
       case 'log':
-        result = cmdLog(
-          args,
-          opts,
-          this.log(),
-          this.refs,
-        );
+        result = cmdLog(args, opts, this.log(), this.refs);
         break;
 
       case 'diff':
-        result = cmdDiff(
-          args,
-          opts,
-          this.vfs,
-          this.objects,
-          this.index,
-          this.getCommittedTree(),
-        );
+        result = cmdDiff(args, opts, this.vfs, this.objects, this.index, this.getCommittedTree());
         break;
 
       case 'branch':
-        result = cmdBranch(
-          args,
-          opts,
-          this.refs,
-          () => this.refs.resolveHEAD(),
-        );
+        result = cmdBranch(args, opts, this.refs, () => this.refs.resolveHEAD());
         break;
 
       case 'checkout':
       case 'switch':
-        result = cmdCheckout(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdCheckout(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       case 'merge':
-        result = cmdMerge(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdMerge(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       case 'reset':
-        result = cmdReset(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdReset(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       case 'stash':
@@ -258,63 +215,27 @@ export class GitEngine {
         break;
 
       case 'tag':
-        result = cmdTag(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-        );
+        result = cmdTag(args, opts, this.refs, this.objects);
         break;
 
       case 'rm':
-        result = cmdRm(
-          args,
-          opts,
-          this.vfs,
-          this.index,
-        );
+        result = cmdRm(args, opts, this.vfs, this.index);
         break;
 
       case 'mv':
-        result = cmdMv(
-          args,
-          opts,
-          this.vfs,
-          this.index,
-        );
+        result = cmdMv(args, opts, this.vfs, this.index);
         break;
 
       case 'rebase':
-        result = cmdRebase(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdRebase(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       case 'cherry-pick':
-        result = cmdCherryPick(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdCherryPick(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       case 'revert':
-        result = cmdRevert(
-          args,
-          opts,
-          this.refs,
-          this.objects,
-          this.vfs,
-          this.index,
-        );
+        result = cmdRevert(args, opts, this.refs, this.objects, this.vfs, this.index);
         break;
 
       default:
@@ -414,9 +335,7 @@ export class GitEngine {
    */
   getUntrackedFiles(): string[] {
     const committedTree = this.getCommittedTree();
-    return this.vfs
-      .allFilePaths()
-      .filter(p => !this.index.has(p) && !committedTree.has(p));
+    return this.vfs.allFilePaths().filter((p) => !this.index.has(p) && !committedTree.has(p));
   }
 
   /**
@@ -546,14 +465,14 @@ export class GitEngine {
    * (needed for serialization round-trips before any commit).
    */
   _allBranchRefs(): [string, string][] {
-    return this.refs.listBranches().map(name => [name, this.refs.resolveBranch(name)]);
+    return this.refs.listBranches().map((name) => [name, this.refs.resolveBranch(name)]);
   }
 
   /**
    * Returns all tag refs.
    */
   _allTagRefs(): [string, string][] {
-    return this.refs.listTags().map(name => [name, this.refs.resolveTag(name)]);
+    return this.refs.listTags().map((name) => [name, this.refs.resolveTag(name)]);
   }
 
   /** Returns all blobs as [hash, content] pairs. */
@@ -590,11 +509,7 @@ export class GitEngine {
    * Restore refs (branches, tags, HEAD).
    * Clears existing state and replaces with the provided data.
    */
-  _restoreRefs(
-    branches: [string, string][],
-    tags: [string, string][],
-    head: HEAD,
-  ): void {
+  _restoreRefs(branches: [string, string][], tags: [string, string][], head: HEAD): void {
     // Rebuild the ref store from scratch: delete all existing branches/tags,
     // then create the restored ones, then set HEAD.
     for (const name of this.refs.listBranches()) {

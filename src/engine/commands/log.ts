@@ -23,7 +23,7 @@ export function cmdLog(
 ): CommandResult {
   if (commits.length === 0) {
     return {
-      output: "your current branch has no commits yet",
+      output: 'your current branch has no commits yet',
       exitCode: 0,
     };
   }

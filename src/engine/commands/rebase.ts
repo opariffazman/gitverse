@@ -7,11 +7,7 @@ import type { VirtualFileSystem } from '../vfs';
 // Ancestor detection (BFS)
 // ---------------------------------------------------------------------------
 
-function isAncestor(
-  candidateAncestor: string,
-  descendant: string,
-  objects: ObjectStore,
-): boolean {
+function isAncestor(candidateAncestor: string, descendant: string, objects: ObjectStore): boolean {
   if (candidateAncestor === descendant) return true;
 
   const visited = new Set<string>();

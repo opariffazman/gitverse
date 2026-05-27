@@ -17,6 +17,7 @@
 ### New Files (by task)
 
 **Task 1 — Project Scaffold:**
+
 - `package.json` — dependencies, scripts
 - `tsconfig.json` — strict TypeScript config
 - `vite.config.ts` — Vite + Svelte + PWA + UnoCSS
@@ -30,21 +31,25 @@
 - `src/app.css` — global reset/base styles
 - `index.html` — Vite HTML entry
 - `.github/workflows/ci.yml` — lint + typecheck + test
-- `.github/workflows/deploy.yml` — build + deploy on v* tag
+- `.github/workflows/deploy.yml` — build + deploy on v\* tag
 
 **Task 2 — Virtual File System:**
+
 - `src/engine/vfs.ts` — VFS class
 - `tests/engine/vfs.test.ts` — VFS tests
 
 **Task 3 — Git Object Store + Hashing:**
+
 - `src/engine/objects.ts` — types + ObjectStore class
 - `tests/engine/objects.test.ts` — object store tests
 
 **Task 4 — Refs + HEAD:**
+
 - `src/engine/refs.ts` — RefStore class
 - `tests/engine/refs.test.ts` — ref tests
 
 **Task 5 — GitEngine Core (init, add, commit, status):**
+
 - `src/engine/commands/init.ts`
 - `src/engine/commands/add.ts`
 - `src/engine/commands/commit.ts`
@@ -53,27 +58,32 @@
 - `tests/engine/core.test.ts` — init/add/commit/status integration tests
 
 **Task 6 — Branch + Checkout + Switch:**
+
 - `src/engine/commands/branch.ts`
 - `src/engine/commands/checkout.ts`
 - `tests/engine/branch-checkout.test.ts`
 
 **Task 7 — Log + Diff:**
+
 - `src/engine/commands/log.ts`
 - `src/engine/diff.ts` — diff generation utility
 - `src/engine/commands/diff.ts` — diff command
 - `tests/engine/log-diff.test.ts`
 
 **Task 8 — Merge:**
+
 - `src/engine/commands/merge.ts`
 - `tests/engine/merge.test.ts`
 
 **Task 9 — Rebase + Cherry-pick + Revert:**
+
 - `src/engine/commands/rebase.ts`
 - `src/engine/commands/cherry-pick.ts`
 - `src/engine/commands/revert.ts`
 - `tests/engine/rebase.test.ts`
 
 **Task 10 — Reset + Stash + Tag + Rm + Mv:**
+
 - `src/engine/commands/reset.ts`
 - `src/engine/commands/stash.ts`
 - `src/engine/commands/tag.ts`
@@ -82,6 +92,7 @@
 - `tests/engine/reset-stash-tag.test.ts`
 
 **Task 11 — Shell Layer:**
+
 - `src/shell/parser.ts`
 - `src/shell/router.ts`
 - `src/shell/builtins.ts`
@@ -93,6 +104,7 @@
 - `tests/shell/builtins.test.ts`
 
 **Task 12 — Svelte Stores + Terminal UI:**
+
 - `src/store/engine.ts`
 - `src/store/ui.ts`
 - `src/ui/Prompt.svelte`
@@ -100,6 +112,7 @@
 - `src/ui/Layout.svelte`
 
 **Task 13 — Graph Visualization:**
+
 - `src/graph/types.ts`
 - `src/graph/layout.ts`
 - `src/ui/Graph.svelte`
@@ -107,15 +120,18 @@
 - `tests/graph/layout.test.ts`
 
 **Task 14 — File Panel + Mobile Toolbar:**
+
 - `src/ui/FilePanel.svelte`
 - `src/ui/MobileToolbar.svelte`
 
 **Task 15 — Persistence:**
+
 - `src/persistence/serializer.ts`
 - `src/persistence/storage.ts`
 - `tests/persistence/serializer.test.ts`
 
 **Task 16 — PWA + Final Polish:**
+
 - `public/favicon.svg`
 - `public/icons/icon-192.png`
 - `public/icons/icon-512.png`
@@ -125,6 +141,7 @@
 ### Task 1: Project Scaffold + CI/CD
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `uno.config.ts`, `eslint.config.js`, `.prettierrc`, `.gitignore`, `wrangler.jsonc`, `index.html`, `src/main.ts`, `src/App.svelte`, `src/app.css`, `.github/workflows/ci.yml`, `.github/workflows/deploy.yml`
 
 - [ ] **Step 1: Initialize package.json with pinned dependencies**
@@ -275,8 +292,7 @@ export default defineConfig({
     },
   },
   shortcuts: {
-    'terminal-panel':
-      'bg-terminal-bg/85 backdrop-blur-8 rounded-lg border border-terminal-dim/30',
+    'terminal-panel': 'bg-terminal-bg/85 backdrop-blur-8 rounded-lg border border-terminal-dim/30',
   },
 });
 ```
@@ -331,8 +347,8 @@ dist/
   "compatibility_date": "2026-05-27",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+    "not_found_handling": "single-page-application",
+  },
 }
 ```
 
@@ -487,6 +503,7 @@ git commit -m "feat: scaffold project with Svelte 5, Vite, UnoCSS, CI/CD"
 ### Task 2: Virtual File System (VFS)
 
 **Files:**
+
 - Create: `src/engine/vfs.ts`
 - Create: `tests/engine/vfs.test.ts`
 
@@ -690,6 +707,7 @@ git commit -m "feat(engine): add virtual file system with flat+1 depth"
 ### Task 3: Git Object Store + Hashing
 
 **Files:**
+
 - Create: `src/engine/objects.ts`
 - Create: `tests/engine/objects.test.ts`
 
@@ -814,7 +832,10 @@ export class ObjectStore {
   }
 
   writeTree(entries: Map<string, string>): string {
-    const serialized = [...entries.entries()].sort().map(([k, v]) => `${k}:${v}`).join(',');
+    const serialized = [...entries.entries()]
+      .sort()
+      .map(([k, v]) => `${k}:${v}`)
+      .join(',');
     const hash = this.makeHash(`tree:${serialized}`);
     this.trees.set(hash, new Map(entries));
     return hash;
@@ -872,6 +893,7 @@ git commit -m "feat(engine): add content-addressable object store with blob/tree
 ### Task 4: Refs + HEAD Management
 
 **Files:**
+
 - Create: `src/engine/refs.ts`
 - Create: `tests/engine/refs.test.ts`
 
@@ -1091,6 +1113,7 @@ git commit -m "feat(engine): add ref store with branch/tag/HEAD management"
 ### Task 5: GitEngine Core — init, add, commit, status
 
 **Files:**
+
 - Create: `src/engine/commands/init.ts`
 - Create: `src/engine/commands/add.ts`
 - Create: `src/engine/commands/commit.ts`
@@ -1216,6 +1239,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement command files**
 
 Create `src/engine/commands/init.ts`:
+
 ```typescript
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
@@ -1227,6 +1251,7 @@ export function init(engine: GitEngine): CommandResult {
 ```
 
 Create `src/engine/commands/types.ts`:
+
 ```typescript
 export type CommandResult = {
   output: string;
@@ -1235,6 +1260,7 @@ export type CommandResult = {
 ```
 
 Create `src/engine/commands/add.ts`:
+
 ```typescript
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
@@ -1262,18 +1288,24 @@ export function add(engine: GitEngine, args: string[]): CommandResult {
 ```
 
 Create `src/engine/commands/commit.ts`:
+
 ```typescript
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 
-export function commit(engine: GitEngine, _args: string[], opts: Map<string, string[]>): CommandResult {
+export function commit(
+  engine: GitEngine,
+  _args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const messages = opts.get('-m');
   if (!messages || messages.length === 0) {
-    return { output: 'error: switch `m\' requires a value', exitCode: 1 };
+    return { output: "error: switch `m' requires a value", exitCode: 1 };
   }
 
   if (engine.index.size === 0) {
-    const hasDirtyFiles = engine.getUntrackedFiles().length > 0 || engine.getModifiedFiles().length > 0;
+    const hasDirtyFiles =
+      engine.getUntrackedFiles().length > 0 || engine.getModifiedFiles().length > 0;
     if (hasDirtyFiles) {
       return { output: 'nothing added to commit but untracked files present', exitCode: 1 };
     }
@@ -1321,6 +1353,7 @@ export function commit(engine: GitEngine, _args: string[], opts: Map<string, str
 ```
 
 Create `src/engine/commands/status.ts`:
+
 ```typescript
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
@@ -1433,9 +1466,7 @@ export class GitEngine {
 
   getUntrackedFiles(): string[] {
     const committed = this.getCommittedTree();
-    return this.vfs.allFilePaths().filter(
-      (p) => !this.index.has(p) && !committed.has(p),
-    );
+    return this.vfs.allFilePaths().filter((p) => !this.index.has(p) && !committed.has(p));
   }
 
   getModifiedFiles(): string[] {
@@ -1568,6 +1599,7 @@ git commit -m "feat(engine): add git init/add/commit/status with three-area mode
 ### Task 6: Branch + Checkout + Switch
 
 **Files:**
+
 - Create: `src/engine/commands/branch.ts`
 - Create: `src/engine/commands/checkout.ts`
 - Modify: `src/engine/index.ts` (add branch/checkout to switch)
@@ -1677,7 +1709,11 @@ Expected: FAIL.
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 
-export function branch(engine: GitEngine, args: string[], opts: Map<string, string[]>): CommandResult {
+export function branch(
+  engine: GitEngine,
+  args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const deleteFlag = opts.has('-d') || opts.has('-D');
 
   if (deleteFlag) {
@@ -1719,7 +1755,11 @@ export function branch(engine: GitEngine, args: string[], opts: Map<string, stri
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 
-export function checkout(engine: GitEngine, args: string[], opts: Map<string, string[]>): CommandResult {
+export function checkout(
+  engine: GitEngine,
+  args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const createBranch = opts.has('-b');
 
   if (createBranch) {
@@ -1818,6 +1858,7 @@ git commit -m "feat(engine): add branch, checkout, switch commands"
 ### Task 7: Log + Diff
 
 **Files:**
+
 - Create: `src/engine/commands/log.ts`
 - Create: `src/engine/diff.ts`
 - Create: `src/engine/commands/diff.ts`
@@ -1953,7 +1994,11 @@ export function generateDiff(path: string, oldContent: string, newContent: strin
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 
-export function log(engine: GitEngine, _args: string[], opts: Map<string, string[]>): CommandResult {
+export function log(
+  engine: GitEngine,
+  _args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const commits = engine.log();
   if (commits.length === 0) {
     return { output: 'fatal: your current branch has no commits yet', exitCode: 0 };
@@ -1973,7 +2018,8 @@ export function log(engine: GitEngine, _args: string[], opts: Map<string, string
   for (const c of commits) {
     const refs = branchMap.get(c.hash) ?? [];
     const refStr = refs.length > 0 ? ` (${refs.join(', ')})` : '';
-    const isHead = (head.attached && refs.includes(head.target)) || (!head.attached && head.target === c.hash);
+    const isHead =
+      (head.attached && refs.includes(head.target)) || (!head.attached && head.target === c.hash);
     const headStr = isHead ? 'HEAD -> ' : '';
 
     if (oneline) {
@@ -1996,7 +2042,11 @@ import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 import { generateDiff } from '$engine/diff';
 
-export function diff(engine: GitEngine, _args: string[], opts: Map<string, string[]>): CommandResult {
+export function diff(
+  engine: GitEngine,
+  _args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const staged = opts.has('--staged') || opts.has('--cached');
   const committed = engine.getCommittedTree();
   const diffs: string[] = [];
@@ -2062,6 +2112,7 @@ git commit -m "feat(engine): add git log and git diff with simulated diffs"
 ### Task 8: Merge
 
 **Files:**
+
 - Create: `src/engine/commands/merge.ts`
 - Modify: `src/engine/index.ts`
 - Create: `tests/engine/merge.test.ts`
@@ -2271,6 +2322,7 @@ git commit -m "feat(engine): add git merge with fast-forward and three-way"
 ### Task 9: Rebase + Cherry-pick + Revert
 
 **Files:**
+
 - Create: `src/engine/commands/rebase.ts`
 - Create: `src/engine/commands/cherry-pick.ts`
 - Create: `src/engine/commands/revert.ts`
@@ -2516,7 +2568,10 @@ export function cherryPick(engine: GitEngine, args: string[]): CommandResult {
     engine.index.set(path, blobHash);
   }
 
-  return { output: `[${head.attached ? head.target : newHash.slice(0, 7)} ${newHash.slice(0, 7)}] ${targetCommit.message}`, exitCode: 0 };
+  return {
+    output: `[${head.attached ? head.target : newHash.slice(0, 7)} ${newHash.slice(0, 7)}] ${targetCommit.message}`,
+    exitCode: 0,
+  };
 }
 ```
 
@@ -2539,9 +2594,10 @@ export function revert(engine: GitEngine, args: string[]): CommandResult {
   }
 
   const targetTree = engine.objects.readTree(targetCommit.tree);
-  const parentTree = targetCommit.parents.length > 0
-    ? engine.objects.readTree(engine.objects.readCommit(targetCommit.parents[0]).tree)
-    : new Map<string, string>();
+  const parentTree =
+    targetCommit.parents.length > 0
+      ? engine.objects.readTree(engine.objects.readCommit(targetCommit.parents[0]).tree)
+      : new Map<string, string>();
 
   const headHash = engine.refs.resolveHEAD();
   const headTree = engine.getCommittedTree();
@@ -2586,7 +2642,10 @@ export function revert(engine: GitEngine, args: string[]): CommandResult {
     engine.index.set(path, blobHash);
   }
 
-  return { output: `[${head.attached ? head.target : newHash.slice(0, 7)} ${newHash.slice(0, 7)}] Revert "${targetCommit.message}"`, exitCode: 0 };
+  return {
+    output: `[${head.attached ? head.target : newHash.slice(0, 7)} ${newHash.slice(0, 7)}] Revert "${targetCommit.message}"`,
+    exitCode: 0,
+  };
 }
 ```
 
@@ -2627,6 +2686,7 @@ git commit -m "feat(engine): add git rebase, cherry-pick, revert"
 ### Task 10: Reset + Stash + Tag + Rm + Mv
 
 **Files:**
+
 - Create: `src/engine/commands/reset.ts`
 - Create: `src/engine/commands/stash.ts`
 - Create: `src/engine/commands/tag.ts`
@@ -2768,12 +2828,17 @@ Expected: FAIL.
 import type { GitEngine } from '$engine/index';
 import type { CommandResult } from '$engine/commands/types';
 
-export function reset(engine: GitEngine, args: string[], opts: Map<string, string[]>): CommandResult {
+export function reset(
+  engine: GitEngine,
+  args: string[],
+  opts: Map<string, string[]>,
+): CommandResult {
   const soft = opts.has('--soft');
   const hard = opts.has('--hard');
   const mixed = opts.has('--mixed') || (!soft && !hard);
 
-  const targetHash = args[0] ?? opts.get('--soft')?.[0] ?? opts.get('--hard')?.[0] ?? opts.get('--mixed')?.[0];
+  const targetHash =
+    args[0] ?? opts.get('--soft')?.[0] ?? opts.get('--hard')?.[0] ?? opts.get('--mixed')?.[0];
   if (!targetHash) return { output: 'fatal: no commit specified', exitCode: 1 };
 
   try {
@@ -2851,7 +2916,10 @@ export function stash(engine: GitEngine, args: string[]): CommandResult {
       for (const [path, blobHash] of committed) {
         engine.index.set(path, blobHash);
       }
-      return { output: `Saved working directory and index state ${stashStack[0].message}`, exitCode: 0 };
+      return {
+        output: `Saved working directory and index state ${stashStack[0].message}`,
+        exitCode: 0,
+      };
     }
 
     case 'pop': {
@@ -3001,6 +3069,7 @@ git commit -m "feat(engine): add reset, stash, tag, rm, mv commands"
 ### Task 11: Shell Layer
 
 **Files:**
+
 - Create: `src/shell/parser.ts`
 - Create: `src/shell/router.ts`
 - Create: `src/shell/builtins.ts`
@@ -3282,11 +3351,7 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
     case 'touch': {
       if (!args[0]) return { output: 'touch: missing operand', exitCode: 1 };
       const filename = args[0];
-      const lines = [
-        `// ${filename}`,
-        `// Auto-generated file`,
-        `export default {};`,
-      ];
+      const lines = [`// ${filename}`, `// Auto-generated file`, `export default {};`];
       engine.vfs.createFile(filename, lines.join('\n'));
       return { output: '', exitCode: 0 };
     }
@@ -3422,9 +3487,23 @@ export class CommandHistory {
 import type { GitEngine } from '$engine/index';
 
 const GIT_COMMANDS = [
-  'add', 'branch', 'checkout', 'cherry-pick', 'commit', 'diff',
-  'log', 'merge', 'mv', 'rebase', 'reset', 'revert', 'rm',
-  'stash', 'status', 'switch', 'tag',
+  'add',
+  'branch',
+  'checkout',
+  'cherry-pick',
+  'commit',
+  'diff',
+  'log',
+  'merge',
+  'mv',
+  'rebase',
+  'reset',
+  'revert',
+  'rm',
+  'stash',
+  'status',
+  'switch',
+  'tag',
 ];
 
 export function getCompletions(input: string, engine: GitEngine): string[] {
@@ -3447,13 +3526,15 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
     const lastPart = parts[parts.length - 1];
 
     if (['checkout', 'switch', 'merge', 'rebase'].includes(subCmd)) {
-      return engine.refs.listBranches()
+      return engine.refs
+        .listBranches()
         .filter((b) => b.startsWith(lastPart))
         .map((b) => trimmed.slice(0, trimmed.lastIndexOf(lastPart)) + b);
     }
 
     if (['add', 'rm', 'mv', 'diff'].includes(subCmd)) {
-      return engine.vfs.allFilePaths()
+      return engine.vfs
+        .allFilePaths()
         .filter((p) => p.startsWith(lastPart))
         .map((p) => trimmed.slice(0, trimmed.lastIndexOf(lastPart)) + p);
     }
@@ -3537,6 +3618,7 @@ git commit -m "feat(shell): add parser, router, builtins, history, autocomplete,
 ### Task 12: Svelte Stores + Terminal UI
 
 **Files:**
+
 - Create: `src/store/engine.ts`
 - Create: `src/store/ui.ts`
 - Create: `src/ui/Prompt.svelte`
@@ -3743,10 +3825,7 @@ export function toggleFocus(): void {
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-<div
-  class="terminal flex flex-col h-full font-mono text-sm"
-  onclick={focusInput}
->
+<div class="terminal flex flex-col h-full font-mono text-sm" onclick={focusInput}>
   <div bind:this={scrollContainer} class="flex-1 overflow-y-auto p-3 space-y-1">
     {#each lines as line (line.id)}
       {#if line.prompt && line.input !== undefined}
@@ -3756,7 +3835,10 @@ export function toggleFocus(): void {
         </div>
       {/if}
       {#if line.output}
-        <pre class="whitespace-pre-wrap {line.isError ? 'text-terminal-red' : 'text-terminal-fg'}">{line.output}</pre>
+        <pre
+          class="whitespace-pre-wrap {line.isError
+            ? 'text-terminal-red'
+            : 'text-terminal-fg'}">{line.output}</pre>
       {/if}
     {/each}
 
@@ -3882,6 +3964,7 @@ git commit -m "feat(ui): add terminal UI with prompt, keyboard shortcuts, layout
 ### Task 13: Graph Visualization
 
 **Files:**
+
 - Create: `src/graph/types.ts`
 - Create: `src/graph/layout.ts`
 - Create: `src/ui/Graph.svelte`
@@ -3898,7 +3981,18 @@ import { computeLayout, type GraphNode, type GraphEdge } from '$graph/layout';
 
 describe('computeLayout', () => {
   it('positions a single commit', () => {
-    const nodes: GraphNode[] = [{ hash: 'a', parents: [], message: 'init', branches: ['main'], isHEAD: true, lane: 0, x: 0, y: 0 }];
+    const nodes: GraphNode[] = [
+      {
+        hash: 'a',
+        parents: [],
+        message: 'init',
+        branches: ['main'],
+        isHEAD: true,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
+    ];
     const result = computeLayout(nodes);
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].x).toBeGreaterThanOrEqual(0);
@@ -3906,8 +4000,26 @@ describe('computeLayout', () => {
 
   it('positions linear commits left to right', () => {
     const nodes: GraphNode[] = [
-      { hash: 'a', parents: [], message: 'first', branches: [], isHEAD: false, lane: 0, x: 0, y: 0 },
-      { hash: 'b', parents: ['a'], message: 'second', branches: ['main'], isHEAD: true, lane: 0, x: 0, y: 0 },
+      {
+        hash: 'a',
+        parents: [],
+        message: 'first',
+        branches: [],
+        isHEAD: false,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
+      {
+        hash: 'b',
+        parents: ['a'],
+        message: 'second',
+        branches: ['main'],
+        isHEAD: true,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
     ];
     const result = computeLayout(nodes);
     expect(result.nodes[1].x).toBeGreaterThan(result.nodes[0].x);
@@ -3916,8 +4028,26 @@ describe('computeLayout', () => {
   it('assigns different lanes to branches', () => {
     const nodes: GraphNode[] = [
       { hash: 'a', parents: [], message: 'base', branches: [], isHEAD: false, lane: 0, x: 0, y: 0 },
-      { hash: 'b', parents: ['a'], message: 'main', branches: ['main'], isHEAD: true, lane: 0, x: 0, y: 0 },
-      { hash: 'c', parents: ['a'], message: 'feat', branches: ['feat'], isHEAD: false, lane: 0, x: 0, y: 0 },
+      {
+        hash: 'b',
+        parents: ['a'],
+        message: 'main',
+        branches: ['main'],
+        isHEAD: true,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
+      {
+        hash: 'c',
+        parents: ['a'],
+        message: 'feat',
+        branches: ['feat'],
+        isHEAD: false,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
     ];
     const result = computeLayout(nodes);
     const mainNode = result.nodes.find((n) => n.hash === 'b')!;
@@ -3927,8 +4057,26 @@ describe('computeLayout', () => {
 
   it('generates edges', () => {
     const nodes: GraphNode[] = [
-      { hash: 'a', parents: [], message: 'first', branches: [], isHEAD: false, lane: 0, x: 0, y: 0 },
-      { hash: 'b', parents: ['a'], message: 'second', branches: ['main'], isHEAD: true, lane: 0, x: 0, y: 0 },
+      {
+        hash: 'a',
+        parents: [],
+        message: 'first',
+        branches: [],
+        isHEAD: false,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
+      {
+        hash: 'b',
+        parents: ['a'],
+        message: 'second',
+        branches: ['main'],
+        isHEAD: true,
+        lane: 0,
+        x: 0,
+        y: 0,
+      },
     ];
     const result = computeLayout(nodes);
     expect(result.edges).toHaveLength(1);
@@ -4098,7 +4246,9 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
     }
 
     let headHash: string | null = null;
-    try { headHash = $engine.refs.resolveHEAD(); } catch {}
+    try {
+      headHash = $engine.refs.resolveHEAD();
+    } catch {}
 
     const nodes: GraphNode[] = commits.map((c) => ({
       hash: c.hash,
@@ -4107,7 +4257,9 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
       branches: branchMap.get(c.hash) ?? [],
       tags: tagMap.get(c.hash),
       isHEAD: c.hash === headHash,
-      lane: 0, x: 0, y: 0,
+      lane: 0,
+      x: 0,
+      y: 0,
     }));
 
     if (nodes.length === 0) return { nodes: [], edges: [], width: 200, height: 100 };
@@ -4138,7 +4290,7 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
     <path
       d={edgePath(edge)}
       fill="none"
-      stroke={laneColor(layout.nodes.find(n => n.hash === edge.to)?.lane ?? 0)}
+      stroke={laneColor(layout.nodes.find((n) => n.hash === edge.to)?.lane ?? 0)}
       stroke-width="2"
       class="transition-all duration-300"
     />
@@ -4159,13 +4311,7 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
         stroke-width={node.isHEAD ? 3 : 0}
         class="transition-all duration-300"
       />
-      <text
-        y="4"
-        text-anchor="middle"
-        fill="white"
-        font-size="8"
-        font-family="monospace"
-      >
+      <text y="4" text-anchor="middle" fill="white" font-size="8" font-family="monospace">
         {node.hash.slice(0, 4)}
       </text>
 
@@ -4180,13 +4326,7 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
             fill={laneColor(node.lane)}
             opacity="0.85"
           />
-          <text
-            text-anchor="middle"
-            y="4"
-            fill="white"
-            font-size="9"
-            font-family="monospace"
-          >
+          <text text-anchor="middle" y="4" fill="white" font-size="9" font-family="monospace">
             {branch}
           </text>
         </g>
@@ -4195,13 +4335,7 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
       {#if node.tags}
         {#each node.tags as tagName, i}
           <g transform="translate(0, {20 + i * 16})">
-            <text
-              text-anchor="middle"
-              y="4"
-              fill="#d29922"
-              font-size="8"
-              font-family="monospace"
-            >
+            <text text-anchor="middle" y="4" fill="#d29922" font-size="8" font-family="monospace">
               🏷 {tagName}
             </text>
           </g>
@@ -4212,7 +4346,12 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
 </svg>
 
 {#if selectedCommit}
-  <CommitDetail commit={selectedCommit} x={popoverPos.x} y={popoverPos.y} onclose={() => selectedCommit = null} />
+  <CommitDetail
+    commit={selectedCommit}
+    x={popoverPos.x}
+    y={popoverPos.y}
+    onclose={() => (selectedCommit = null)}
+  />
 {/if}
 ```
 
@@ -4223,13 +4362,17 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
 <script lang="ts">
   import type { GraphNode } from '$graph/types';
 
-  let { commit, x, y, onclose }: { commit: GraphNode; x: number; y: number; onclose: () => void } = $props();
+  let { commit, x, y, onclose }: { commit: GraphNode; x: number; y: number; onclose: () => void } =
+    $props();
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 <div
   class="fixed z-50 bg-terminal-bg border border-terminal-dim/50 rounded-lg p-3 shadow-lg font-mono text-xs max-w-xs"
-  style="left: {Math.min(x, window.innerWidth - 280)}px; top: {Math.min(y + 10, window.innerHeight - 200)}px"
+  style="left: {Math.min(x, window.innerWidth - 280)}px; top: {Math.min(
+    y + 10,
+    window.innerHeight - 200,
+  )}px"
 >
   <div class="flex justify-between items-center mb-2">
     <span class="text-terminal-yellow font-bold">{commit.hash.slice(0, 7)}</span>
@@ -4240,7 +4383,7 @@ function hasOtherChildren(nodes: GraphNode[], parentHash: string, excludeHash: s
     <p class="text-terminal-green">Branches: {commit.branches.join(', ')}</p>
   {/if}
   {#if commit.parents.length > 0}
-    <p class="text-terminal-dim">Parents: {commit.parents.map(p => p.slice(0, 7)).join(', ')}</p>
+    <p class="text-terminal-dim">Parents: {commit.parents.map((p) => p.slice(0, 7)).join(', ')}</p>
   {/if}
 </div>
 ```
@@ -4275,6 +4418,7 @@ git commit -m "feat(ui): add SVG git graph visualization with commit detail popo
 ### Task 14: File Panel + Mobile Toolbar
 
 **Files:**
+
 - Create: `src/ui/FilePanel.svelte`
 - Create: `src/ui/MobileToolbar.svelte`
 - Modify: `src/ui/Layout.svelte`
@@ -4294,7 +4438,7 @@ git commit -m "feat(ui): add SVG git graph visualization with commit detail popo
       result.push({ path: f.path, status: 'staged' });
     }
     for (const f of $engine.getModifiedFiles()) {
-      if (!result.some(r => r.path === f)) {
+      if (!result.some((r) => r.path === f)) {
         result.push({ path: f, status: 'modified' });
       }
     }
@@ -4333,7 +4477,9 @@ git commit -m "feat(ui): add SVG git graph visualization with commit detail popo
 
   {#each files as file}
     <span
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border {statusColor[file.status]} shrink-0"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border {statusColor[
+        file.status
+      ]} shrink-0"
       title="{file.status}: {file.path}"
     >
       <span>{statusIcon[file.status]}</span>
@@ -4396,8 +4542,7 @@ git commit -m "feat(ui): add SVG git graph visualization with commit detail popo
 Update `src/ui/Layout.svelte` terminal panel section to include FilePanel above Terminal and MobileToolbar:
 
 ```svelte
-import FilePanel from './FilePanel.svelte';
-import MobileToolbar from './MobileToolbar.svelte';
+import FilePanel from './FilePanel.svelte'; import MobileToolbar from './MobileToolbar.svelte';
 
 <!-- Inside the terminal-panel div, before Terminal -->
 <FilePanel />
@@ -4424,6 +4569,7 @@ git commit -m "feat(ui): add file panel with status chips and mobile toolbar"
 ### Task 15: Persistence (IndexedDB)
 
 **Files:**
+
 - Create: `src/persistence/serializer.ts`
 - Create: `src/persistence/storage.ts`
 - Modify: `src/store/engine.ts`
@@ -4653,6 +4799,7 @@ git commit -m "feat(persistence): add IndexedDB auto-save with engine serializat
 ### Task 16: PWA + Final Polish + Deploy Config
 
 **Files:**
+
 - Create: `public/favicon.svg`
 - Create: `public/icons/icon-192.png` (placeholder)
 - Create: `public/icons/icon-512.png` (placeholder)
@@ -4685,6 +4832,7 @@ cp public/favicon.svg public/icons/icon-512.svg
 ```
 
 Update `vite.config.ts` manifest icons to reference SVG:
+
 ```typescript
 icons: [
   { src: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },

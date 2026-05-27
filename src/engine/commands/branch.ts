@@ -89,7 +89,7 @@ export function cmdBranch(
   const head = refs.getHEAD();
   const current = head.attached ? head.target : null;
 
-  const lines = branches.map(name => {
+  const lines = branches.map((name) => {
     const marker = name === current ? '* ' : '  ';
     return `${marker}${name}`;
   });
