@@ -6,6 +6,7 @@ import type { GraphNode } from '$graph/types';
 function makeNode(hash: string, parents: string[], overrides: Partial<GraphNode> = {}): GraphNode {
   return {
     hash,
+    type: 'commit' as const,
     parents,
     message: `commit ${hash}`,
     branches: [],

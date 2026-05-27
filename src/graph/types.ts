@@ -1,5 +1,6 @@
 export type GraphNode = {
   hash: string;
+  type: 'commit' | 'phantom';
   parents: string[];
   message: string;
   branches: string[];

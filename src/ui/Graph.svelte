@@ -1,6 +1,6 @@
 <script lang="ts">
   import { engine, engineVersion } from '$store/engine';
-  import { computeLayout } from '$graph/layout';
+  import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
@@ -28,6 +28,27 @@
     void $engineVersion;
     const allCommits = eng.allCommits();
     if (allCommits.length === 0) {
+      if (eng.isInitialized()) {
+        const phantomNode: GraphNode = {
+          hash: '',
+          type: 'phantom',
+          parents: [],
+          message: '',
+          branches: ['main'],
+          tags: [],
+          isHEAD: true,
+          lane: 0,
+          x: NODE_SPACING_X,
+          y: LANE_SPACING_Y,
+        };
+        return {
+          nodes: [phantomNode],
+          edges: [],
+          width: NODE_SPACING_X * 2,
+          height: LANE_SPACING_Y * 2,
+          orientation: orientation as Orientation,
+        };
+      }
       return {
         nodes: [],
         edges: [],
@@ -63,6 +84,7 @@
 
     const inputNodes: GraphNode[] = allCommits.map((c) => ({
       hash: c.hash,
+      type: 'commit' as const,
       parents: c.parents,
       message: c.message,
       branches: branchMap.get(c.hash) ?? [],
@@ -140,7 +162,7 @@
         {/each}
 
         <!-- Nodes -->
-        {#each layout.nodes as node (node.hash)}
+        {#each layout.nodes as node, ni (node.type === 'phantom' ? `phantom-${ni}` : node.hash)}
           {@const color = laneColor(node.lane)}
           {@const isVert = orientation === 'vertical'}
 
@@ -242,31 +264,43 @@
           {/each}
 
           <!-- Commit circle -->
-          <circle
-            cx={node.x}
-            cy={node.y}
-            r={NODE_RADIUS}
-            fill={color}
-            stroke={node.isHEAD ? '#22d3ee' : color}
-            stroke-width={node.isHEAD ? 3 : 1.5}
-            style="cursor: pointer;"
-            onclick={() => selectNode(node)}
-            role="button"
-            tabindex="0"
-            aria-label={`Commit ${node.hash}: ${node.message}`}
-            onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
-          />
+          {#if node.type === 'phantom'}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={NODE_RADIUS}
+              fill="transparent"
+              stroke="#484f58"
+              stroke-width="2"
+              stroke-dasharray="6 3"
+            />
+          {:else}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={NODE_RADIUS}
+              fill={color}
+              stroke={node.isHEAD ? '#22d3ee' : color}
+              stroke-width={node.isHEAD ? 3 : 1.5}
+              style="cursor: pointer;"
+              onclick={() => selectNode(node)}
+              role="button"
+              tabindex="0"
+              aria-label={`Commit ${node.hash}: ${node.message}`}
+              onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
+            />
 
-          <!-- Short hash label inside circle -->
-          <text
-            x={node.x}
-            y={node.y + 5}
-            text-anchor="middle"
-            font-family="monospace"
-            font-size="14"
-            fill="#0d1117"
-            pointer-events="none">{node.hash.slice(0, 4)}</text
-          >
+            <!-- Short hash label inside circle -->
+            <text
+              x={node.x}
+              y={node.y + 5}
+              text-anchor="middle"
+              font-family="monospace"
+              font-size="14"
+              fill="#0d1117"
+              pointer-events="none">{node.hash.slice(0, 4)}</text
+            >
+          {/if}
         {/each}
       </g>
     </svg>
