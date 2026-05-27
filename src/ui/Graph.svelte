@@ -82,7 +82,7 @@
   let selectedHash = $state<string | null>(null);
 
   const selectedNode = $derived(
-    selectedHash ? layout.nodes.find((n) => n.hash === selectedHash) ?? null : null,
+    selectedHash ? (layout.nodes.find((n) => n.hash === selectedHash) ?? null) : null,
   );
 
   function selectNode(node: GraphNode) {

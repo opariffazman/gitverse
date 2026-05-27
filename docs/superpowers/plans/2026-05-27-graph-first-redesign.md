@@ -13,6 +13,7 @@
 ### Task 1: Bug Fix — Shell builtins call engine.notify()
 
 **Files:**
+
 - Modify: `src/shell/builtins.ts` (return value change)
 - Modify: `src/shell/router.ts:29-31` (call notify after builtin)
 - Test: `tests/shell/builtins.test.ts`
@@ -117,6 +118,7 @@ git commit -m "fix: shell builtins (rm/touch/mv) now trigger engine notify for U
 ### Task 2: Bug Fix — git add silent output
 
 **Files:**
+
 - Modify: `src/engine/commands/add.ts:32` (already silent)
 - Test: `tests/engine/core.test.ts`
 
@@ -162,6 +164,7 @@ git commit -m "test: confirm git add returns silent output"
 ### Task 3: Remove sim command, FilePanel, MobileToolbar
 
 **Files:**
+
 - Modify: `src/shell/builtins.ts` (delete sim handler + MUTATIONS const + help reference)
 - Modify: `src/shell/complete.ts:88` (remove 'sim' from command list)
 - Delete: `src/ui/FilePanel.svelte`
@@ -273,7 +276,10 @@ Replace `src/ui/Layout.svelte` entirely with this placeholder (full layout redes
   <div class="absolute inset-0 overflow-auto">
     <Graph />
   </div>
-  <div class="absolute bottom-0 left-0 right-0" style="height: 30%; background-color: rgba(13, 17, 23, 0.95);">
+  <div
+    class="absolute bottom-0 left-0 right-0"
+    style="height: 30%; background-color: rgba(13, 17, 23, 0.95);"
+  >
     <div class="h-full overflow-hidden border-t border-terminal-dim/30">
       <Terminal />
     </div>
@@ -298,6 +304,7 @@ git commit -m "feat: remove sim command, FilePanel, MobileToolbar, overlay syste
 ### Task 4: Add MesloLGS NF web font
 
 **Files:**
+
 - Create: `public/fonts/MesloLGS-NF-Regular.woff2` (download)
 - Modify: `src/app.css` (add @font-face)
 
@@ -348,7 +355,8 @@ body,
 body {
   background: #0d1117;
   color: #c9d1d9;
-  font-family: 'MesloLGS NF', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-family:
+    'MesloLGS NF', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
 }
 ```
@@ -370,6 +378,7 @@ git commit -m "feat: add MesloLGS NF web font for nerd font icons"
 ### Task 5: Prompt redesign — p10k minimal
 
 **Files:**
+
 - Modify: `src/shell/prompt.ts` (complete rewrite)
 - Modify: `src/ui/Prompt.svelte` (add cyan color)
 
@@ -585,6 +594,7 @@ git commit -m "feat: p10k minimal prompt with nerd font branch icon and colored 
 ### Task 6: ASCII welcome banner
 
 **Files:**
+
 - Modify: `src/store/engine.ts` (inject banner on init)
 
 The banner is terminal output — it belongs in the initial `terminalLines` state, not in a component.
@@ -601,7 +611,7 @@ const WELCOME_BANNER = `\x1b[CYAN]██████╗ ██╗█████
 ╚██████╔╝██║   ██║    ╚████╔╝ ███████╗██║  ██║███████║███████╗
  ╚═════╝ ╚═╝   ╚═╝     ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝`;
 
-const WELCOME_SUBTITLE = 'interactive git sandbox — type \'help\' for commands';
+const WELCOME_SUBTITLE = "interactive git sandbox — type 'help' for commands";
 
 function createInitialLines(): TerminalLine[] {
   return [
@@ -700,6 +710,7 @@ git commit -m "feat: ASCII GITVERSE welcome banner on terminal init"
 ### Task 7: Ghost text autosuggestion
 
 **Files:**
+
 - Modify: `src/ui/Terminal.svelte` (ghost text rendering + accept logic)
 
 - [ ] **Step 1: Add ghost text derived state**
@@ -785,8 +796,8 @@ Replace the input line div at the bottom of Terminal.svelte:
     {#if ghostText}
       <span
         class="absolute top-0 left-0 pointer-events-none font-mono text-sm text-terminal-dim/50 whitespace-pre"
-        aria-hidden="true"
-      >{inputValue}<span class="text-terminal-dim/40">{ghostText}</span></span>
+        aria-hidden="true">{inputValue}<span class="text-terminal-dim/40">{ghostText}</span></span
+      >
     {/if}
   </div>
 </div>
@@ -799,7 +810,9 @@ Note: The ghost text span overlays the input. The `inputValue` portion is transp
   <span
     class="absolute top-0 left-0 pointer-events-none font-mono text-sm whitespace-pre"
     aria-hidden="true"
-  ><span class="invisible">{inputValue}</span><span class="text-terminal-dim/40">{ghostText}</span></span>
+    ><span class="invisible">{inputValue}</span><span class="text-terminal-dim/40">{ghostText}</span
+    ></span
+  >
 {/if}
 ```
 
@@ -827,6 +840,7 @@ git commit -m "feat: ghost text autosuggestion with Tab/Right arrow acceptance"
 ### Task 8: Graph layout — alternating branch lanes
 
 **Files:**
+
 - Modify: `src/graph/layout.ts` (rewrite lane assignment)
 - Modify: `tests/graph/layout.test.ts` (update expectations)
 
@@ -1266,8 +1280,7 @@ export function computeLayout(
     nodes: positioned,
     edges,
     width: maxX + (orientation === 'horizontal' ? commitSpacing : laneSpacing),
-    height:
-      maxY + (orientation === 'horizontal' ? laneSpacing : commitSpacing),
+    height: maxY + (orientation === 'horizontal' ? laneSpacing : commitSpacing),
     orientation,
   };
 }
@@ -1290,6 +1303,7 @@ git commit -m "feat: alternating branch lanes — first below, second above main
 ### Task 9: Graph scale-up and auto-centering
 
 **Files:**
+
 - Modify: `src/ui/Graph.svelte` (node radius, pill sizes, viewBox centering)
 
 - [ ] **Step 1: Update Graph.svelte constants and pill rendering**
@@ -1297,12 +1311,14 @@ git commit -m "feat: alternating branch lanes — first below, second above main
 In `src/ui/Graph.svelte`:
 
 Change constants at top:
+
 ```typescript
 const NODE_RADIUS = 18;
 const GRAPH_PADDING = 60;
 ```
 
 Update branch label pill sizing (around line 164):
+
 ```typescript
 {@const pillWidth = Math.max(label.length * 7.5 + 20, 48)}
 ```
@@ -1320,11 +1336,13 @@ Update HEAD glow ring radius: `r={NODE_RADIUS + 4}` → `r={NODE_RADIUS + 6}`.
 - [ ] **Step 2: Update pill positioning math for new sizes**
 
 Branch labels (horizontal mode):
+
 ```typescript
 {@const ly = isVert ? node.y - 11 + bi * 26 : node.y - NODE_RADIUS - 30 - bi * 26}
 ```
 
 Tag labels:
+
 ```typescript
 {@const ly = isVert
   ? node.y - 11 + (node.branches.length + ti) * 26 + (node.branches.length > 0 ? 4 : 0)
@@ -1352,6 +1370,7 @@ Keep the existing SVG with these computed dimensions.
 
 Run: `npm run dev`
 Create some branches and commits — verify:
+
 - Nodes are larger (18px radius)
 - Branch labels are readable (14px font)
 - First branch appears below main
@@ -1375,6 +1394,7 @@ git commit -m "feat: scale up graph nodes/labels, auto-centering viewBox"
 ### Task 10: Layout redesign — 70/30 split
 
 **Files:**
+
 - Modify: `src/ui/Layout.svelte` (final clean version)
 - Modify: `src/store/ui.ts` (remove focusMode, toggleFocus, terminalOpacity)
 
@@ -1404,7 +1424,10 @@ Replace `src/ui/Layout.svelte`:
   </div>
 
   <!-- Terminal: bottom section -->
-  <div class="h-[30vh] md:h-[30vh] max-sm:h-[40vh] shrink-0 border-t border-terminal-dim/30 overflow-hidden" style="background-color: rgba(13, 17, 23, 0.95);">
+  <div
+    class="h-[30vh] md:h-[30vh] max-sm:h-[40vh] shrink-0 border-t border-terminal-dim/30 overflow-hidden"
+    style="background-color: rgba(13, 17, 23, 0.95);"
+  >
     <Terminal />
   </div>
 </div>
@@ -1429,6 +1452,7 @@ Expected: PASS
 
 Run: `npm run dev`
 Verify:
+
 - Graph takes ~70% top
 - Terminal docked at bottom ~30%
 - No overlay, no opacity slider, no focus toggle
@@ -1447,6 +1471,7 @@ git commit -m "feat: 70/30 graph/terminal split layout, remove overlay system"
 ### Task 11: Final integration test and cleanup
 
 **Files:**
+
 - All previously modified files
 
 - [ ] **Step 1: Run full test suite**
@@ -1472,6 +1497,7 @@ Expected: Build succeeds
 - [ ] **Step 5: Visual smoke test**
 
 Run: `npm run dev` and verify all features work together:
+
 1. ASCII banner displays on load
 2. Prompt shows `gitverse  main ❯` in correct colors
 3. Type `touch a.txt` — prompt updates to show `?1`

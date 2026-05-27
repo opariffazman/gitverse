@@ -145,7 +145,11 @@
       return;
     }
 
-    if (e.key === 'ArrowRight' && ghostText && (inputEl?.selectionStart ?? cursorPos) === inputValue.length) {
+    if (
+      e.key === 'ArrowRight' &&
+      ghostText &&
+      (inputEl?.selectionStart ?? cursorPos) === inputValue.length
+    ) {
       e.preventDefault();
       inputValue = inputValue + ghostText;
       cursorPos = inputValue.length;
@@ -230,7 +234,10 @@
         <span
           class="absolute top-0 left-0 pointer-events-none font-mono text-sm whitespace-pre"
           aria-hidden="true"
-        ><span class="invisible">{inputValue}</span><span class="text-terminal-dim/40">{ghostText}</span></span>
+          ><span class="invisible">{inputValue}</span><span class="text-terminal-dim/40"
+            >{ghostText}</span
+          ></span
+        >
       {/if}
     </div>
   </div>

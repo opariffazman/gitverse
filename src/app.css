@@ -25,6 +25,7 @@ body,
 body {
   background: #0d1117;
   color: #c9d1d9;
-  font-family: 'MesloLGS NF', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-family:
+    'MesloLGS NF', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
 }

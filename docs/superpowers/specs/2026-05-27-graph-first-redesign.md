@@ -43,6 +43,7 @@ Delete `src/ui/MobileToolbar.svelte` entirely. Remove import and usage from `src
 ### 2d. Overlay/opacity/blur system
 
 Remove from `src/ui/Layout.svelte`:
+
 - Opacity range slider
 - Backdrop blur computation
 - Focus toggle button and `focusMode` store usage
@@ -53,20 +54,20 @@ Remove from `src/ui/Layout.svelte`:
 ### Format
 
 ```
-gitverse  main +1 ~2 ?3 ❯ 
+gitverse  main +1 ~2 ?3 ❯
 ```
 
 ### Segments (left to right)
 
-| Segment | Content | Color | Condition |
-|---------|---------|-------|-----------|
-| Repo name | `gitverse` | dim grey | Always |
-| Branch icon | `` (U+E0A0) | cyan | Always |
-| Branch name | `main` / short hash | green=clean, yellow=dirty, red=detached | Always |
-| Staged count | `+N` | green | Only if >0 |
-| Modified count | `~N` | yellow | Only if >0 |
-| Untracked count | `?N` | dim grey | Only if >0 |
-| Cursor | `❯` | cyan | Always |
+| Segment         | Content             | Color                                   | Condition  |
+| --------------- | ------------------- | --------------------------------------- | ---------- |
+| Repo name       | `gitverse`          | dim grey                                | Always     |
+| Branch icon     | `` (U+E0A0)         | cyan                                    | Always     |
+| Branch name     | `main` / short hash | green=clean, yellow=dirty, red=detached | Always     |
+| Staged count    | `+N`                | green                                   | Only if >0 |
+| Modified count  | `~N`                | yellow                                  | Only if >0 |
+| Untracked count | `?N`                | dim grey                                | Only if >0 |
+| Cursor          | `❯`                 | cyan                                    | Always     |
 
 ### Detached HEAD
 
@@ -75,7 +76,7 @@ Show `` + short commit hash (7 chars) in red instead of branch name.
 ### Clean state
 
 ```
-gitverse  main ❯ 
+gitverse  main ❯
 ```
 
 ### Font
@@ -91,8 +92,8 @@ On terminal session start, render:
 ```
 ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
 ██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
-██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗  
-██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝  
+██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
+██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝
 ╚██████╔╝██║   ██║    ╚████╔╝ ███████╗██║  ██║███████║███████╗
  ╚═════╝ ╚═╝   ╚═╝     ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝
 
@@ -132,13 +133,13 @@ As user types, display top completion candidate as grey ghost text after cursor 
 
 Main branch stays at lane 0 (visual center). New branches alternate sides:
 
-| Branch creation order | Lane |
-|----------------------|------|
-| main | 0 |
-| 1st branch | -1 (below) |
-| 2nd branch | +1 (above) |
-| 3rd branch | -2 (below) |
-| 4th branch | +2 (above) |
+| Branch creation order | Lane       |
+| --------------------- | ---------- |
+| main                  | 0          |
+| 1st branch            | -1 (below) |
+| 2nd branch            | +1 (above) |
+| 3rd branch            | -2 (below) |
+| 4th branch            | +2 (above) |
 
 ### Lane Persistence
 
@@ -146,11 +147,11 @@ Branch lane stays allocated until branch ref is deleted (`git branch -d`). Merge
 
 ### Node & Spacing Scale-Up
 
-| Property | Old | New |
-|----------|-----|-----|
-| NODE_RADIUS | 12 | 18 |
-| LANE_SPACING_Y | 50 | 80 |
-| NODE_SPACING_X | 80 | 120 |
+| Property       | Old | New |
+| -------------- | --- | --- |
+| NODE_RADIUS    | 12  | 18  |
+| LANE_SPACING_Y | 50  | 80  |
+| NODE_SPACING_X | 80  | 120 |
 
 Branch label pills: font-size 14px, padding 4px 10px (up from 10px/3px 8px).
 
@@ -197,18 +198,18 @@ No FilePanel. No MobileToolbar. Clean two-panel split.
 
 ## Files Changed Summary
 
-| File | Action |
-|------|--------|
-| `src/shell/builtins.ts` | Fix notify, remove sim, update help |
-| `src/engine/commands/add.ts` | Silent output |
-| `src/shell/complete.ts` | Remove sim, support sync API for ghost text |
-| `src/shell/prompt.ts` | Rewrite — p10k minimal format |
-| `src/ui/Prompt.svelte` | Rewrite — new segment rendering |
-| `src/ui/Layout.svelte` | Rewrite — 70/30 split, remove overlay/focus/FilePanel/MobileToolbar |
-| `src/ui/Graph.svelte` | Scale up nodes, update viewBox centering |
-| `src/graph/layout.ts` | Rewrite lane assignment — alternating +/- from center |
-| `src/ui/Terminal.svelte` | Add welcome banner (inline constant), ghost text autosuggestion |
-| `src/ui/FilePanel.svelte` | Delete |
-| `src/ui/MobileToolbar.svelte` | Delete |
-| `public/fonts/MesloLGS-NF.woff2` | Add (new asset) |
-| `src/app.css` or font config | Add @font-face for MesloLGS NF |
+| File                             | Action                                                              |
+| -------------------------------- | ------------------------------------------------------------------- |
+| `src/shell/builtins.ts`          | Fix notify, remove sim, update help                                 |
+| `src/engine/commands/add.ts`     | Silent output                                                       |
+| `src/shell/complete.ts`          | Remove sim, support sync API for ghost text                         |
+| `src/shell/prompt.ts`            | Rewrite — p10k minimal format                                       |
+| `src/ui/Prompt.svelte`           | Rewrite — new segment rendering                                     |
+| `src/ui/Layout.svelte`           | Rewrite — 70/30 split, remove overlay/focus/FilePanel/MobileToolbar |
+| `src/ui/Graph.svelte`            | Scale up nodes, update viewBox centering                            |
+| `src/graph/layout.ts`            | Rewrite lane assignment — alternating +/- from center               |
+| `src/ui/Terminal.svelte`         | Add welcome banner (inline constant), ghost text autosuggestion     |
+| `src/ui/FilePanel.svelte`        | Delete                                                              |
+| `src/ui/MobileToolbar.svelte`    | Delete                                                              |
+| `public/fonts/MesloLGS-NF.woff2` | Add (new asset)                                                     |
+| `src/app.css` or font config     | Add @font-face for MesloLGS NF                                      |
