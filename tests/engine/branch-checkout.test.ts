@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { GitEngine } from '$engine/index';
 
 // ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ describe('git branch – list', () => {
 
 describe('git branch – create', () => {
   it('creates a branch at current HEAD', () => {
-    const { engine, commitHash } = engineWithCommit();
+    const { engine } = engineWithCommit();
     const result = engine.execute('git branch feature');
     expect(result.exitCode).toBe(0);
     // Switching to the new branch should succeed
@@ -192,7 +192,7 @@ describe('git checkout – restores working directory', () => {
     engine.getVFS().createFile('file-a.txt', 'content-a');
     engine.execute('git add file-a.txt');
     engine.execute('git commit -m "commit A"');
-    const commitAHash = engine.log()[0].hash;
+    engine.log()[0].hash;
 
     // Create branch "branchA" pointing at commit A (same as main for now)
     engine.execute('git branch branchA');

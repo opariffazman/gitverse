@@ -20,14 +20,14 @@ function engineWithBase(): GitEngine {
 describe('git rebase', () => {
   it('replays branch commits onto target with new hashes', () => {
     const engine = engineWithBase();
-    const baseHash = engine.log()[0].hash;
+    engine.log()[0].hash;
 
     // Create feature branch with 2 commits
     engine.execute('git checkout -b feature');
     engine.getVFS().createFile('f1.txt', 'f1');
     engine.execute('git add f1.txt');
     engine.execute('git commit -m "add f1"');
-    const origF1Hash = engine.log()[0].hash;
+    engine.log()[0].hash;
 
     engine.getVFS().createFile('f2.txt', 'f2');
     engine.execute('git add f2.txt');
@@ -147,7 +147,7 @@ describe('git rebase', () => {
 
   it('is a no-op when HEAD is already an ancestor of target', () => {
     const engine = engineWithBase();
-    const initialTip = engine.log()[0].hash;
+    engine.log()[0].hash;
 
     // feature is behind main (just branched, no new commits)
     engine.execute('git branch feature');

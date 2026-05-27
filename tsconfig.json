@@ -22,6 +22,6 @@
       "$persistence/*": ["src/persistence/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "tests/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

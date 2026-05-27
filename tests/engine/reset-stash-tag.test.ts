@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { GitEngine } from '$engine/index';
 
 // ---------------------------------------------------------------------------
@@ -301,11 +301,10 @@ describe('git tag – creation', () => {
     expect(result.exitCode).toBe(0);
 
     // Tag should resolve to HEAD's commit hash
-    const { refs } = engine as unknown as { refs: import('$engine/refs').RefStore };
     // Verify via list output
     const listResult = engine.execute('git tag');
     expect(listResult.output).toContain('v1.0');
-    void headHash; // used indirectly via refs
+    void headHash;
   });
 
   it('creates a tag at a specific commit hash', () => {
