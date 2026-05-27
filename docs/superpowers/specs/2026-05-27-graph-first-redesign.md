@@ -104,7 +104,7 @@ interactive git sandbox — type 'help' for commands
 - Pushed into terminal output buffer once on init
 - Clears with `clear` command
 
-**Files:** `src/ui/Terminal.svelte` or new `src/shell/welcome.ts`
+**Files:** `src/ui/Terminal.svelte` (inline constant, no separate file)
 
 ## 5. Ghost Text Autosuggestion
 
@@ -124,7 +124,7 @@ As user types, display top completion candidate as grey ghost text after cursor 
 - Ghost text: dim grey, same font, appended after input
 - Cursor: blinking block or line at end of real input (before ghost text)
 
-**Files:** `src/ui/Terminal.svelte`, `src/shell/complete.ts` (may need sync API)
+**Files:** `src/ui/Terminal.svelte`, `src/shell/complete.ts` (already sync)
 
 ## 6. Graph Layout — Alternating Branch Lanes
 
@@ -152,7 +152,7 @@ Branch lane stays allocated until branch ref is deleted (`git branch -d`). Merge
 | LANE_SPACING_Y | 50 | 80 |
 | NODE_SPACING_X | 80 | 120 |
 
-Branch label pills scale proportionally.
+Branch label pills: font-size 14px, padding 4px 10px (up from 10px/3px 8px).
 
 ### Edge Style
 
@@ -175,7 +175,6 @@ SVG viewBox centers on main branch lane (y=0). Expands symmetrically as branches
 - Graph: top 70% of viewport, scrollable
 - Terminal: bottom 30%, fixed height, own scroll context
 - Subtle top border on terminal for separation
-- No overlay, no opacity slider, no blur, no focus toggle
 
 ### Mobile (<640px)
 
@@ -208,7 +207,7 @@ No FilePanel. No MobileToolbar. Clean two-panel split.
 | `src/ui/Layout.svelte` | Rewrite — 70/30 split, remove overlay/focus/FilePanel/MobileToolbar |
 | `src/ui/Graph.svelte` | Scale up nodes, update viewBox centering |
 | `src/graph/layout.ts` | Rewrite lane assignment — alternating +/- from center |
-| `src/ui/Terminal.svelte` | Add welcome banner, ghost text autosuggestion |
+| `src/ui/Terminal.svelte` | Add welcome banner (inline constant), ghost text autosuggestion |
 | `src/ui/FilePanel.svelte` | Delete |
 | `src/ui/MobileToolbar.svelte` | Delete |
 | `public/fonts/MesloLGS-NF.woff2` | Add (new asset) |
