@@ -12,6 +12,15 @@ import { cmdDiff } from './commands/diff';
 import { cmdBranch } from './commands/branch';
 import { cmdCheckout } from './commands/checkout';
 import { cmdMerge } from './commands/merge';
+import { cmdReset } from './commands/reset';
+import { cmdStash } from './commands/stash';
+import type { StashEntry } from './commands/stash';
+import { cmdTag } from './commands/tag';
+import { cmdRm } from './commands/rm';
+import { cmdMv } from './commands/mv';
+import { cmdRebase } from './commands/rebase';
+import { cmdCherryPick } from './commands/cherry-pick';
+import { cmdRevert } from './commands/revert';
 
 // ---------------------------------------------------------------------------
 // Command parsing
@@ -100,6 +109,8 @@ export class GitEngine {
   /** Staging index: path → blob hash */
   private index: Map<string, string>;
   private listeners: Set<() => void>;
+  /** Stash stack (LIFO). Index 0 is the most recent entry. */
+  stashStack: StashEntry[];
 
   constructor() {
     this.vfs = new VirtualFileSystem();
@@ -107,6 +118,7 @@ export class GitEngine {
     this.refs = new RefStore();
     this.index = new Map();
     this.listeners = new Set();
+    this.stashStack = [];
   }
 
   // -------------------------------------------------------------------------
@@ -213,6 +225,89 @@ export class GitEngine {
 
       case 'merge':
         result = cmdMerge(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'reset':
+        result = cmdReset(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'stash':
+        result = cmdStash(
+          args,
+          opts,
+          this.vfs,
+          this.index,
+          this.stashStack,
+          () => this.getCommittedTree(),
+          (hash: string) => this.objects.readBlob(hash),
+        );
+        break;
+
+      case 'tag':
+        result = cmdTag(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+        );
+        break;
+
+      case 'rm':
+        result = cmdRm(
+          args,
+          opts,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'mv':
+        result = cmdMv(
+          args,
+          opts,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'rebase':
+        result = cmdRebase(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'cherry-pick':
+        result = cmdCherryPick(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'revert':
+        result = cmdRevert(
           args,
           opts,
           this.refs,
