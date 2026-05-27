@@ -97,7 +97,7 @@
   });
 
   function laneColor(lane: number): string {
-    return LANE_COLORS[lane % LANE_COLORS.length];
+    return LANE_COLORS[((lane % LANE_COLORS.length) + LANE_COLORS.length) % LANE_COLORS.length];
   }
 
   function edgePath(edge: GraphEdge): string {

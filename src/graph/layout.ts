@@ -15,7 +15,7 @@ export type LayoutResult = {
 
 function nextAlternatingLane(branchIndex: number): number {
   if (branchIndex === 0) return 0;
-  const side = branchIndex % 2 === 1 ? -1 : 1;
+  const side = branchIndex % 2 === 1 ? 1 : -1;
   const magnitude = Math.ceil(branchIndex / 2);
   return side * magnitude;
 }

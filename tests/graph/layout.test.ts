@@ -74,7 +74,7 @@ describe('computeLayout – linear chain', () => {
 });
 
 describe('computeLayout – alternating branch lanes', () => {
-  it('first branch goes to lane -1 (below main)', () => {
+  it('first branch goes to lane +1 (below main in SVG)', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root'], { branches: ['main'] });
     const B = makeNode('B', ['root'], { branches: ['feat1'] });
@@ -82,10 +82,10 @@ describe('computeLayout – alternating branch lanes', () => {
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
     expect(byHash.get('root')!.lane).toBe(0);
     expect(byHash.get('A')!.lane).toBe(0);
-    expect(byHash.get('B')!.lane).toBe(-1);
+    expect(byHash.get('B')!.lane).toBe(1);
   });
 
-  it('second branch goes to lane +1 (above main)', () => {
+  it('second branch goes to lane -1 (above main in SVG)', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root']);
     const B = makeNode('B', ['A'], { branches: ['main'] });
@@ -93,11 +93,11 @@ describe('computeLayout – alternating branch lanes', () => {
     const D = makeNode('D', ['A'], { branches: ['feat2'] });
     const { nodes } = computeLayout([root, A, B, C, D]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('C')!.lane).toBe(-1);
-    expect(byHash.get('D')!.lane).toBe(1);
+    expect(byHash.get('C')!.lane).toBe(1);
+    expect(byHash.get('D')!.lane).toBe(-1);
   });
 
-  it('third branch goes to lane -2', () => {
+  it('third branch goes to lane +2', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root'], { branches: ['main'] });
     const B = makeNode('B', ['root'], { branches: ['feat1'] });
@@ -105,9 +105,9 @@ describe('computeLayout – alternating branch lanes', () => {
     const D = makeNode('D', ['root'], { branches: ['feat3'] });
     const { nodes } = computeLayout([root, A, B, C, D]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('B')!.lane).toBe(-1);
-    expect(byHash.get('C')!.lane).toBe(1);
-    expect(byHash.get('D')!.lane).toBe(-2);
+    expect(byHash.get('B')!.lane).toBe(1);
+    expect(byHash.get('C')!.lane).toBe(-1);
+    expect(byHash.get('D')!.lane).toBe(2);
   });
 });
 
