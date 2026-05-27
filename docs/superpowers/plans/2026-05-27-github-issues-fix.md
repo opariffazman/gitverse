@@ -14,16 +14,16 @@
 
 ## File Map
 
-| File | Task | Action | Responsibility |
-|------|------|--------|----------------|
-| `src/ui/Terminal.svelte` | 1 | Modify | Bottom-anchor prompt via inner flex wrapper |
-| `src/store/ui.ts` | 2 | Modify | Add `terminalOpacity` persisted store |
-| `src/ui/Layout.svelte` | 2 | Modify | Add opacity slider, apply dynamic bg |
-| `uno.config.ts` | 2 | Modify | Remove bg opacity from `terminal-panel` shortcut |
-| `src/graph/layout.ts` | 3 | Modify | Branch-aware lane assignment algorithm |
-| `tests/graph/layout.test.ts` | 3 | Modify | Add branch divergence tests |
-| `src/store/engine.ts` | 4 | Modify | Add `engineVersion` signal for reactivity |
-| `src/ui/Graph.svelte` | 4, 5 | Modify | Track version, add SVG padding, HEAD indicator |
+| File                         | Task | Action | Responsibility                                   |
+| ---------------------------- | ---- | ------ | ------------------------------------------------ |
+| `src/ui/Terminal.svelte`     | 1    | Modify | Bottom-anchor prompt via inner flex wrapper      |
+| `src/store/ui.ts`            | 2    | Modify | Add `terminalOpacity` persisted store            |
+| `src/ui/Layout.svelte`       | 2    | Modify | Add opacity slider, apply dynamic bg             |
+| `uno.config.ts`              | 2    | Modify | Remove bg opacity from `terminal-panel` shortcut |
+| `src/graph/layout.ts`        | 3    | Modify | Branch-aware lane assignment algorithm           |
+| `tests/graph/layout.test.ts` | 3    | Modify | Add branch divergence tests                      |
+| `src/store/engine.ts`        | 4    | Modify | Add `engineVersion` signal for reactivity        |
+| `src/ui/Graph.svelte`        | 4, 5 | Modify | Track version, add SVG padding, HEAD indicator   |
 
 ---
 
@@ -31,6 +31,7 @@
 
 **Closes:** #1
 **Files:**
+
 - Modify: `src/ui/Terminal.svelte:162-178`
 
 **Problem:** The scrollable output area uses `flex-1` which takes all space, but content starts at the top. When there's little or no output, the prompt sits high in the panel with empty space below it. Real terminals show the prompt at the bottom with output growing upward.
@@ -71,6 +72,7 @@ Expected: PASS (no type changes, only template)
 Run: `npm run dev`
 
 Check:
+
 1. Empty terminal: prompt/input anchored at bottom of panel
 2. Run `git status`: output appears above the input, input stays at bottom
 3. Run many commands: scrollbar appears, auto-scroll to bottom works
@@ -89,6 +91,7 @@ git commit -m "fix: anchor terminal prompt to bottom of panel (#1)"
 
 **Closes:** #2
 **Files:**
+
 - Modify: `src/store/ui.ts`
 - Modify: `src/ui/Layout.svelte`
 - Modify: `uno.config.ts`
@@ -99,8 +102,7 @@ Add after the existing `toggleFocus` function:
 
 ```typescript
 function createPersistedWritable(key: string, defaultValue: number) {
-  const stored =
-    typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
   const initial = stored !== null ? parseFloat(stored) : defaultValue;
   const store = writable(initial);
   store.subscribe((value) => {
@@ -111,10 +113,7 @@ function createPersistedWritable(key: string, defaultValue: number) {
   return store;
 }
 
-export const terminalOpacity = createPersistedWritable(
-  'gitverse-terminal-opacity',
-  0.85,
-);
+export const terminalOpacity = createPersistedWritable('gitverse-terminal-opacity', 0.85);
 ```
 
 - [ ] **Step 2: Update UnoCSS shortcut in `uno.config.ts`**
@@ -132,11 +131,13 @@ Remove the background opacity from the `terminal-panel` shortcut (the bg will be
 - [ ] **Step 3: Update Layout.svelte with slider and dynamic opacity**
 
 Add import:
+
 ```typescript
 import { focusMode, toggleFocus, terminalOpacity } from '$store/ui';
 ```
 
 Add inline style to the terminal panel div (line 18-22):
+
 ```svelte
 <div
   class="absolute terminal-panel flex flex-col transition-all duration-300 ease-in-out"
@@ -147,6 +148,7 @@ Add inline style to the terminal panel div (line 18-22):
 ```
 
 Replace the title bar (lines 24-33) to include the slider:
+
 ```svelte
 <div class="flex items-center justify-between px-3 py-2 border-b border-terminal-dim/30">
   <span class="font-mono text-xs text-terminal-dim select-none">terminal</span>
@@ -186,6 +188,7 @@ Expected: PASS
 Run: `npm run dev`
 
 Check:
+
 1. Slider visible in terminal title bar next to the focus toggle button
 2. Drag slider left: terminal becomes more transparent, graph visible through it
 3. Drag slider right: terminal becomes opaque
@@ -205,6 +208,7 @@ git commit -m "feat: add terminal opacity slider (#2)"
 
 **Closes:** #3
 **Files:**
+
 - Modify: `src/graph/layout.ts:88-129`
 - Modify: `tests/graph/layout.test.ts`
 
@@ -293,72 +297,72 @@ Expected: New tests FAIL (branch commits inherit parent lane)
 Replace the lane assignment section (lines 88-129) with:
 
 ```typescript
-  // --- Branch membership ---
-  // Walk backward from each branch tip to assign commits to branches.
-  // Main/master processed first so they claim the primary lane.
-  const branchTips = new Map<string, string>();
-  for (const n of nodeMap.values()) {
-    for (const b of n.branches) {
-      branchTips.set(b, n.hash);
-    }
+// --- Branch membership ---
+// Walk backward from each branch tip to assign commits to branches.
+// Main/master processed first so they claim the primary lane.
+const branchTips = new Map<string, string>();
+for (const n of nodeMap.values()) {
+  for (const b of n.branches) {
+    branchTips.set(b, n.hash);
   }
+}
 
-  const branchOrder = [...branchTips.keys()].sort((a, b) => {
-    if (a === 'main' || a === 'master') return -1;
-    if (b === 'main' || b === 'master') return 1;
-    return a.localeCompare(b);
-  });
+const branchOrder = [...branchTips.keys()].sort((a, b) => {
+  if (a === 'main' || a === 'master') return -1;
+  if (b === 'main' || b === 'master') return 1;
+  return a.localeCompare(b);
+});
 
-  const commitBranch = new Map<string, string>();
-  for (const branch of branchOrder) {
-    let current: string | undefined = branchTips.get(branch);
-    while (current && nodeMap.has(current) && !commitBranch.has(current)) {
-      commitBranch.set(current, branch);
-      current = nodeMap.get(current)!.parents[0];
-    }
+const commitBranch = new Map<string, string>();
+for (const branch of branchOrder) {
+  let current: string | undefined = branchTips.get(branch);
+  while (current && nodeMap.has(current) && !commitBranch.has(current)) {
+    commitBranch.set(current, branch);
+    current = nodeMap.get(current)!.parents[0];
   }
+}
 
-  // --- Lane assignment ---
-  // Inherit parent lane only when on the same branch and parent hasn't
-  // already given its lane to another child. Different branch = new lane.
-  const childCountAssigned = new Map<string, number>();
-  const laneOf = new Map<string, number>();
-  let nextLane = 0;
+// --- Lane assignment ---
+// Inherit parent lane only when on the same branch and parent hasn't
+// already given its lane to another child. Different branch = new lane.
+const childCountAssigned = new Map<string, number>();
+const laneOf = new Map<string, number>();
+let nextLane = 0;
 
-  for (const hash of topoOrder) {
-    const node = nodeMap.get(hash)!;
-    const validParents = node.parents.filter((p) => nodeMap.has(p));
-    const myBranch = commitBranch.get(hash);
+for (const hash of topoOrder) {
+  const node = nodeMap.get(hash)!;
+  const validParents = node.parents.filter((p) => nodeMap.has(p));
+  const myBranch = commitBranch.get(hash);
 
-    let assignedLane: number;
+  let assignedLane: number;
 
-    if (validParents.length === 0) {
-      assignedLane = nextLane++;
+  if (validParents.length === 0) {
+    assignedLane = nextLane++;
+  } else {
+    const firstParent = validParents[0];
+    const parentLane = laneOf.get(firstParent);
+    const parentBranch = commitBranch.get(firstParent);
+    const parentChildCount = childCountAssigned.get(firstParent) ?? 0;
+    const sameBranch = myBranch === parentBranch;
+
+    if (parentChildCount === 0 && parentLane !== undefined && sameBranch) {
+      assignedLane = parentLane;
     } else {
-      const firstParent = validParents[0];
-      const parentLane = laneOf.get(firstParent);
-      const parentBranch = commitBranch.get(firstParent);
-      const parentChildCount = childCountAssigned.get(firstParent) ?? 0;
-      const sameBranch = myBranch === parentBranch;
-
-      if (parentChildCount === 0 && parentLane !== undefined && sameBranch) {
-        assignedLane = parentLane;
-      } else {
-        assignedLane = nextLane++;
-      }
-
-      if (sameBranch) {
-        childCountAssigned.set(firstParent, parentChildCount + 1);
-      }
-
-      for (let i = 1; i < validParents.length; i++) {
-        const p = validParents[i];
-        childCountAssigned.set(p, (childCountAssigned.get(p) ?? 0) + 1);
-      }
+      assignedLane = nextLane++;
     }
 
-    laneOf.set(hash, assignedLane);
+    if (sameBranch) {
+      childCountAssigned.set(firstParent, parentChildCount + 1);
+    }
+
+    for (let i = 1; i < validParents.length; i++) {
+      const p = validParents[i];
+      childCountAssigned.set(p, (childCountAssigned.get(p) ?? 0) + 1);
+    }
   }
+
+  laneOf.set(hash, assignedLane);
+}
 ```
 
 Also update the doc comment at the top of the function (lines 13-25) — replace step 3:
@@ -376,6 +380,7 @@ Run: `npm run test -- --run tests/graph/layout.test.ts`
 Expected: ALL tests PASS (including existing ones)
 
 Key verifications:
+
 - Existing "single commit" test: node without branches → lane 0 ✓
 - Existing "linear chain" test: all nodes without branches, same undefined branch → all lane 0 ✓
 - Existing "branching" test: nodes without branches, childCount logic still works ✓
@@ -394,10 +399,12 @@ git commit -m "fix: branch-aware lane assignment for diverging graph (#3)"
 
 **Closes:** #4
 **Files:**
+
 - Modify: `src/store/engine.ts:26,76`
 - Modify: `src/ui/Graph.svelte`
 
 **Problem:** Two issues combine to make commits invisible in the graph:
+
 1. **Reactivity:** `engine.set(eng)` passes the same object reference. Svelte 5's signal equality check (`===`) sees no change and skips re-derivation of the layout.
 2. **Clipping:** The SVG has no padding, so labels extending above/below nodes at the edges are clipped.
 
@@ -414,8 +421,8 @@ export const engineVersion = writable(0);
 Then in `executeCommand()`, after `engine.set(eng)` (line 76), add:
 
 ```typescript
-  engine.set(eng);
-  engineVersion.update((v) => v + 1);
+engine.set(eng);
+engineVersion.update((v) => v + 1);
 ```
 
 - [ ] **Step 2: Update Graph.svelte to track version and add padding**
@@ -606,6 +613,7 @@ Full replacement for `src/ui/Graph.svelte`:
 ```
 
 Key changes from original:
+
 - Import `engineVersion` (line 2)
 - Add `GRAPH_PADDING = 40` constant (line 9)
 - Add `void $engineVersion` in derived (line 14) to force re-evaluation
@@ -623,6 +631,7 @@ Expected: ALL PASS
 Run: `npm run dev`
 
 Check:
+
 1. Open app, run `touch file.txt`, `git add file.txt`, `git commit -m "init"`
 2. Graph immediately shows a single green node with "main" label above
 3. Make more commits → graph grows left-to-right
@@ -643,9 +652,11 @@ git commit -m "fix: initial commit visibility and graph reactivity (#4)"
 **Closes:** #5
 **Depends on:** Task 4 (modifies same Graph.svelte file)
 **Files:**
+
 - Modify: `src/ui/Graph.svelte`
 
 **Design:**
+
 - **Attached HEAD** (on branch): The branch pill for HEAD's target shows `HEAD → branchName` in cyan (#22d3ee) instead of the lane color. Visually distinct, no extra vertical space needed.
 - **Detached HEAD** (on commit): A standalone `HEAD` pill with dashed cyan border appears above the commit.
 - **Glow ring:** A pulsing cyan ring around the HEAD commit node for at-a-glance visibility.
@@ -655,147 +666,143 @@ git commit -m "fix: initial commit visibility and graph reactivity (#4)"
 Add after the `layout` derived (after the closing `});`):
 
 ```typescript
-  const headBranch = $derived.by(() => {
-    const eng = $engine;
-    void $engineVersion;
-    try {
-      const h = eng.getHEAD();
-      return h.attached ? h.target : null;
-    } catch {
-      return null;
-    }
-  });
+const headBranch = $derived.by(() => {
+  const eng = $engine;
+  void $engineVersion;
+  try {
+    const h = eng.getHEAD();
+    return h.attached ? h.target : null;
+  } catch {
+    return null;
+  }
+});
 ```
 
 Replace the `<!-- Nodes -->` section inside the `<g>` group with:
 
 ```svelte
-        <!-- Nodes -->
-        {#each layout.nodes as node (node.hash)}
-          {@const color = laneColor(node.lane)}
+<!-- Nodes -->
+{#each layout.nodes as node (node.hash)}
+  {@const color = laneColor(node.lane)}
 
-          <!-- HEAD glow ring -->
-          {#if node.isHEAD}
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={NODE_RADIUS + 4}
-              fill="none"
-              stroke="#22d3ee"
-              stroke-width="2"
-              opacity="0.5"
-            >
-              <animate
-                attributeName="opacity"
-                values="0.3;0.7;0.3"
-                dur="2s"
-                repeatCount="indefinite"
-              />
-            </circle>
-          {/if}
+  <!-- HEAD glow ring -->
+  {#if node.isHEAD}
+    <circle
+      cx={node.x}
+      cy={node.y}
+      r={NODE_RADIUS + 4}
+      fill="none"
+      stroke="#22d3ee"
+      stroke-width="2"
+      opacity="0.5"
+    >
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite" />
+    </circle>
+  {/if}
 
-          <!-- Branch labels above node -->
-          {#each node.branches as branch, bi (branch)}
-            {@const isHeadBranch = node.isHEAD && headBranch === branch}
-            {@const label = isHeadBranch ? `HEAD → ${branch}` : branch}
-            {@const pillWidth = Math.max(label.length * 5.6 + 14, 36)}
-            <rect
-              x={node.x - pillWidth / 2}
-              y={node.y - NODE_RADIUS - 22 - bi * 18}
-              width={pillWidth}
-              height={16}
-              rx={4}
-              fill={isHeadBranch ? '#22d3ee' : color}
-              opacity={isHeadBranch ? 0.95 : 0.85}
-            />
-            <text
-              x={node.x}
-              y={node.y - NODE_RADIUS - 22 - bi * 18 + 11}
-              text-anchor="middle"
-              font-family="monospace"
-              font-size="9"
-              fill="#0d1117"
-              font-weight={isHeadBranch ? 'bold' : 'normal'}>{label}</text
-            >
-          {/each}
+  <!-- Branch labels above node -->
+  {#each node.branches as branch, bi (branch)}
+    {@const isHeadBranch = node.isHEAD && headBranch === branch}
+    {@const label = isHeadBranch ? `HEAD → ${branch}` : branch}
+    {@const pillWidth = Math.max(label.length * 5.6 + 14, 36)}
+    <rect
+      x={node.x - pillWidth / 2}
+      y={node.y - NODE_RADIUS - 22 - bi * 18}
+      width={pillWidth}
+      height={16}
+      rx={4}
+      fill={isHeadBranch ? '#22d3ee' : color}
+      opacity={isHeadBranch ? 0.95 : 0.85}
+    />
+    <text
+      x={node.x}
+      y={node.y - NODE_RADIUS - 22 - bi * 18 + 11}
+      text-anchor="middle"
+      font-family="monospace"
+      font-size="9"
+      fill="#0d1117"
+      font-weight={isHeadBranch ? 'bold' : 'normal'}>{label}</text
+    >
+  {/each}
 
-          <!-- Detached HEAD label (when HEAD points directly at commit, not a branch) -->
-          {#if node.isHEAD && !headBranch}
-            {@const pillWidth = 4 * 5.6 + 14}
-            {@const headY = node.y - NODE_RADIUS - 22 - node.branches.length * 18}
-            <rect
-              x={node.x - pillWidth / 2}
-              y={headY - 13}
-              width={pillWidth}
-              height={16}
-              rx={4}
-              fill="none"
-              stroke="#22d3ee"
-              stroke-width="1.5"
-              stroke-dasharray="3 2"
-            />
-            <text
-              x={node.x}
-              y={headY - 1}
-              text-anchor="middle"
-              font-family="monospace"
-              font-size="9"
-              font-weight="bold"
-              fill="#22d3ee">HEAD</text
-            >
-          {/if}
+  <!-- Detached HEAD label (when HEAD points directly at commit, not a branch) -->
+  {#if node.isHEAD && !headBranch}
+    {@const pillWidth = 4 * 5.6 + 14}
+    {@const headY = node.y - NODE_RADIUS - 22 - node.branches.length * 18}
+    <rect
+      x={node.x - pillWidth / 2}
+      y={headY - 13}
+      width={pillWidth}
+      height={16}
+      rx={4}
+      fill="none"
+      stroke="#22d3ee"
+      stroke-width="1.5"
+      stroke-dasharray="3 2"
+    />
+    <text
+      x={node.x}
+      y={headY - 1}
+      text-anchor="middle"
+      font-family="monospace"
+      font-size="9"
+      font-weight="bold"
+      fill="#22d3ee">HEAD</text
+    >
+  {/if}
 
-          <!-- Tag labels below node -->
-          {#each node.tags ?? [] as tag, ti (tag)}
-            <rect
-              x={node.x - 20}
-              y={node.y + NODE_RADIUS + 4 + ti * 18}
-              width={40}
-              height={14}
-              rx={3}
-              fill="#f59e0b"
-              opacity="0.85"
-            />
-            <text
-              x={node.x}
-              y={node.y + NODE_RADIUS + 4 + ti * 18 + 10}
-              text-anchor="middle"
-              font-family="monospace"
-              font-size="8"
-              fill="#0d1117">{tag}</text
-            >
-          {/each}
+  <!-- Tag labels below node -->
+  {#each node.tags ?? [] as tag, ti (tag)}
+    <rect
+      x={node.x - 20}
+      y={node.y + NODE_RADIUS + 4 + ti * 18}
+      width={40}
+      height={14}
+      rx={3}
+      fill="#f59e0b"
+      opacity="0.85"
+    />
+    <text
+      x={node.x}
+      y={node.y + NODE_RADIUS + 4 + ti * 18 + 10}
+      text-anchor="middle"
+      font-family="monospace"
+      font-size="8"
+      fill="#0d1117">{tag}</text
+    >
+  {/each}
 
-          <!-- Commit circle -->
-          <circle
-            cx={node.x}
-            cy={node.y}
-            r={NODE_RADIUS}
-            fill={color}
-            stroke={node.isHEAD ? '#22d3ee' : color}
-            stroke-width={node.isHEAD ? 2 : 1}
-            style="cursor: pointer;"
-            onclick={() => selectNode(node)}
-            role="button"
-            tabindex="0"
-            aria-label={`Commit ${node.hash}: ${node.message}`}
-            onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
-          />
+  <!-- Commit circle -->
+  <circle
+    cx={node.x}
+    cy={node.y}
+    r={NODE_RADIUS}
+    fill={color}
+    stroke={node.isHEAD ? '#22d3ee' : color}
+    stroke-width={node.isHEAD ? 2 : 1}
+    style="cursor: pointer;"
+    onclick={() => selectNode(node)}
+    role="button"
+    tabindex="0"
+    aria-label={`Commit ${node.hash}: ${node.message}`}
+    onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
+  />
 
-          <!-- Short hash label inside circle -->
-          <text
-            x={node.x}
-            y={node.y + 4}
-            text-anchor="middle"
-            font-family="monospace"
-            font-size="8"
-            fill="#0d1117"
-            pointer-events="none">{node.hash.slice(0, 4)}</text
-          >
-        {/each}
+  <!-- Short hash label inside circle -->
+  <text
+    x={node.x}
+    y={node.y + 4}
+    text-anchor="middle"
+    font-family="monospace"
+    font-size="8"
+    fill="#0d1117"
+    pointer-events="none">{node.hash.slice(0, 4)}</text
+  >
+{/each}
 ```
 
 Changes from Task 4 baseline:
+
 - Added `headBranch` derived
 - Added HEAD glow ring with pulse animation
 - Branch pill: `isHeadBranch` check → cyan fill + "HEAD → branch" label + bold text
@@ -812,6 +819,7 @@ Expected: ALL PASS
 Run: `npm run dev`
 
 Check:
+
 1. Make initial commit → "HEAD → main" label in cyan above the node, pulsing glow ring
 2. Create branch: `git branch feat && git checkout feat` → "HEAD → feat" moves to new branch tip
 3. Make commit on feat → HEAD indicator follows

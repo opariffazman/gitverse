@@ -31,10 +31,7 @@
           max="1"
           step="0.05"
           value={$terminalOpacity}
-          oninput={(e) =>
-            terminalOpacity.set(
-              parseFloat((e.target as HTMLInputElement).value),
-            )}
+          oninput={(e) => terminalOpacity.set(parseFloat((e.target as HTMLInputElement).value))}
           class="w-16 h-1 appearance-none bg-terminal-dim/40 rounded cursor-pointer"
           style="accent-color: #58a6ff"
           title="Terminal opacity ({Math.round($terminalOpacity * 100)}%)"

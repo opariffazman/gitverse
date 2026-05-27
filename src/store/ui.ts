@@ -9,8 +9,7 @@ export function toggleFocus(): void {
 }
 
 function createPersistedWritable(key: string, defaultValue: number) {
-  const stored =
-    typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+  const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
   const initial = stored !== null ? parseFloat(stored) : defaultValue;
   const store = writable(initial);
   store.subscribe((value) => {
@@ -21,7 +20,4 @@ function createPersistedWritable(key: string, defaultValue: number) {
   return store;
 }
 
-export const terminalOpacity = createPersistedWritable(
-  'gitverse-terminal-opacity',
-  0.85,
-);
+export const terminalOpacity = createPersistedWritable('gitverse-terminal-opacity', 0.85);
