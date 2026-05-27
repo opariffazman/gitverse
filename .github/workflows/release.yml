@@ -40,6 +40,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           npm version ${{ steps.version.outputs.stable }}
           git push --follow-tags
+      - name: Validate
+        if: steps.version.outputs.is_rc == 'true'
+        run: |
+          npm run format:check
+          npm run lint
+          npm run typecheck
+          npm run test
       - name: Build
         if: steps.version.outputs.is_rc == 'true'
         run: npm run build

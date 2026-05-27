@@ -6,7 +6,7 @@
   import Graph from './Graph.svelte';
 
   const isTerminalFocused = $derived($focusMode === 'terminal');
-  const blur = $derived(Math.round((($terminalOpacity - 0.3) / 0.7) * 8));
+  const blur = $derived(Math.max(0, Math.round((($terminalOpacity - 0.3) / 0.7) * 8)));
 </script>
 
 <div class="relative w-full h-full overflow-hidden bg-terminal-bg">

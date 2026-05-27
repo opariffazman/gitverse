@@ -103,9 +103,11 @@ export function computeLayout(
     }
   }
 
+  const primaryBranch = (n: string) => (n === 'main' ? 0 : n === 'master' ? 1 : 2);
   const branchOrder = [...branchTips.keys()].sort((a, b) => {
-    if (a === 'main' || a === 'master') return -1;
-    if (b === 'main' || b === 'master') return 1;
+    const pa = primaryBranch(a);
+    const pb = primaryBranch(b);
+    if (pa !== pb) return pa - pb;
     return a.localeCompare(b);
   });
 
@@ -162,7 +164,7 @@ export function computeLayout(
 
   // --- Assign x, y positions ---
   const commitSpacing = orientation === 'horizontal' ? NODE_SPACING_X : 70;
-  const laneSpacing = orientation === 'horizontal' ? LANE_SPACING_Y : 60;
+  const laneSpacing = orientation === 'horizontal' ? LANE_SPACING_Y : 120;
 
   const positioned: GraphNode[] = [];
   topoOrder.forEach((hash, index) => {
