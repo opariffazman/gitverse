@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { focusMode, toggleFocus } from '$store/ui';
+  import { focusMode, toggleFocus, terminalOpacity } from '$store/ui';
   import Terminal from './Terminal.svelte';
   import FilePanel from './FilePanel.svelte';
   import MobileToolbar from './MobileToolbar.svelte';
@@ -19,17 +19,34 @@
     class="absolute terminal-panel flex flex-col transition-all duration-300 ease-in-out"
     class:terminal-focused={isTerminalFocused}
     class:graph-focused={!isTerminalFocused}
+    style="background-color: rgba(13, 17, 23, {$terminalOpacity})"
   >
     <!-- Terminal title bar -->
     <div class="flex items-center justify-between px-3 py-2 border-b border-terminal-dim/30">
       <span class="font-mono text-xs text-terminal-dim select-none">terminal</span>
-      <button
-        class="font-mono text-xs text-terminal-grey hover:text-terminal-fg transition-colors px-2 py-0.5 rounded hover:bg-terminal-dim/20"
-        onclick={toggleFocus}
-        title={isTerminalFocused ? 'Focus graph' : 'Focus terminal'}
-      >
-        {isTerminalFocused ? '⇱ graph' : '⇲ terminal'}
-      </button>
+      <div class="flex items-center gap-2">
+        <input
+          type="range"
+          min="0.3"
+          max="1"
+          step="0.05"
+          value={$terminalOpacity}
+          oninput={(e) =>
+            terminalOpacity.set(
+              parseFloat((e.target as HTMLInputElement).value),
+            )}
+          class="w-16 h-1 appearance-none bg-terminal-dim/40 rounded cursor-pointer"
+          style="accent-color: #58a6ff"
+          title="Terminal opacity ({Math.round($terminalOpacity * 100)}%)"
+        />
+        <button
+          class="font-mono text-xs text-terminal-grey hover:text-terminal-fg transition-colors px-2 py-0.5 rounded hover:bg-terminal-dim/20"
+          onclick={toggleFocus}
+          title={isTerminalFocused ? 'Focus graph' : 'Focus terminal'}
+        >
+          {isTerminalFocused ? '⇱ graph' : '⇲ terminal'}
+        </button>
+      </div>
     </div>
 
     <!-- File status panel -->
