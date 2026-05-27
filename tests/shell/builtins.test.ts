@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GitEngine } from '$engine/index';
 import { executeBuiltin } from '$shell/builtins';
+import { ShellRouter } from '$shell/router';
 
 let engine: GitEngine;
 
@@ -187,6 +188,35 @@ describe('sim', () => {
     // File content should differ from original
     const newContent = engine.getVFS().readFile('readme.txt');
     expect(newContent).not.toBe('original content');
+  });
+});
+
+describe('VFS-mutating builtins trigger status change', () => {
+  it('rm on committed file makes engine dirty', () => {
+    engine.getVFS().createFile('tracked.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    expect(engine.isDirty()).toBe(false);
+
+    const router = new ShellRouter(engine);
+    router.execute('rm tracked.txt');
+    expect(engine.isDirty()).toBe(true);
+  });
+
+  it('touch creates untracked file visible to engine', () => {
+    const router = new ShellRouter(engine);
+    router.execute('touch newfile.txt');
+    expect(engine.getUntrackedFiles()).toContain('newfile.txt');
+  });
+
+  it('mv on committed file makes engine dirty', () => {
+    engine.getVFS().createFile('a.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+
+    const router = new ShellRouter(engine);
+    router.execute('mv a.txt b.txt');
+    expect(engine.isDirty()).toBe(true);
   });
 });
 

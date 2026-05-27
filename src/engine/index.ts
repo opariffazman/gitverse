@@ -140,7 +140,7 @@ export class GitEngine {
     };
   }
 
-  private notify(): void {
+  notify(): void {
     for (const listener of this.listeners) {
       listener();
     }
@@ -405,13 +405,23 @@ export class GitEngine {
   }
 
   /**
-   * Returns true if there are any untracked, modified, or staged files.
+   * Files in the committed tree that no longer exist in VFS
+   * (deleted from the working directory but not staged for removal).
+   */
+  getDeletedFiles(): string[] {
+    const committedTree = this.getCommittedTree();
+    return [...committedTree.keys()].filter((p) => !this.vfs.exists(p));
+  }
+
+  /**
+   * Returns true if there are any untracked, modified, staged, or deleted files.
    */
   isDirty(): boolean {
     return (
       this.getUntrackedFiles().length > 0 ||
       this.getModifiedFiles().length > 0 ||
-      this.getStagedFiles().length > 0
+      this.getStagedFiles().length > 0 ||
+      this.getDeletedFiles().length > 0
     );
   }
 
