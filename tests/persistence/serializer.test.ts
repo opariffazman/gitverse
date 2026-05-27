@@ -154,3 +154,33 @@ describe('round-trip: detached HEAD', () => {
     expect(head.target).toBe(headHash);
   });
 });
+
+describe('initialized state', () => {
+  it('round-trips initialized flag', () => {
+    const engine = new GitEngine();
+    engine.execute('git init');
+    const json = serialize(engine);
+    const restored = deserialize(json);
+    expect(restored.isInitialized()).toBe(true);
+  });
+
+  it('round-trips uninitialized state', () => {
+    const engine = new GitEngine();
+    const json = serialize(engine);
+    const restored = deserialize(json);
+    expect(restored.isInitialized()).toBe(false);
+  });
+
+  it('defaults old saves without initialized field to true', () => {
+    const engine = new GitEngine();
+    engine.execute('git init');
+    engine.getVFS().createFile('readme.md', '# hello');
+    engine.execute('git add readme.md');
+    engine.execute('git commit -m "initial"');
+    const json = serialize(engine);
+    const parsed = JSON.parse(json);
+    delete parsed.initialized;
+    const restored = deserialize(JSON.stringify(parsed));
+    expect(restored.isInitialized()).toBe(true);
+  });
+});

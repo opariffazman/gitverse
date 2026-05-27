@@ -42,6 +42,7 @@ type WireRefs = {
 };
 
 type WireState = {
+  initialized: boolean;
   vfs: [string, WireFileEntry][];
   objects: WireObjects;
   refs: WireRefs;
@@ -83,6 +84,7 @@ export function serialize(engine: GitEngine): string {
   const wireIndex: [string, string][] = [...engine._getIndex().entries()];
 
   const state: WireState = {
+    initialized: engine.isInitialized(),
     vfs: wireVfs,
     objects: wireObjects,
     refs: wireRefs,
@@ -100,6 +102,13 @@ export function deserialize(json: string): GitEngine {
   const state = JSON.parse(json) as WireState;
 
   const engine = new GitEngine();
+
+  // Backwards compat: old saves without initialized field default to true
+  if (state.initialized !== undefined) {
+    engine.setInitialized(state.initialized);
+  } else {
+    engine.setInitialized(true);
+  }
 
   // Restore VFS
   const snapMap = new Map<string, FileEntry>();
