@@ -27,7 +27,7 @@ Engine emits state → Renderer subscribes. Shell dispatches → Engine processe
 | Build         | Vite                     | 8.0.14          |
 | PWA           | vite-plugin-pwa          | 1.3.0           |
 | Testing       | Vitest + Playwright      | 4.1.7 / 1.60.0  |
-| Deploy        | Cloudflare Workers       | wrangler 4.95.0 |
+| Deploy        | GitHub Pages             | actions v4      |
 | Storage       | IndexedDB via idb-keyval | 6.2.4           |
 
 ## Commands
@@ -49,8 +49,8 @@ npm run typecheck        # TypeScript check
 npm run lint             # ESLint
 npm run format           # Prettier
 
-# Deploy (via CI on v* tag push, or manual)
-npx wrangler deploy
+# Deploy (via CI on v* tag push to GitHub Pages)
+# Manual deploy not needed — CI handles it
 ```
 
 ## Project Structure
@@ -110,8 +110,9 @@ tests/
 ## CI/CD
 
 - **CI** (`.github/workflows/ci.yml`): lint + typecheck + test on every push/PR
-- **Release** (`.github/workflows/release.yml`): on PR merge to main, auto-bumps RC → stable and deploys
-- **Deploy** (`.github/workflows/deploy.yml`): build + deploy to Cloudflare Workers on `v*` tag push
+- **Preview** (`.github/workflows/preview.yml`): PR preview deploy to GitHub Pages (`/pr-preview/pr-N/`)
+- **Release** (`.github/workflows/release.yml`): on PR merge to main, auto-bumps RC → stable, pushes tag
+- **Deploy** (`.github/workflows/deploy.yml`): build + deploy to GitHub Pages on stable `v*` tag push
 - GitHub Actions pinned to SHA for security
 
 ## Release Flow
@@ -128,7 +129,7 @@ git push --follow-tags
 
 ## Deployment
 
-- Cloudflare Workers with static asset hosting
-- Config: `wrangler.jsonc` (JSONC format, not TOML)
-- SPA routing via `not_found_handling: "single-page-application"`
-- Requires `CLOUDFLARE_API_TOKEN` repository secret
+- GitHub Pages via `JamesIves/github-pages-deploy-action`
+- PR previews via `rossjrw/pr-preview-action` (deploys to `/pr-preview/pr-N/`)
+- Base path: `/gitverse/` (set in `vite.config.ts`)
+- Requires GitHub Pages enabled on repo (source: `gh-pages` branch)

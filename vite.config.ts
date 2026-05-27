@@ -4,6 +4,7 @@ import UnoCSS from 'unocss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/gitverse/',
   plugins: [
     UnoCSS(),
     svelte(),
