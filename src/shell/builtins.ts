@@ -25,10 +25,32 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
 
   switch (command) {
     case 'ls': {
-      const dir = args[0];
-      const entries = vfs.listDir(dir);
+      const flags = new Set<string>();
+      const paths: string[] = [];
+      for (const arg of args) {
+        if (arg.startsWith('-')) {
+          for (const ch of arg.slice(1)) flags.add(ch);
+        } else {
+          paths.push(arg);
+        }
+      }
+      const showAll = flags.has('a');
+      const longFormat = flags.has('l');
+      const dir = paths[0];
+
+      let entries = vfs.listDir(dir);
+      if (!showAll) {
+        entries = entries.filter((e) => !e.startsWith('.'));
+      }
       if (entries.length === 0) {
         return { output: '', exitCode: 0 };
+      }
+      if (longFormat) {
+        const lines = entries.map((e) => {
+          const perm = e.endsWith('/') ? 'drwxr-xr-x' : '-rw-r--r--';
+          return `${perm}  ${e}`;
+        });
+        return { output: lines.join('\n'), exitCode: 0 };
       }
       return { output: entries.join('  '), exitCode: 0 };
     }
