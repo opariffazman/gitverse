@@ -7,6 +7,10 @@ import type { CommandResult } from './commands/types';
 import { cmdAdd } from './commands/add';
 import { cmdCommit } from './commands/commit';
 import { cmdStatus } from './commands/status';
+import { cmdLog } from './commands/log';
+import { cmdDiff } from './commands/diff';
+import { cmdBranch } from './commands/branch';
+import { cmdCheckout } from './commands/checkout';
 
 // ---------------------------------------------------------------------------
 // Command parsing
@@ -161,6 +165,27 @@ export class GitEngine {
           this.getModifiedFiles(),
           this.getUntrackedFiles(),
           this.getCommittedTree(),
+          this.index,
+        );
+        break;
+
+      case 'branch':
+        result = cmdBranch(
+          args,
+          opts,
+          this.refs,
+          () => this.refs.resolveHEAD(),
+        );
+        break;
+
+      case 'checkout':
+      case 'switch':
+        result = cmdCheckout(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
           this.index,
         );
         break;
