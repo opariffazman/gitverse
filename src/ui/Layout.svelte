@@ -3,13 +3,14 @@
   import Graph from './Graph.svelte';
 </script>
 
-<div class="relative w-full h-full overflow-hidden bg-terminal-bg">
-  <div class="absolute inset-0 overflow-auto">
+<div class="flex flex-col w-full h-full bg-terminal-bg">
+  <!-- Graph: top section -->
+  <div class="flex-1 min-h-0 overflow-auto">
     <Graph />
   </div>
-  <div class="absolute bottom-0 left-0 right-0" style="height: 30%; background-color: rgba(13, 17, 23, 0.95);">
-    <div class="h-full overflow-hidden border-t border-terminal-dim/30">
-      <Terminal />
-    </div>
+
+  <!-- Terminal: bottom section -->
+  <div class="h-[30vh] max-sm:h-[40vh] shrink-0 border-t border-terminal-dim/30 overflow-hidden" style="background-color: rgba(13, 17, 23, 0.95);">
+    <Terminal />
   </div>
 </div>
