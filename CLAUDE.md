@@ -110,8 +110,21 @@ tests/
 ## CI/CD
 
 - **CI** (`.github/workflows/ci.yml`): lint + typecheck + test on every push/PR
+- **Release** (`.github/workflows/release.yml`): on PR merge to main, auto-bumps RC → stable and deploys
 - **Deploy** (`.github/workflows/deploy.yml`): build + deploy to Cloudflare Workers on `v*` tag push
 - GitHub Actions pinned to SHA for security
+
+## Release Flow
+
+**Always bump an RC version before creating a PR to main.** The release workflow only triggers auto-deploy when it detects an RC version (e.g. `v0.3.0-rc.0`). On PR merge, it strips the RC suffix, tags stable (`v0.3.0`), and deploys.
+
+```bash
+# Before opening PR — scan commits for bump type:
+# feat: → preminor, fix:/chore: → prepatch, BREAKING: → premajor
+npm version preminor --preid=rc   # e.g. 0.3.0 → 0.4.0-rc.0
+git push --follow-tags
+# Then open PR. On merge, release.yml bumps to 0.4.0 and deploys.
+```
 
 ## Deployment
 
