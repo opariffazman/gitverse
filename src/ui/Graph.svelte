@@ -66,6 +66,17 @@
     selectedNode = selectedNode?.hash === node.hash ? null : node;
   }
 
+  const headBranch = $derived.by(() => {
+    const eng = $engine;
+    void $engineVersion;
+    try {
+      const h = eng.getHEAD();
+      return h.attached ? h.target : null;
+    } catch {
+      return null;
+    }
+  });
+
   function laneColor(lane: number): string {
     return LANE_COLORS[lane % LANE_COLORS.length];
   }
@@ -104,17 +115,40 @@
         <!-- Nodes -->
         {#each layout.nodes as node (node.hash)}
           {@const color = laneColor(node.lane)}
+
+          <!-- HEAD glow ring -->
+          {#if node.isHEAD}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={NODE_RADIUS + 4}
+              fill="none"
+              stroke="#22d3ee"
+              stroke-width="2"
+              opacity="0.5"
+            >
+              <animate
+                attributeName="opacity"
+                values="0.3;0.7;0.3"
+                dur="2s"
+                repeatCount="indefinite"
+              />
+            </circle>
+          {/if}
+
           <!-- Branch labels above node -->
           {#each node.branches as branch, bi (branch)}
-            {@const pillWidth = Math.max(branch.length * 5.6 + 14, 36)}
+            {@const isHeadBranch = node.isHEAD && headBranch === branch}
+            {@const label = isHeadBranch ? `HEAD → ${branch}` : branch}
+            {@const pillWidth = Math.max(label.length * 5.6 + 14, 36)}
             <rect
               x={node.x - pillWidth / 2}
               y={node.y - NODE_RADIUS - 22 - bi * 18}
               width={pillWidth}
               height={16}
               rx={4}
-              fill={color}
-              opacity="0.85"
+              fill={isHeadBranch ? '#22d3ee' : color}
+              opacity={isHeadBranch ? 0.95 : 0.85}
             />
             <text
               x={node.x}
@@ -122,9 +156,36 @@
               text-anchor="middle"
               font-family="monospace"
               font-size="9"
-              fill="#0d1117">{branch}</text
+              fill="#0d1117"
+              font-weight={isHeadBranch ? 'bold' : 'normal'}>{label}</text
             >
           {/each}
+
+          <!-- Detached HEAD label -->
+          {#if node.isHEAD && !headBranch}
+            {@const pillWidth = 4 * 5.6 + 14}
+            {@const headY = node.y - NODE_RADIUS - 22 - node.branches.length * 18}
+            <rect
+              x={node.x - pillWidth / 2}
+              y={headY - 13}
+              width={pillWidth}
+              height={16}
+              rx={4}
+              fill="none"
+              stroke="#22d3ee"
+              stroke-width="1.5"
+              stroke-dasharray="3 2"
+            />
+            <text
+              x={node.x}
+              y={headY - 1}
+              text-anchor="middle"
+              font-family="monospace"
+              font-size="9"
+              font-weight="bold"
+              fill="#22d3ee">HEAD</text
+            >
+          {/if}
 
           <!-- Tag labels below node -->
           {#each node.tags ?? [] as tag, ti (tag)}
@@ -153,8 +214,8 @@
             cy={node.y}
             r={NODE_RADIUS}
             fill={color}
-            stroke={node.isHEAD ? '#ffffff' : color}
-            stroke-width={node.isHEAD ? 3 : 1}
+            stroke={node.isHEAD ? '#22d3ee' : color}
+            stroke-width={node.isHEAD ? 2 : 1}
             style="cursor: pointer;"
             onclick={() => selectNode(node)}
             role="button"
