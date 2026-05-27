@@ -29,7 +29,7 @@ Engine (pure TS) ← Shell (router) ← Renderer (Svelte 5)
 | Advanced | `git merge` `git rebase` `git reset` `git stash` `git tag` `git cherry-pick` `git revert` |
 | File     | `git rm` `git mv`                                                                         |
 
-File builtins: `ls` `cat` `touch` `rm` `mv` `clear` `help` `sim change`
+File builtins: `ls` `cat` `touch` `rm` `mv` `clear` `help`
 
 ## Features
 
@@ -143,7 +143,7 @@ CI/CD:
 | Source lines      | ~4,800 |
 | Test lines        | ~3,500 |
 | Git commands      | 17     |
-| File builtins     | 8      |
+| File builtins     | 7      |
 | Svelte components | 5      |
 | Total commits     | 64     |
 
