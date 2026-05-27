@@ -111,8 +111,7 @@ tests/
 
 - **CI** (`.github/workflows/ci.yml`): lint + typecheck + test on every push/PR
 - **Preview** (`.github/workflows/preview.yml`): PR preview deploy to GitHub Pages (`/pr-preview/pr-N/`)
-- **Release** (`.github/workflows/release.yml`): on PR merge to main, auto-bumps RC → stable, pushes tag
-- **Deploy** (`.github/workflows/deploy.yml`): build + deploy to GitHub Pages on stable `v*` tag push
+- **Deploy** (`.github/workflows/deploy.yml`): on PR merge to main, bumps RC → stable, builds, deploys to GitHub Pages
 - GitHub Actions pinned to SHA for security
 
 ## Release Flow
@@ -124,7 +123,7 @@ tests/
 # feat: → preminor, fix:/chore: → prepatch, BREAKING: → premajor
 npm version preminor --preid=rc   # e.g. 0.3.0 → 0.4.0-rc.0
 git push --follow-tags
-# Then open PR. On merge, release.yml bumps to 0.4.0 and deploys.
+# Then open PR. On merge, deploy.yml bumps to 0.4.0 and deploys.
 ```
 
 ## Deployment

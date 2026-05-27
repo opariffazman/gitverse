@@ -134,8 +134,7 @@ CI/CD:
 
 - **ci.yml** — lint + typecheck + test on every push/PR
 - **preview.yml** — PR preview deploy to GitHub Pages (`/pr-preview/pr-N/`), auto-cleanup on close
-- **release.yml** — RC → stable version bump + tag push on PR merge
-- **deploy.yml** — production deploy to GitHub Pages on stable `v*` tag push
+- **deploy.yml** — on PR merge: bump RC → stable, build, deploy to GitHub Pages
 
 ## Numbers
 
