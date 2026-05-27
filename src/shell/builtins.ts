@@ -101,6 +101,9 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         return { output: 'rm: missing operand', exitCode: 1 };
       }
       const path = args[0];
+      if (path === '.git' || path === '.git/') {
+        return { output: 'rm: cannot remove .git: protected directory', exitCode: 1 };
+      }
       if (!vfs.exists(path)) {
         return { output: `rm: cannot remove '${path}': No such file or directory`, exitCode: 1 };
       }

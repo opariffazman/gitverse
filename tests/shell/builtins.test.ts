@@ -155,6 +155,13 @@ describe('rm', () => {
     expect(r.exitCode).toBe(0);
     expect(engine.getVFS().exists('bye.txt')).toBe(false);
   });
+
+  it('refuses to delete .git directory', () => {
+    engine.getVFS().createDir('.git');
+    const result = executeBuiltin(engine, 'rm', ['.git/']);
+    expect(result.exitCode).toBe(1);
+    expect(engine.getVFS().exists('.git/')).toBe(true);
+  });
 });
 
 describe('mv', () => {

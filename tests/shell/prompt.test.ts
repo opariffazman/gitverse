@@ -104,6 +104,25 @@ describe('prompt — detached HEAD', () => {
   });
 });
 
+describe('uninitialized state', () => {
+  it('shows no branch segment when uninitialized', () => {
+    const engine = new GitEngine();
+    const segments = generatePrompt(engine);
+    const text = segmentText(segments);
+    expect(text).not.toContain('main');
+    expect(text).toContain('gitverse');
+    expect(text).toContain('❯');
+  });
+
+  it('shows branch after init', () => {
+    const engine = new GitEngine();
+    engine.execute('git init');
+    const segments = generatePrompt(engine);
+    const text = segmentText(segments);
+    expect(text).toContain('main');
+  });
+});
+
 describe('prompt — deleted files', () => {
   it('shows -N for deleted files in red', () => {
     engine.getVFS().createFile('a.txt', 'aaa');
