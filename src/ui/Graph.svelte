@@ -6,8 +6,8 @@
   import CommitDetail from './CommitDetail.svelte';
 
   const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
-  const NODE_RADIUS = 12;
-  const GRAPH_PADDING = 40;
+  const NODE_RADIUS = 18;
+  const GRAPH_PADDING = 60;
 
   let isMobile = $state(false);
 
@@ -76,6 +76,9 @@
     return computeLayout(inputNodes, orientation);
   });
 
+  const svgWidth = $derived(layout.width + GRAPH_PADDING * 2);
+  const svgHeight = $derived(layout.height + GRAPH_PADDING * 2);
+
   let selectedNode = $state<GraphNode | null>(null);
 
   function selectNode(node: GraphNode) {
@@ -114,8 +117,8 @@
     </div>
   {:else}
     <svg
-      width={layout.width + GRAPH_PADDING * 2}
-      height={layout.height + GRAPH_PADDING * 2}
+      width={svgWidth}
+      height={svgHeight}
       class="block"
       style="min-width: 100%; min-height: 100%;"
     >
@@ -127,7 +130,7 @@
             d={edgePath(edge)}
             fill="none"
             stroke={fromNode ? laneColor(fromNode.lane) : '#888'}
-            stroke-width="2"
+            stroke-width="2.5"
             opacity="0.6"
           />
         {/each}
@@ -142,7 +145,7 @@
             <circle
               cx={node.x}
               cy={node.y}
-              r={NODE_RADIUS + 4}
+              r={NODE_RADIUS + 6}
               fill="none"
               stroke="#22d3ee"
               stroke-width="2"
@@ -161,25 +164,25 @@
           {#each node.branches as branch, bi (branch)}
             {@const isHeadBranch = node.isHEAD && headBranch === branch}
             {@const label = isHeadBranch ? `HEAD → ${branch}` : branch}
-            {@const pillWidth = Math.max(label.length * 5.6 + 14, 36)}
+            {@const pillWidth = Math.max(label.length * 7.5 + 20, 48)}
             {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - pillWidth / 2}
-            {@const ly = isVert ? node.y - 8 + bi * 18 : node.y - NODE_RADIUS - 22 - bi * 18}
+            {@const ly = isVert ? node.y - 11 + bi * 26 : node.y - NODE_RADIUS - 30 - bi * 26}
             {@const tx = isVert ? lx + pillWidth / 2 : node.x}
             <rect
               x={lx}
               y={ly}
               width={pillWidth}
-              height={16}
-              rx={4}
+              height={22}
+              rx={6}
               fill={isHeadBranch ? '#22d3ee' : color}
               opacity={isHeadBranch ? 0.95 : 0.85}
             />
             <text
               x={tx}
-              y={ly + 11}
+              y={ly + 15}
               text-anchor="middle"
               font-family="monospace"
-              font-size="9"
+              font-size="14"
               fill="#0d1117"
               font-weight={isHeadBranch ? 'bold' : 'normal'}>{label}</text
             >
@@ -187,18 +190,18 @@
 
           <!-- Detached HEAD label -->
           {#if node.isHEAD && !headBranch}
-            {@const pillWidth = 4 * 5.6 + 14}
+            {@const pillWidth = 4 * 7.5 + 20}
             {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - pillWidth / 2}
             {@const ly = isVert
-              ? node.y - 8 - 18
-              : node.y - NODE_RADIUS - 22 - node.branches.length * 18 - 13}
+              ? node.y - 11 - 26
+              : node.y - NODE_RADIUS - 30 - node.branches.length * 26 - 13}
             {@const tx = isVert ? lx + pillWidth / 2 : node.x}
             <rect
               x={lx}
               y={ly}
               width={pillWidth}
-              height={16}
-              rx={4}
+              height={22}
+              rx={6}
               fill="none"
               stroke="#22d3ee"
               stroke-width="1.5"
@@ -206,10 +209,10 @@
             />
             <text
               x={tx}
-              y={ly + 11}
+              y={ly + 15}
               text-anchor="middle"
               font-family="monospace"
-              font-size="9"
+              font-size="14"
               font-weight="bold"
               fill="#22d3ee">HEAD</text
             >
@@ -217,19 +220,19 @@
 
           <!-- Tag labels -->
           {#each node.tags ?? [] as tag, ti (tag)}
-            {@const tagWidth = Math.max(tag.length * 4.8 + 10, 40)}
+            {@const tagWidth = Math.max(tag.length * 6.5 + 14, 48)}
             {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - tagWidth / 2}
             {@const ly = isVert
-              ? node.y - 8 + (node.branches.length + ti) * 18 + (node.branches.length > 0 ? 4 : 0)
-              : node.y + NODE_RADIUS + 4 + ti * 18}
+              ? node.y - 11 + (node.branches.length + ti) * 26 + (node.branches.length > 0 ? 4 : 0)
+              : node.y + NODE_RADIUS + 6 + ti * 26}
             {@const tx = isVert ? lx + tagWidth / 2 : node.x}
-            <rect x={lx} y={ly} width={tagWidth} height={14} rx={3} fill="#f59e0b" opacity="0.85" />
+            <rect x={lx} y={ly} width={tagWidth} height={20} rx={5} fill="#f59e0b" opacity="0.85" />
             <text
               x={tx}
-              y={ly + 10}
+              y={ly + 14}
               text-anchor="middle"
               font-family="monospace"
-              font-size="8"
+              font-size="12"
               fill="#0d1117">{tag}</text
             >
           {/each}
@@ -256,7 +259,7 @@
             y={node.y + 4}
             text-anchor="middle"
             font-family="monospace"
-            font-size="8"
+            font-size="10"
             fill="#0d1117"
             pointer-events="none">{node.hash.slice(0, 4)}</text
           >

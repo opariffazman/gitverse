@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
+import { computeLayout, NODE_SPACING_X } from '$graph/layout';
 import type { Orientation } from '$graph/layout';
 import type { GraphNode } from '$graph/types';
 
