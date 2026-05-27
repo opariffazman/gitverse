@@ -7,6 +7,7 @@ let engine: GitEngine;
 
 beforeEach(() => {
   engine = new GitEngine();
+  engine.execute('git init');
 });
 
 describe('ls', () => {

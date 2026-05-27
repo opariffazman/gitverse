@@ -18,6 +18,7 @@ function engineWithTwoCommits(): {
   c2Hash: string;
 } {
   const engine = new GitEngine();
+  engine.execute('git init');
 
   // C1
   engine.getVFS().createFile('readme.md', '# hello');
@@ -166,6 +167,7 @@ describe('git reset --hard', () => {
 describe('git stash save + pop round-trip', () => {
   it('stash pop restores VFS to pre-stash state', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'committed');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "base"');
@@ -190,6 +192,7 @@ describe('git stash save + pop round-trip', () => {
 
   it('stash pop restores index to pre-stash state', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'committed');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "base"');
@@ -213,6 +216,7 @@ describe('git stash save + pop round-trip', () => {
 
   it('stash stack is empty after a single pop', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'x');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "base"');
@@ -227,6 +231,7 @@ describe('git stash save + pop round-trip', () => {
 describe('git stash list', () => {
   it('lists stash entries in LIFO order', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'base');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "base"');
@@ -251,6 +256,7 @@ describe('git stash list', () => {
 
   it('shows empty output when no stashes exist', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git stash list');
     expect(result.exitCode).toBe(0);
     expect(result.output).toBe('');
@@ -260,6 +266,7 @@ describe('git stash list', () => {
 describe('git stash drop', () => {
   it('removes the most recent entry without applying', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'base');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "base"');
@@ -279,6 +286,7 @@ describe('git stash drop', () => {
 
   it('errors when no stashes to drop', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git stash drop');
     expect(result.exitCode).not.toBe(0);
     expect(result.output).toMatch(/no stash/i);
@@ -292,6 +300,7 @@ describe('git stash drop', () => {
 describe('git tag – creation', () => {
   it('creates a tag pointing at HEAD', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "initial"');
@@ -309,6 +318,7 @@ describe('git tag – creation', () => {
 
   it('creates a tag at a specific commit hash', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "initial"');
@@ -329,6 +339,7 @@ describe('git tag – creation', () => {
 
   it('errors when tagging at a non-existent commit', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "initial"');
@@ -342,6 +353,7 @@ describe('git tag – creation', () => {
 describe('git tag – list', () => {
   it('lists all tags alphabetically', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "initial"');
@@ -362,6 +374,7 @@ describe('git tag – list', () => {
 
   it('shows empty output when no tags exist', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git tag');
     expect(result.exitCode).toBe(0);
     expect(result.output).toBe('');
@@ -375,6 +388,7 @@ describe('git tag – list', () => {
 describe('git rm', () => {
   it('removes file from VFS', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('delete-me.txt', 'content');
     engine.execute('git add delete-me.txt');
     engine.execute('git commit -m "add file"');
@@ -386,6 +400,7 @@ describe('git rm', () => {
 
   it('removes file from staging index', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('tracked.txt', 'content');
     engine.execute('git add tracked.txt');
     engine.execute('git commit -m "add file"');
@@ -402,6 +417,7 @@ describe('git rm', () => {
 
   it('errors when file does not exist', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git rm nonexistent.txt');
     expect(result.exitCode).not.toBe(0);
     expect(result.output).toMatch(/nonexistent\.txt/);
@@ -415,6 +431,7 @@ describe('git rm', () => {
 describe('git mv', () => {
   it('renames file in VFS', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('old.txt', 'content');
     engine.execute('git add old.txt');
     engine.execute('git commit -m "add old"');
@@ -428,6 +445,7 @@ describe('git mv', () => {
 
   it('updates index: removes old entry, adds new entry', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('old.txt', 'hello');
     engine.execute('git add old.txt');
 
@@ -443,6 +461,7 @@ describe('git mv', () => {
 
   it('errors when source file does not exist', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git mv ghost.txt other.txt');
     expect(result.exitCode).not.toBe(0);
     expect(result.output).toMatch(/ghost\.txt/);
@@ -450,6 +469,7 @@ describe('git mv', () => {
 
   it('preserves file content after move', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('src.txt', 'important data');
     engine.execute('git add src.txt');
 

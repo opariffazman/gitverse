@@ -22,6 +22,7 @@ describe('serialize', () => {
 describe('round-trip: simple repo', () => {
   it('preserves commits and branches after round-trip', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('README.md', 'hello');
     engine.execute('git add README.md');
     engine.execute('git commit -m "initial commit"');
@@ -53,6 +54,7 @@ describe('round-trip: simple repo', () => {
 
   it('preserves multiple commits and parent links', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'aaa');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "first"');
@@ -77,6 +79,7 @@ describe('round-trip: simple repo', () => {
 
   it('preserves tags', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('f.txt', 'content');
     engine.execute('git add f.txt');
     engine.execute('git commit -m "tagged commit"');
@@ -106,6 +109,7 @@ describe('round-trip: simple repo', () => {
 describe('round-trip: staged files', () => {
   it('preserves index (staged files) after round-trip', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('staged.txt', 'staged content');
     engine.execute('git add staged.txt');
     // No commit — staged.txt is in the index but not committed
@@ -120,6 +124,7 @@ describe('round-trip: staged files', () => {
 
   it('preserves staged content after round-trip', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('README.md', 'initial');
     engine.execute('git add README.md');
     engine.execute('git commit -m "init"');
@@ -140,6 +145,7 @@ describe('round-trip: staged files', () => {
 describe('round-trip: detached HEAD', () => {
   it('preserves detached HEAD state', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('x.txt', 'x');
     engine.execute('git add x.txt');
     engine.execute('git commit -m "c1"');

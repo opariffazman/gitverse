@@ -7,6 +7,7 @@ let router: ShellRouter;
 
 beforeEach(() => {
   engine = new GitEngine();
+  engine.execute('git init');
   router = new ShellRouter(engine);
 });
 

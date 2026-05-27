@@ -14,6 +14,7 @@ function segmentByText(segments: PromptSegment[], text: string): PromptSegment |
 
 beforeEach(() => {
   engine = new GitEngine();
+  engine.execute('git init');
 });
 
 describe('prompt — clean state', () => {
