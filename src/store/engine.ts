@@ -4,6 +4,8 @@ import { CommandHistory } from '$shell/history';
 import { ShellRouter } from '$shell/router';
 import { generatePrompt } from '$shell/prompt';
 import type { PromptSegment } from '$shell/prompt';
+import { serialize } from '$persistence/serializer';
+import { autoSave } from '$persistence/storage';
 
 export type TerminalLine = {
   id: number;
@@ -72,4 +74,7 @@ export function executeCommand(command: string): void {
 
   // Notify engine store subscribers about possible state change
   engine.set(eng);
+
+  // Persist state asynchronously after every command
+  autoSave(serialize(eng));
 }

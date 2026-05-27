@@ -536,4 +536,101 @@ export class GitEngine {
     }
     return result;
   }
+
+  // -------------------------------------------------------------------------
+  // Persistence exposition – used by Task 15 serializer/deserializer
+  // -------------------------------------------------------------------------
+
+  /**
+   * Returns all branch refs including those with empty targets
+   * (needed for serialization round-trips before any commit).
+   */
+  _allBranchRefs(): [string, string][] {
+    return this.refs.listBranches().map(name => [name, this.refs.resolveBranch(name)]);
+  }
+
+  /**
+   * Returns all tag refs.
+   */
+  _allTagRefs(): [string, string][] {
+    return this.refs.listTags().map(name => [name, this.refs.resolveTag(name)]);
+  }
+
+  /** Returns all blobs as [hash, content] pairs. */
+  _allBlobs(): [string, string][] {
+    return this.objects.allBlobs();
+  }
+
+  /** Returns all trees as [hash, entries] pairs. */
+  _allTrees(): [string, Map<string, string>][] {
+    return this.objects.allTrees();
+  }
+
+  /** Returns the current staging index. */
+  _getIndex(): Map<string, string> {
+    return new Map(this.index);
+  }
+
+  /** Restore a blob directly into the object store (bypasses hashing counter). */
+  _restoreBlob(hash: string, content: string): void {
+    this.objects.restoreBlob(hash, content);
+  }
+
+  /** Restore a tree directly into the object store (bypasses hashing counter). */
+  _restoreTree(hash: string, entries: Map<string, string>): void {
+    this.objects.restoreTree(hash, entries);
+  }
+
+  /** Restore a commit directly into the object store (bypasses hashing counter). */
+  _restoreCommit(commit: Commit): void {
+    this.objects.restoreCommit(commit);
+  }
+
+  /**
+   * Restore refs (branches, tags, HEAD).
+   * Clears existing state and replaces with the provided data.
+   */
+  _restoreRefs(
+    branches: [string, string][],
+    tags: [string, string][],
+    head: HEAD,
+  ): void {
+    // Rebuild the ref store from scratch: delete all existing branches/tags,
+    // then create the restored ones, then set HEAD.
+    for (const name of this.refs.listBranches()) {
+      try {
+        // detach HEAD temporarily to allow deleting the current branch
+        if (this.refs.getHEAD().attached && this.refs.getHEAD().target === name) {
+          this.refs.detachHEAD('0000000');
+        }
+        this.refs.deleteBranch(name);
+      } catch {
+        // ignore
+      }
+    }
+    for (const name of this.refs.listTags()) {
+      this.refs.deleteTag(name);
+    }
+
+    for (const [name, target] of branches) {
+      this.refs.createBranch(name, target);
+    }
+    for (const [name, target] of tags) {
+      this.refs.createTag(name, target);
+    }
+
+    if (head.attached) {
+      this.refs.attachHEAD(head.target);
+    } else {
+      this.refs.detachHEAD(head.target);
+    }
+  }
+
+  /** Restore the staging index. */
+  _restoreIndex(index: Map<string, string>): void {
+    this.index.clear();
+    for (const [path, hash] of index) {
+      this.index.set(path, hash);
+    }
+  }
 }
