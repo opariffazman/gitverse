@@ -169,6 +169,26 @@ export class GitEngine {
         );
         break;
 
+      case 'log':
+        result = cmdLog(
+          args,
+          opts,
+          this.log(),
+          this.refs,
+        );
+        break;
+
+      case 'diff':
+        result = cmdDiff(
+          args,
+          opts,
+          this.vfs,
+          this.objects,
+          this.index,
+          this.getCommittedTree(),
+        );
+        break;
+
       case 'branch':
         result = cmdBranch(
           args,
@@ -216,11 +236,52 @@ export class GitEngine {
   // Log
   // -------------------------------------------------------------------------
 
-  /** Returns all commits sorted newest-first (by timestamp). */
+  /**
+   * Returns commits reachable from HEAD, newest first.
+   *
+   * Walks the parent graph from HEAD using DFS, which naturally visits
+   * children before parents.  The DFS insertion order is used as a
+   * tiebreaker so that commits with identical millisecond timestamps
+   * (common in tests) still appear in the correct child-before-parent
+   * order.
+   */
   log(): Commit[] {
-    return this.objects
-      .allCommits()
-      .sort((a, b) => b.timestamp - a.timestamp);
+    const headHash = this.refs.resolveHEAD();
+    if (!headHash || !this.objects.hasCommit(headHash)) {
+      return [];
+    }
+
+    const result: Commit[] = [];
+    const visited = new Set<string>();
+    const stack: string[] = [headHash];
+
+    while (stack.length > 0) {
+      const hash = stack.pop()!;
+      if (visited.has(hash)) continue;
+      visited.add(hash);
+
+      if (!this.objects.hasCommit(hash)) continue;
+      const commit = this.objects.readCommit(hash);
+      result.push(commit);
+
+      // Push parents — they will be processed (and thus appended) after the child
+      for (const parent of commit.parents) {
+        if (!visited.has(parent)) {
+          stack.push(parent);
+        }
+      }
+    }
+
+    // Stable sort: primary key = timestamp desc, tiebreak = DFS insertion order
+    // (result array already has DFS order; use index as tiebreaker)
+    const order = new Map(result.map((c, i) => [c.hash, i]));
+    result.sort((a, b) => {
+      const tsDiff = b.timestamp - a.timestamp;
+      if (tsDiff !== 0) return tsDiff;
+      return (order.get(a.hash) ?? 0) - (order.get(b.hash) ?? 0);
+    });
+
+    return result;
   }
 
   // -------------------------------------------------------------------------
