@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
+import type { Orientation } from '$graph/layout';
 import type { GraphNode } from '$graph/types';
 
 // Helper to build a minimal GraphNode
@@ -151,5 +152,103 @@ describe('computeLayout – empty input', () => {
     expect(edges).toHaveLength(0);
     expect(width).toBe(0);
     expect(height).toBe(0);
+  });
+});
+
+describe('computeLayout – branch divergence with named branches', () => {
+  it('feat branch from main tip gets a different lane', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root'], { branches: ['main'] });
+    const B = makeNode('B', ['A'], { branches: ['feat'] });
+    const { nodes } = computeLayout([root, A, B]);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    expect(byHash.get('root')!.lane).toBe(byHash.get('A')!.lane);
+    expect(byHash.get('B')!.lane).not.toBe(byHash.get('A')!.lane);
+  });
+
+  it('main branch keeps lane 0 while feat gets lane 1', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['A'], { branches: ['main'] });
+    const C = makeNode('C', ['A'], { branches: ['feat'] });
+    const { nodes } = computeLayout([root, A, B, C]);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    expect(byHash.get('root')!.lane).toBe(0);
+    expect(byHash.get('A')!.lane).toBe(0);
+    expect(byHash.get('B')!.lane).toBe(0);
+    expect(byHash.get('C')!.lane).not.toBe(0);
+  });
+});
+
+describe('computeLayout – parallel branches', () => {
+  it('long main and feat branches stay on separate lanes', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['A']);
+    const C = makeNode('C', ['B'], { branches: ['main'] });
+    const D = makeNode('D', ['B'], { branches: ['feat'] });
+    const { nodes } = computeLayout([root, A, B, C, D]);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    const mainLane = byHash.get('root')!.lane;
+    expect(byHash.get('A')!.lane).toBe(mainLane);
+    expect(byHash.get('B')!.lane).toBe(mainLane);
+    expect(byHash.get('C')!.lane).toBe(mainLane);
+    expect(byHash.get('D')!.lane).not.toBe(mainLane);
+  });
+});
+
+describe('computeLayout – merge across branches', () => {
+  it('merge commit rejoins the main lane', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['A']);
+    const C = makeNode('C', ['B']);
+    const D = makeNode('D', ['A'], { branches: ['feat'] });
+    const M = makeNode('M', ['C', 'D'], { branches: ['main'] });
+    const { nodes, edges } = computeLayout([root, A, B, C, D, M]);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    expect(byHash.get('M')!.lane).toBe(byHash.get('root')!.lane);
+    expect(byHash.get('D')!.lane).not.toBe(byHash.get('root')!.lane);
+    const pairs = new Set(edges.map((e) => `${e.from}→${e.to}`));
+    expect(pairs.has('M→C')).toBe(true);
+    expect(pairs.has('M→D')).toBe(true);
+  });
+});
+
+describe('computeLayout – vertical orientation', () => {
+  const vert: Orientation = 'vertical';
+
+  it('swaps axes: commits stack top-to-bottom, lanes go left-to-right', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const { nodes } = computeLayout([root, A], vert);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    // Time axis is Y (root above A)
+    expect(byHash.get('root')!.y).toBeLessThan(byHash.get('A')!.y);
+    // Same lane = same X
+    expect(byHash.get('root')!.x).toBe(byHash.get('A')!.x);
+  });
+
+  it('branches go left-to-right in vertical mode', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root'], { branches: ['main'] });
+    const B = makeNode('B', ['root'], { branches: ['feat'] });
+    const { nodes } = computeLayout([root, A, B], vert);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    // Different lanes = different X positions
+    expect(byHash.get('A')!.x).not.toBe(byHash.get('B')!.x);
+    // Both below root in Y
+    expect(byHash.get('A')!.y).toBeGreaterThan(byHash.get('root')!.y);
+    expect(byHash.get('B')!.y).toBeGreaterThan(byHash.get('root')!.y);
+  });
+
+  it('returns orientation in result', () => {
+    const { orientation } = computeLayout([makeNode('a', [])], vert);
+    expect(orientation).toBe('vertical');
+  });
+
+  it('returns horizontal orientation by default', () => {
+    const { orientation } = computeLayout([makeNode('a', [])]);
+    expect(orientation).toBe('horizontal');
   });
 });

@@ -3,11 +3,14 @@ import type { GraphNode, GraphEdge } from './types';
 export const NODE_SPACING_X = 80;
 export const LANE_SPACING_Y = 50;
 
+export type Orientation = 'horizontal' | 'vertical';
+
 export type LayoutResult = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   width: number;
   height: number;
+  orientation: Orientation;
 };
 
 /**
@@ -19,14 +22,19 @@ export type LayoutResult = {
  * Algorithm:
  * 1. Topological sort (parents before children via Kahn's algorithm on reversed edges).
  * 2. X position: (topoIndex + 1) * NODE_SPACING_X.
- * 3. Lane assignment: inherit parent lane when parent has no other children,
- *    else assign next free lane.
- * 4. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
- * 5. Generate edges from each node to each of its parents.
+ * 3. Branch membership: walk backward from branch tips to assign commits
+ *    to branches. Main/master gets priority.
+ * 4. Lane assignment: inherit parent lane only when on the same branch.
+ *    Different branch always gets a new lane.
+ * 5. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
+ * 6. Generate edges from each node to each of its parents.
  */
-export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
+export function computeLayout(
+  inputNodes: GraphNode[],
+  orientation: Orientation = 'horizontal',
+): LayoutResult {
   if (inputNodes.length === 0) {
-    return { nodes: [], edges: [], width: 0, height: 0 };
+    return { nodes: [], edges: [], width: 0, height: 0, orientation };
   }
 
   // Build lookup map
@@ -85,8 +93,36 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
     if (!topoOrder.includes(hash)) topoOrder.push(hash);
   }
 
+  // --- Branch membership ---
+  // Walk backward from each branch tip to assign commits to branches.
+  // Main/master processed first so they claim the primary lane.
+  const branchTips = new Map<string, string>();
+  for (const n of nodeMap.values()) {
+    for (const b of n.branches) {
+      branchTips.set(b, n.hash);
+    }
+  }
+
+  const primaryBranch = (n: string) => (n === 'main' ? 0 : n === 'master' ? 1 : 2);
+  const branchOrder = [...branchTips.keys()].sort((a, b) => {
+    const pa = primaryBranch(a);
+    const pb = primaryBranch(b);
+    if (pa !== pb) return pa - pb;
+    return a.localeCompare(b);
+  });
+
+  const commitBranch = new Map<string, string>();
+  for (const branch of branchOrder) {
+    let current: string | undefined = branchTips.get(branch);
+    while (current && nodeMap.has(current) && !commitBranch.has(current)) {
+      commitBranch.set(current, branch);
+      current = nodeMap.get(current)!.parents[0];
+    }
+  }
+
   // --- Lane assignment ---
-  // Track how many children each node has been assigned to (for lane inheritance)
+  // Inherit parent lane only when on the same branch and parent hasn't
+  // already given its lane to another child. Different branch = new lane.
   const childCountAssigned = new Map<string, number>();
   const laneOf = new Map<string, number>();
   let nextLane = 0;
@@ -94,31 +130,29 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
   for (const hash of topoOrder) {
     const node = nodeMap.get(hash)!;
     const validParents = node.parents.filter((p) => nodeMap.has(p));
+    const myBranch = commitBranch.get(hash);
 
     let assignedLane: number;
 
     if (validParents.length === 0) {
-      // Root commit: assign next available lane
       assignedLane = nextLane++;
     } else {
-      // Try to inherit lane from first parent if that parent hasn't been
-      // used to assign a lane to another child yet.
       const firstParent = validParents[0];
       const parentLane = laneOf.get(firstParent);
+      const parentBranch = commitBranch.get(firstParent);
       const parentChildCount = childCountAssigned.get(firstParent) ?? 0;
+      const sameBranch = myBranch === parentBranch;
 
-      if (parentChildCount === 0 && parentLane !== undefined) {
-        // Inherit parent's lane
+      if (parentChildCount === 0 && parentLane !== undefined && sameBranch) {
         assignedLane = parentLane;
       } else {
-        // Need a new lane
         assignedLane = nextLane++;
       }
 
-      // Increment child count for first parent
-      childCountAssigned.set(firstParent, parentChildCount + 1);
+      if (sameBranch) {
+        childCountAssigned.set(firstParent, parentChildCount + 1);
+      }
 
-      // Also increment for other parents (they still count as used)
       for (let i = 1; i < validParents.length; i++) {
         const p = validParents[i];
         childCountAssigned.set(p, (childCountAssigned.get(p) ?? 0) + 1);
@@ -129,12 +163,17 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
   }
 
   // --- Assign x, y positions ---
+  const commitSpacing = orientation === 'horizontal' ? NODE_SPACING_X : 70;
+  const laneSpacing = orientation === 'horizontal' ? LANE_SPACING_Y : 120;
+
   const positioned: GraphNode[] = [];
   topoOrder.forEach((hash, index) => {
     const node = nodeMap.get(hash)!;
     const lane = laneOf.get(hash) ?? 0;
-    const x = (index + 1) * NODE_SPACING_X;
-    const y = lane * LANE_SPACING_Y + LANE_SPACING_Y;
+    const x =
+      orientation === 'horizontal' ? (index + 1) * commitSpacing : lane * laneSpacing + laneSpacing;
+    const y =
+      orientation === 'horizontal' ? lane * laneSpacing + laneSpacing : (index + 1) * commitSpacing;
     positioned.push({ ...node, lane, x, y });
   });
 
@@ -160,8 +199,14 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
     }
   }
 
-  const maxX = positioned.reduce((m, n) => Math.max(m, n.x), 0) + NODE_SPACING_X;
-  const maxY = positioned.reduce((m, n) => Math.max(m, n.y), 0) + LANE_SPACING_Y;
+  const maxX = positioned.reduce((m, n) => Math.max(m, n.x), 0);
+  const maxY = positioned.reduce((m, n) => Math.max(m, n.y), 0);
 
-  return { nodes: positioned, edges, width: maxX, height: maxY };
+  return {
+    nodes: positioned,
+    edges,
+    width: maxX + (orientation === 'horizontal' ? commitSpacing : laneSpacing),
+    height: maxY + (orientation === 'horizontal' ? laneSpacing : commitSpacing),
+    orientation,
+  };
 }

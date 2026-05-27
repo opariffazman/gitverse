@@ -157,29 +157,28 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="flex flex-col h-full overflow-hidden font-mono text-sm" onclick={focusInput}>
-  <!-- Scrollable output area -->
-  <div bind:this={scrollEl} class="flex-1 overflow-y-auto p-3 space-y-0.5">
-    {#each $terminalLines as line (line.id)}
-      {#if line.prompt !== undefined}
-        <div class="flex flex-wrap items-baseline leading-6">
-          <Prompt segments={line.prompt} />
-          <span class="text-terminal-fg ml-1">{line.input ?? ''}</span>
-        </div>
-      {:else if line.output !== undefined && line.output !== ''}
-        <div
-          class="leading-6 whitespace-pre-wrap break-all"
-          class:text-terminal-red={line.isError}
-          class:text-terminal-fg={!line.isError}
-        >
-          {line.output}
-        </div>
-      {/if}
-    {/each}
-  </div>
-
-  <!-- Input row -->
-  <div class="flex items-baseline p-3 pt-0 leading-6">
+<div
+  bind:this={scrollEl}
+  class="h-full overflow-y-auto p-3 space-y-0.5 font-mono text-sm"
+  onclick={focusInput}
+>
+  {#each $terminalLines as line (line.id)}
+    {#if line.prompt !== undefined}
+      <div class="flex flex-wrap items-baseline leading-6">
+        <Prompt segments={line.prompt} />
+        <span class="text-terminal-fg ml-1">{line.input ?? ''}</span>
+      </div>
+    {:else if line.output !== undefined && line.output !== ''}
+      <div
+        class="leading-6 whitespace-pre-wrap break-all"
+        class:text-terminal-red={line.isError}
+        class:text-terminal-fg={!line.isError}
+      >
+        {line.output}
+      </div>
+    {/if}
+  {/each}
+  <div class="flex items-baseline leading-6">
     <Prompt segments={$prompt} />
     <input
       bind:this={inputEl}

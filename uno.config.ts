@@ -22,6 +22,6 @@ export default defineConfig({
     },
   },
   shortcuts: {
-    'terminal-panel': 'bg-terminal-bg/85 backdrop-blur-8 rounded-lg border border-terminal-dim/30',
+    'terminal-panel': 'rounded-lg border border-terminal-dim/30',
   },
 });
