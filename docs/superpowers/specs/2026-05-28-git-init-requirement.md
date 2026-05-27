@@ -53,23 +53,21 @@ export function cmdInit(engine: GitEngine): CommandResult {
     return { output: 'Reinitialized existing Git repository', exitCode: 0 };
   }
 
-  engine._initialize();  // sets flag, creates main branch, HEAD, .git/ dir
+  // Inline — single call site, no reuse
+  engine.setInitialized(true);
+  engine.refs.createBranch('main', '');
+  engine.refs.setHEAD({ attached: true, target: 'main' });
+  engine.vfs.createDir('.git');
+
   return { output: 'Initialized empty Git repository', exitCode: 0 };
 }
 ```
 
-`_initialize()` on GitEngine:
-
-- Sets `this.initialized = true`
-- Creates `main` branch with empty target: `this.refs.branches.set('main', '')`
-- Sets HEAD: `this.refs.head = { attached: true, target: 'main' }`
-- Creates `.git/` directory marker: `this.vfs.createDir('.git')`
-
 ## 2. Command Gating
 
-### Router (`src/shell/router.ts`)
+### Engine Execute (`src/engine/index.ts`)
 
-Before dispatching git commands, check `engine.isInitialized()`. Gate all git commands except `git init`.
+Single gating point — add init check at top of `execute()`. If command is not `init` and not initialized, return error. No router changes needed (KISS — one check, one place).
 
 ```
 Allowed pre-init:  git init, ls, cat, touch, rm, mv, clear, help
@@ -85,9 +83,7 @@ Error message for blocked commands:
 fatal: not a git repository (or any of the parent directories): .git
 ```
 
-### Engine Execute (`src/engine/index.ts`)
-
-Add init check at top of `execute()` method. If command is not `init` and not initialized, return error. This provides defense-in-depth alongside router check.
+Builtins bypass engine entirely (routed by shell), so they work pre-init by default.
 
 ## 3. Prompt Change
 
@@ -121,7 +117,7 @@ Behavior:
 
 ### New Behavior
 
-Support `-a`, `-l`, `-h` flags in any combination (`-lah`, `-la`, `-al`, `-a -l`, etc.).
+Support `-a` and `-l` flags in any combination (`-la`, `-al`, `-a -l`, etc.). No `-h` — no file sizes to format (KISS).
 
 **`-a` (all):** Show hidden files/directories (names starting with `.`). Without `-a`, filter out dotfiles.
 
@@ -135,8 +131,6 @@ drwxr-xr-x  src/
 ```
 
 Permissions are decorative (always `drwxr-xr-x` for dirs, `-rw-r--r--` for files). No size/date columns — simulated filesystem has no metadata.
-
-**`-h` (human-readable):** Accepted, no-op. No file sizes to format.
 
 **Without `-l`:** Space-separated (current behavior), respecting `-a` filter.
 
@@ -304,8 +298,7 @@ Update `beforeEach` in all engine test files. Add new test file `tests/engine/in
 | `src/engine/index.ts` | Add `initialized` flag, `_initialize()`, init check in `execute()`, dispatch `git init` |
 | `src/engine/refs.ts` | Constructor starts empty (no branches, no HEAD target) |
 | `src/engine/commands/init.ts` | **New file** — `cmdInit` handler |
-| `src/shell/router.ts` | Gate git commands behind init check |
-| `src/shell/builtins.ts` | Enhance `ls` with `-a`, `-l`, `-h` flags, protect `.git/` from `rm` |
+| `src/shell/builtins.ts` | Enhance `ls` with `-a`, `-l` flags, protect `.git/` from `rm` |
 | `src/shell/prompt.ts` | Handle uninitialized state (no branch segment) |
 | `src/shell/complete.ts` | Filter completions pre-init |
 | `src/graph/types.ts` | Add `'phantom'` to node type |
