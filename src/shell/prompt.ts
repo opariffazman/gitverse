@@ -11,6 +11,7 @@ export function generatePrompt(engine: GitEngine): PromptSegment[] {
   const staged = engine.getStagedFiles();
   const modified = engine.getModifiedFiles();
   const untracked = engine.getUntrackedFiles();
+  const deleted = engine.getDeletedFiles();
 
   const segments: PromptSegment[] = [];
 
@@ -35,6 +36,11 @@ export function generatePrompt(engine: GitEngine): PromptSegment[] {
   // Modified count
   if (modified.length > 0) {
     segments.push({ text: ' ~' + modified.length, color: 'yellow' });
+  }
+
+  // Deleted count
+  if (deleted.length > 0) {
+    segments.push({ text: ' -' + deleted.length, color: 'red' });
   }
 
   // Untracked count

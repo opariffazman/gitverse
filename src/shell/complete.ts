@@ -64,7 +64,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
       return completeBranches(engine, `git ${subcommand} `, partial);
     }
 
-    if (FILE_SUBCOMMANDS.has(subcommand) || subcommand === 'diff') {
+    if (FILE_SUBCOMMANDS.has(subcommand)) {
       return completeFilePaths(engine, `git ${subcommand} `, partial);
     }
 
@@ -95,20 +95,10 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 function completeBranches(engine: GitEngine, prefix: string, partial: string): string[] {
   try {
     const head = engine.getHEAD();
-    // Access branches via execute — we can't directly read refs
-    // Instead, we call git branch and parse the output
-    const result = engine.execute('git branch');
-    const branches = result.output
-      .split('\n')
-      .map((line) => line.replace(/^\*?\s+/, '').trim())
-      .filter((b) => b.length > 0);
-
-    // Also include HEAD's detached commit if relevant
-    const candidates = branches;
+    const candidates = [...engine.allBranches().keys()];
     if (!head.attached) {
       candidates.push(head.target.slice(0, 7));
     }
-
     return candidates.filter((b) => b.startsWith(partial)).map((b) => `${prefix}${b}`);
   } catch {
     return [];

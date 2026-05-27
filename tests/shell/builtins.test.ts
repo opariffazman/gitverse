@@ -185,6 +185,25 @@ describe('VFS-mutating builtins trigger status change', () => {
   });
 });
 
+describe('getDeletedFiles', () => {
+  it('detects committed file deleted from VFS', () => {
+    engine.getVFS().createFile('tracked.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    expect(engine.getDeletedFiles()).toHaveLength(0);
+
+    engine.getVFS().deleteFile('tracked.txt');
+    expect(engine.getDeletedFiles()).toContain('tracked.txt');
+    expect(engine.isDirty()).toBe(true);
+  });
+
+  it('does not include uncommitted files', () => {
+    engine.getVFS().createFile('untracked.txt', 'content');
+    engine.getVFS().deleteFile('untracked.txt');
+    expect(engine.getDeletedFiles()).toHaveLength(0);
+  });
+});
+
 describe('unknown command', () => {
   it('returns command not found', () => {
     const r = executeBuiltin(engine, 'foobar', []);

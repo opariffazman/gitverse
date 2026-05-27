@@ -13,7 +13,7 @@
 
   const ghostText = $derived.by(() => {
     if (!inputValue) return '';
-    const eng = get(engine);
+    const eng = $engine;
     const completions = getCompletions(inputValue, eng);
     if (completions.length === 0) return '';
     const best = completions[0];
@@ -145,7 +145,7 @@
       return;
     }
 
-    if (e.key === 'ArrowRight' && ghostText && cursorPos === inputValue.length) {
+    if (e.key === 'ArrowRight' && ghostText && (inputEl?.selectionStart ?? cursorPos) === inputValue.length) {
       e.preventDefault();
       inputValue = inputValue + ghostText;
       cursorPos = inputValue.length;
@@ -157,7 +157,8 @@
 
     if (e.key === 'Tab') {
       e.preventDefault();
-      if (ghostText) {
+      const atEnd = (inputEl?.selectionStart ?? cursorPos) === inputValue.length;
+      if (ghostText && atEnd) {
         inputValue = inputValue + ghostText;
         cursorPos = inputValue.length;
         tick().then(() => {

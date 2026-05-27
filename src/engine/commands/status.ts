@@ -15,6 +15,7 @@ export function cmdStatus(
   stagedFiles: string[],
   modifiedFiles: string[],
   untrackedFiles: string[],
+  deletedFiles: string[],
   committedTree: Map<string, string>,
   index: Map<string, string>,
 ): CommandResult {
@@ -31,8 +32,9 @@ export function cmdStatus(
   const hasStagedFiles = stagedFiles.length > 0;
   const hasModifiedFiles = modifiedFiles.length > 0;
   const hasUntrackedFiles = untrackedFiles.length > 0;
+  const hasDeletedFiles = deletedFiles.length > 0;
 
-  if (!hasStagedFiles && !hasModifiedFiles && !hasUntrackedFiles) {
+  if (!hasStagedFiles && !hasModifiedFiles && !hasUntrackedFiles && !hasDeletedFiles) {
     lines.push('nothing to commit, working tree clean');
     return { output: lines.join('\n'), exitCode: 0 };
   }
@@ -55,6 +57,16 @@ export function cmdStatus(
     lines.push('  (use "git add <file>..." to update what will be committed)');
     for (const f of modifiedFiles.sort()) {
       lines.push(`\tmodified:   ${f}`);
+    }
+  }
+
+  // Deleted files
+  if (hasDeletedFiles) {
+    lines.push('');
+    lines.push('Deleted files:');
+    lines.push('  (use "git checkout <file>" to restore)');
+    for (const f of deletedFiles.sort()) {
+      lines.push(`\tdeleted:    ${f}`);
     }
   }
 

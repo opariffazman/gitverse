@@ -103,3 +103,16 @@ describe('prompt — detached HEAD', () => {
     expect(hash?.color).toBe('red');
   });
 });
+
+describe('prompt — deleted files', () => {
+  it('shows -N for deleted files in red', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    engine.getVFS().deleteFile('a.txt');
+    const segs = generatePrompt(engine);
+    const deleted = segmentByText(segs, '-1');
+    expect(deleted).toBeDefined();
+    expect(deleted?.color).toBe('red');
+  });
+});

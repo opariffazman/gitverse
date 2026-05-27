@@ -172,6 +172,7 @@ export class GitEngine {
           this.getStagedFiles(),
           this.getModifiedFiles(),
           this.getUntrackedFiles(),
+          this.getDeletedFiles(),
           this.getCommittedTree(),
           this.index,
         );

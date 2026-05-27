@@ -26,11 +26,8 @@ export class ShellRouter {
         return { output: result.output, exitCode: result.exitCode };
       }
 
-      case 'builtin': {
-        const result = executeBuiltin(this.engine, parsed.command, parsed.args);
-        this.engine.notify();
-        return result;
-      }
+      case 'builtin':
+        return executeBuiltin(this.engine, parsed.command, parsed.args);
 
       case 'unknown':
         return {

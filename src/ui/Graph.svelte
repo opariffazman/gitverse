@@ -79,10 +79,14 @@
   const svgWidth = $derived(layout.width + GRAPH_PADDING * 2);
   const svgHeight = $derived(layout.height + GRAPH_PADDING * 2);
 
-  let selectedNode = $state<GraphNode | null>(null);
+  let selectedHash = $state<string | null>(null);
+
+  const selectedNode = $derived(
+    selectedHash ? layout.nodes.find((n) => n.hash === selectedHash) ?? null : null,
+  );
 
   function selectNode(node: GraphNode) {
-    selectedNode = selectedNode?.hash === node.hash ? null : node;
+    selectedHash = selectedHash === node.hash ? null : node.hash;
   }
 
   const headBranch = $derived.by(() => {
@@ -269,6 +273,6 @@
   {/if}
 
   {#if selectedNode}
-    <CommitDetail node={selectedNode} onclose={() => (selectedNode = null)} />
+    <CommitDetail node={selectedNode} onclose={() => (selectedHash = null)} />
   {/if}
 </div>
