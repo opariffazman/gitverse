@@ -14,6 +14,7 @@ export function cmdAdd(
   vfs: VirtualFileSystem,
   objects: ObjectStore,
   index: Map<string, string>,
+  committedTree?: Map<string, string>,
 ): CommandResult {
   if (args.length === 0) {
     return { output: 'Nothing specified, nothing added.', exitCode: 1 };
@@ -21,18 +22,31 @@ export function cmdAdd(
 
   const pathArg = args[0];
 
+  const stageFile = (p: string) => {
+    const content = vfs.readFile(p);
+    const committedHash = committedTree?.get(p);
+    if (committedHash) {
+      let committedContent: string | undefined;
+      try {
+        committedContent = objects.readBlob(committedHash);
+      } catch {
+        /* blob missing */
+      }
+      if (committedContent === content && index.get(p) === committedHash) {
+        return;
+      }
+    }
+    const blobHash = objects.writeBlob(content);
+    index.set(p, blobHash);
+  };
+
   if (pathArg === '.') {
-    // Stage all files in the VFS
-    const allPaths = vfs.allFilePaths();
-    for (const p of allPaths) {
-      const content = vfs.readFile(p);
-      const blobHash = objects.writeBlob(content);
-      index.set(p, blobHash);
+    for (const p of vfs.allFilePaths()) {
+      stageFile(p);
     }
     return { output: '', exitCode: 0 };
   }
 
-  // Stage a specific file
   if (!vfs.exists(pathArg)) {
     return {
       output: `error: pathspec '${pathArg}' did not match any files`,
@@ -40,9 +54,6 @@ export function cmdAdd(
     };
   }
 
-  const content = vfs.readFile(pathArg);
-  const blobHash = objects.writeBlob(content);
-  index.set(pathArg, blobHash);
-
+  stageFile(pathArg);
   return { output: '', exitCode: 0 };
 }

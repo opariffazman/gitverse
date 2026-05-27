@@ -1,7 +1,7 @@
 import type { GraphNode, GraphEdge } from './types';
 
-export const NODE_SPACING_X = 80;
-export const LANE_SPACING_Y = 50;
+export const NODE_SPACING_X = 168;
+export const LANE_SPACING_Y = 112;
 
 export type Orientation = 'horizontal' | 'vertical';
 
@@ -13,22 +13,13 @@ export type LayoutResult = {
   orientation: Orientation;
 };
 
-/**
- * Compute a left-to-right DAG layout for the given nodes.
- *
- * Expects nodes to arrive with hash/parents/message/branches/tags/isHEAD set.
- * The function assigns lane, x, and y then generates edges.
- *
- * Algorithm:
- * 1. Topological sort (parents before children via Kahn's algorithm on reversed edges).
- * 2. X position: (topoIndex + 1) * NODE_SPACING_X.
- * 3. Branch membership: walk backward from branch tips to assign commits
- *    to branches. Main/master gets priority.
- * 4. Lane assignment: inherit parent lane only when on the same branch.
- *    Different branch always gets a new lane.
- * 5. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
- * 6. Generate edges from each node to each of its parents.
- */
+function nextAlternatingLane(branchIndex: number): number {
+  if (branchIndex === 0) return 0;
+  const side = branchIndex % 2 === 1 ? 1 : -1;
+  const magnitude = Math.ceil(branchIndex / 2);
+  return side * magnitude;
+}
+
 export function computeLayout(
   inputNodes: GraphNode[],
   orientation: Orientation = 'horizontal',
@@ -37,38 +28,24 @@ export function computeLayout(
     return { nodes: [], edges: [], width: 0, height: 0, orientation };
   }
 
-  // Build lookup map
   const nodeMap = new Map<string, GraphNode>();
   for (const n of inputNodes) {
     nodeMap.set(n.hash, { ...n });
   }
 
   // --- Topological sort (Kahn's algorithm) ---
-  // "parents" in git means older commits. We want oldest → newest (left to right),
-  // so we process parents before children.
-  // In-degree: how many children (nodes whose parents list includes this hash) point to each node.
-  const inDegree = new Map<string, number>();
-  const childrenOf = new Map<string, string[]>(); // parent hash -> list of child hashes
+  const childrenOf = new Map<string, string[]>();
 
   for (const n of nodeMap.values()) {
-    if (!inDegree.has(n.hash)) inDegree.set(n.hash, 0);
     for (const p of n.parents) {
-      if (!nodeMap.has(p)) continue; // skip refs to commits not in the set
+      if (!nodeMap.has(p)) continue;
       childrenOf.set(p, [...(childrenOf.get(p) ?? []), n.hash]);
-      inDegree.set(p, inDegree.get(p) ?? 0); // ensure parent has an entry
     }
   }
 
-  // For the topo sort we want: a node is ready when all its children have been placed.
-  // Actually we want parents first. Use: a node is ready when it has no parents
-  // (root commit) or all parents have been placed. Use child-count based in-degree.
-  //
-  // Redefine: in-degree here = number of parents (i.e., dependencies the node needs
-  // to be resolved first).
   const dep = new Map<string, number>();
   for (const n of nodeMap.values()) {
-    const validParents = n.parents.filter((p) => nodeMap.has(p));
-    dep.set(n.hash, validParents.length);
+    dep.set(n.hash, n.parents.filter((p) => nodeMap.has(p)).length);
   }
 
   const queue: string[] = [];
@@ -80,22 +57,18 @@ export function computeLayout(
   while (queue.length > 0) {
     const hash = queue.shift()!;
     topoOrder.push(hash);
-    const children = childrenOf.get(hash) ?? [];
-    for (const child of children) {
+    for (const child of childrenOf.get(hash) ?? []) {
       const newDep = (dep.get(child) ?? 1) - 1;
       dep.set(child, newDep);
       if (newDep === 0) queue.push(child);
     }
   }
 
-  // If there are nodes not in topoOrder (cycle or missing parents), append them
   for (const hash of nodeMap.keys()) {
     if (!topoOrder.includes(hash)) topoOrder.push(hash);
   }
 
   // --- Branch membership ---
-  // Walk backward from each branch tip to assign commits to branches.
-  // Main/master processed first so they claim the primary lane.
   const branchTips = new Map<string, string>();
   for (const n of nodeMap.values()) {
     for (const b of n.branches) {
@@ -120,12 +93,11 @@ export function computeLayout(
     }
   }
 
-  // --- Lane assignment ---
-  // Inherit parent lane only when on the same branch and parent hasn't
-  // already given its lane to another child. Different branch = new lane.
+  // --- Alternating lane assignment ---
   const childCountAssigned = new Map<string, number>();
   const laneOf = new Map<string, number>();
-  let nextLane = 0;
+  let branchCount = 0;
+  const branchLane = new Map<string, number>();
 
   for (const hash of topoOrder) {
     const node = nodeMap.get(hash)!;
@@ -135,7 +107,10 @@ export function computeLayout(
     let assignedLane: number;
 
     if (validParents.length === 0) {
-      assignedLane = nextLane++;
+      assignedLane = nextAlternatingLane(branchCount++);
+      if (myBranch && !branchLane.has(myBranch)) {
+        branchLane.set(myBranch, assignedLane);
+      }
     } else {
       const firstParent = validParents[0];
       const parentLane = laneOf.get(firstParent);
@@ -145,8 +120,13 @@ export function computeLayout(
 
       if (parentChildCount === 0 && parentLane !== undefined && sameBranch) {
         assignedLane = parentLane;
+      } else if (myBranch && branchLane.has(myBranch)) {
+        assignedLane = branchLane.get(myBranch)!;
       } else {
-        assignedLane = nextLane++;
+        assignedLane = nextAlternatingLane(branchCount++);
+        if (myBranch && !branchLane.has(myBranch)) {
+          branchLane.set(myBranch, assignedLane);
+        }
       }
 
       if (sameBranch) {
@@ -154,8 +134,7 @@ export function computeLayout(
       }
 
       for (let i = 1; i < validParents.length; i++) {
-        const p = validParents[i];
-        childCountAssigned.set(p, (childCountAssigned.get(p) ?? 0) + 1);
+        childCountAssigned.set(validParents[i], (childCountAssigned.get(validParents[i]) ?? 0) + 1);
       }
     }
 
@@ -163,17 +142,27 @@ export function computeLayout(
   }
 
   // --- Assign x, y positions ---
+  const allLanes = [...laneOf.values()];
+  const minLane = Math.min(...allLanes);
+
   const commitSpacing = orientation === 'horizontal' ? NODE_SPACING_X : 70;
   const laneSpacing = orientation === 'horizontal' ? LANE_SPACING_Y : 120;
+
+  const laneOffset = -minLane;
 
   const positioned: GraphNode[] = [];
   topoOrder.forEach((hash, index) => {
     const node = nodeMap.get(hash)!;
     const lane = laneOf.get(hash) ?? 0;
+    const adjustedLane = lane + laneOffset;
     const x =
-      orientation === 'horizontal' ? (index + 1) * commitSpacing : lane * laneSpacing + laneSpacing;
+      orientation === 'horizontal'
+        ? (index + 1) * commitSpacing
+        : adjustedLane * laneSpacing + laneSpacing;
     const y =
-      orientation === 'horizontal' ? lane * laneSpacing + laneSpacing : (index + 1) * commitSpacing;
+      orientation === 'horizontal'
+        ? adjustedLane * laneSpacing + laneSpacing
+        : (index + 1) * commitSpacing;
     positioned.push({ ...node, lane, x, y });
   });
 

@@ -11,6 +11,18 @@
   let inputEl: HTMLInputElement;
   let scrollEl: HTMLDivElement;
 
+  const ghostText = $derived.by(() => {
+    if (!inputValue) return '';
+    const eng = $engine;
+    const completions = getCompletions(inputValue, eng);
+    if (completions.length === 0) return '';
+    const best = completions[0];
+    if (best.startsWith(inputValue) && best !== inputValue) {
+      return best.slice(inputValue.length);
+    }
+    return '';
+  });
+
   function scrollToBottom() {
     tick().then(() => {
       if (scrollEl) {
@@ -133,8 +145,31 @@
       return;
     }
 
+    if (
+      e.key === 'ArrowRight' &&
+      ghostText &&
+      (inputEl?.selectionStart ?? cursorPos) === inputValue.length
+    ) {
+      e.preventDefault();
+      inputValue = inputValue + ghostText;
+      cursorPos = inputValue.length;
+      tick().then(() => {
+        if (inputEl) inputEl.setSelectionRange(cursorPos, cursorPos);
+      });
+      return;
+    }
+
     if (e.key === 'Tab') {
       e.preventDefault();
+      const atEnd = (inputEl?.selectionStart ?? cursorPos) === inputValue.length;
+      if (ghostText && atEnd) {
+        inputValue = inputValue + ghostText;
+        cursorPos = inputValue.length;
+        tick().then(() => {
+          if (inputEl) inputEl.setSelectionRange(cursorPos, cursorPos);
+        });
+        return;
+      }
       const eng = get(engine);
       const completions = getCompletions(inputValue, eng);
       if (completions.length === 1) {
@@ -171,8 +206,10 @@
     {:else if line.output !== undefined && line.output !== ''}
       <div
         class="leading-6 whitespace-pre-wrap break-all"
-        class:text-terminal-red={line.isError}
-        class:text-terminal-fg={!line.isError}
+        class:text-cyan-400={line.color === 'cyan'}
+        class:text-terminal-dim={line.color === 'dim'}
+        class:text-terminal-red={line.isError && !line.color}
+        class:text-terminal-fg={!line.isError && !line.color}
       >
         {line.output}
       </div>
@@ -180,17 +217,28 @@
   {/each}
   <div class="flex items-baseline leading-6">
     <Prompt segments={$prompt} />
-    <input
-      bind:this={inputEl}
-      type="text"
-      autocomplete="off"
-      autocorrect="off"
-      autocapitalize="off"
-      spellcheck={false}
-      class="flex-1 ml-1 bg-transparent outline-none border-none text-terminal-fg caret-terminal-green font-mono text-sm"
-      value={inputValue}
-      oninput={handleInput}
-      onkeydown={handleKeydown}
-    />
+    <div class="relative flex-1 ml-1">
+      <input
+        bind:this={inputEl}
+        type="text"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck={false}
+        class="w-full bg-transparent outline-none border-none text-terminal-fg caret-terminal-green font-mono text-sm"
+        value={inputValue}
+        oninput={handleInput}
+        onkeydown={handleKeydown}
+      />
+      {#if ghostText}
+        <span
+          class="absolute top-0 left-0 pointer-events-none font-mono text-sm whitespace-pre"
+          aria-hidden="true"
+          ><span class="invisible">{inputValue}</span><span class="text-terminal-dim/40"
+            >{ghostText}</span
+          ></span
+        >
+      {/if}
+    </div>
   </div>
 </div>

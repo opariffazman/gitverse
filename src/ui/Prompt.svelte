@@ -11,6 +11,7 @@
     blue: 'text-terminal-blue',
     grey: 'text-terminal-grey',
     fg: 'text-terminal-fg',
+    cyan: 'text-cyan-400',
   };
 </script>
 

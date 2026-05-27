@@ -18,7 +18,7 @@ export default defineConfig({
       },
     },
     fontFamily: {
-      mono: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace",
+      mono: "'MesloLGS NF', 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace",
     },
   },
   shortcuts: {

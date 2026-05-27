@@ -17,15 +17,6 @@ function autoContent(filename: string): string {
   return CONTENT_TEMPLATES[filename.length % CONTENT_TEMPLATES.length];
 }
 
-// Mutation variants for sim change — each MUST produce a different string
-const MUTATIONS = [
-  (s: string) => s + '\n# updated',
-  (s: string) => 'MODIFIED: ' + s,
-  (s: string) => s + '\n\nchanged at ' + Date.now(),
-  (s: string) => s.replace(/[a-zA-Z]+/, 'REPLACED'),
-  (s: string) => '[edited]\n' + s,
-];
-
 /**
  * Execute a shell builtin command against the engine's VFS.
  */
@@ -151,50 +142,15 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         '  File builtins:',
         '    ls [dir]          — list files',
         '    cat <file>        — show file content',
-        '    touch <file>      — create file',
+        '    touch <file>      — create file (hint: use this to add files!)',
         '    rm <file>         — delete file',
         '    mv <src> <dst>    — move/rename file',
         '    clear             — clear the terminal',
-        '',
-        '  Simulation:',
-        '    sim change <file> — randomly mutate a tracked file',
         '',
         '  Other:',
         '    help              — show this message',
       ];
       return { output: lines.join('\n'), exitCode: 0 };
-    }
-
-    case 'sim': {
-      // sim change <file>
-      const subcommand = args[0];
-      if (subcommand !== 'change') {
-        return {
-          output: `sim: unknown subcommand '${subcommand ?? ''}'. Try: sim change <file>`,
-          exitCode: 1,
-        };
-      }
-      const filePath = args[1];
-      if (!filePath) {
-        return { output: 'sim change: missing file operand', exitCode: 1 };
-      }
-      if (!vfs.exists(filePath)) {
-        return {
-          output: `sim change: '${filePath}': No such file or directory`,
-          exitCode: 1,
-        };
-      }
-      let current: string;
-      try {
-        current = vfs.readFile(filePath);
-      } catch {
-        return { output: `sim change: '${filePath}': not a file`, exitCode: 1 };
-      }
-      // Pick a mutation deterministically based on current content length
-      const mutate = MUTATIONS[current.length % MUTATIONS.length];
-      const newContent = mutate(current);
-      vfs.createFile(filePath, newContent);
-      return { output: `Mutated '${filePath}'`, exitCode: 0 };
     }
 
     default:

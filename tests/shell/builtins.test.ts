@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GitEngine } from '$engine/index';
 import { executeBuiltin } from '$shell/builtins';
+import { ShellRouter } from '$shell/router';
 
 let engine: GitEngine;
 
@@ -151,42 +152,55 @@ describe('help', () => {
     expect(r.output).toContain('git');
     expect(r.output).toContain('ls');
     expect(r.output).toContain('touch');
-    expect(r.output).toContain('sim');
+    expect(r.output).not.toContain('sim');
   });
 });
 
-describe('sim', () => {
-  it('errors for unknown subcommand', () => {
-    const r = executeBuiltin(engine, 'sim', ['foo']);
-    expect(r.exitCode).toBe(1);
-    expect(r.output).toContain('unknown subcommand');
+describe('VFS-mutating builtins trigger status change', () => {
+  it('rm on committed file makes engine dirty', () => {
+    engine.getVFS().createFile('tracked.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    expect(engine.isDirty()).toBe(false);
+
+    const router = new ShellRouter(engine);
+    router.execute('rm tracked.txt');
+    expect(engine.isDirty()).toBe(true);
   });
 
-  it('errors with no subcommand', () => {
-    const r = executeBuiltin(engine, 'sim', []);
-    expect(r.exitCode).toBe(1);
+  it('touch creates untracked file visible to engine', () => {
+    const router = new ShellRouter(engine);
+    router.execute('touch newfile.txt');
+    expect(engine.getUntrackedFiles()).toContain('newfile.txt');
   });
 
-  it('errors for missing file operand', () => {
-    const r = executeBuiltin(engine, 'sim', ['change']);
-    expect(r.exitCode).toBe(1);
-    expect(r.output).toContain('missing file operand');
+  it('mv on committed file makes engine dirty', () => {
+    engine.getVFS().createFile('a.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+
+    const router = new ShellRouter(engine);
+    router.execute('mv a.txt b.txt');
+    expect(engine.isDirty()).toBe(true);
+  });
+});
+
+describe('getDeletedFiles', () => {
+  it('detects committed file deleted from VFS', () => {
+    engine.getVFS().createFile('tracked.txt', 'content');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    expect(engine.getDeletedFiles()).toHaveLength(0);
+
+    engine.getVFS().deleteFile('tracked.txt');
+    expect(engine.getDeletedFiles()).toContain('tracked.txt');
+    expect(engine.isDirty()).toBe(true);
   });
 
-  it('errors for non-existent file', () => {
-    const r = executeBuiltin(engine, 'sim', ['change', 'ghost.txt']);
-    expect(r.exitCode).toBe(1);
-    expect(r.output).toContain('No such file');
-  });
-
-  it('mutates an existing file', () => {
-    engine.getVFS().createFile('readme.txt', 'original content');
-    const r = executeBuiltin(engine, 'sim', ['change', 'readme.txt']);
-    expect(r.exitCode).toBe(0);
-    expect(r.output).toContain('readme.txt');
-    // File content should differ from original
-    const newContent = engine.getVFS().readFile('readme.txt');
-    expect(newContent).not.toBe('original content');
+  it('does not include uncommitted files', () => {
+    engine.getVFS().createFile('untracked.txt', 'content');
+    engine.getVFS().deleteFile('untracked.txt');
+    expect(engine.getDeletedFiles()).toHaveLength(0);
   });
 });
 

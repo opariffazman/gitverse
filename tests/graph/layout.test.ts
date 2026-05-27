@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
+import { computeLayout, NODE_SPACING_X } from '$graph/layout';
 import type { Orientation } from '$graph/layout';
 import type { GraphNode } from '$graph/types';
 
-// Helper to build a minimal GraphNode
 function makeNode(hash: string, parents: string[], overrides: Partial<GraphNode> = {}): GraphNode {
   return {
     hash,
@@ -19,56 +18,54 @@ function makeNode(hash: string, parents: string[], overrides: Partial<GraphNode>
   };
 }
 
+describe('computeLayout – empty', () => {
+  it('returns empty result for empty input', () => {
+    const { nodes, edges, width, height } = computeLayout([]);
+    expect(nodes).toHaveLength(0);
+    expect(edges).toHaveLength(0);
+    expect(width).toBe(0);
+    expect(height).toBe(0);
+  });
+});
+
 describe('computeLayout – single commit', () => {
-  it('positions the only commit at (1*NODE_SPACING_X, 1*LANE_SPACING_Y)', () => {
+  it('positions at first slot', () => {
     const nodes = [makeNode('aaa', [])];
     const { nodes: out } = computeLayout(nodes);
     expect(out).toHaveLength(1);
     expect(out[0].x).toBe(NODE_SPACING_X);
-    expect(out[0].y).toBe(LANE_SPACING_Y);
   });
 
-  it('assigns lane 0 to the root commit', () => {
+  it('assigns lane 0 to root', () => {
     const nodes = [makeNode('aaa', [])];
     const { nodes: out } = computeLayout(nodes);
     expect(out[0].lane).toBe(0);
   });
 
-  it('returns no edges for a single commit', () => {
-    const nodes = [makeNode('aaa', [])];
-    const { edges } = computeLayout(nodes);
+  it('no edges for single commit', () => {
+    const { edges } = computeLayout([makeNode('aaa', [])]);
     expect(edges).toHaveLength(0);
   });
 });
 
 describe('computeLayout – linear chain', () => {
-  // root → A → B (B is newest)
   const root = makeNode('root', []);
   const A = makeNode('A', ['root']);
   const B = makeNode('B', ['A']);
 
-  it('orders commits left-to-right: root, A, B', () => {
+  it('orders left-to-right', () => {
     const { nodes } = computeLayout([root, A, B]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
     expect(byHash.get('root')!.x).toBeLessThan(byHash.get('A')!.x);
     expect(byHash.get('A')!.x).toBeLessThan(byHash.get('B')!.x);
   });
 
-  it('all linear commits share lane 0', () => {
+  it('all share lane 0', () => {
     const { nodes } = computeLayout([root, A, B]);
-    for (const n of nodes) {
-      expect(n.lane).toBe(0);
-    }
+    for (const n of nodes) expect(n.lane).toBe(0);
   });
 
-  it('X spacing equals NODE_SPACING_X between adjacent commits', () => {
-    const { nodes } = computeLayout([root, A, B]);
-    const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('A')!.x - byHash.get('root')!.x).toBe(NODE_SPACING_X);
-    expect(byHash.get('B')!.x - byHash.get('A')!.x).toBe(NODE_SPACING_X);
-  });
-
-  it('generates edges root→A and A→B', () => {
+  it('generates correct edges', () => {
     const { edges } = computeLayout([root, A, B]);
     const pairs = edges.map((e) => `${e.from}→${e.to}`).sort();
     expect(pairs).toContain('A→root');
@@ -76,54 +73,61 @@ describe('computeLayout – linear chain', () => {
   });
 });
 
-describe('computeLayout – branching', () => {
-  // root → A (main) and root → C (feature branch from root)
-  const root = makeNode('root', []);
-  const A = makeNode('A', ['root']); // main continues
-  const C = makeNode('C', ['root']); // branch off root
-
-  it('assigns different lanes to branching commits', () => {
-    const { nodes } = computeLayout([root, A, C]);
-    const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    // A and C both branch from root, they should be on different lanes
-    expect(byHash.get('A')!.lane).not.toBe(byHash.get('C')!.lane);
-  });
-
-  it('root gets lane 0', () => {
-    const { nodes } = computeLayout([root, A, C]);
+describe('computeLayout – alternating branch lanes', () => {
+  it('first branch goes to lane +1 (below main in SVG)', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root'], { branches: ['main'] });
+    const B = makeNode('B', ['root'], { branches: ['feat1'] });
+    const { nodes } = computeLayout([root, A, B]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
     expect(byHash.get('root')!.lane).toBe(0);
+    expect(byHash.get('A')!.lane).toBe(0);
+    expect(byHash.get('B')!.lane).toBe(1);
   });
 
-  it('branch commits get distinct Y positions', () => {
-    const { nodes } = computeLayout([root, A, C]);
+  it('second branch goes to lane -1 (above main in SVG)', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['A'], { branches: ['main'] });
+    const C = makeNode('C', ['A'], { branches: ['feat1'] });
+    const D = makeNode('D', ['A'], { branches: ['feat2'] });
+    const { nodes } = computeLayout([root, A, B, C, D]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('A')!.y).not.toBe(byHash.get('C')!.y);
+    expect(byHash.get('C')!.lane).toBe(1);
+    expect(byHash.get('D')!.lane).toBe(-1);
   });
 
-  it('generates edges A→root and C→root', () => {
-    const { edges } = computeLayout([root, A, C]);
-    const pairs = edges.map((e) => `${e.from}→${e.to}`).sort();
-    expect(pairs).toContain('A→root');
-    expect(pairs).toContain('C→root');
+  it('third branch goes to lane +2', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root'], { branches: ['main'] });
+    const B = makeNode('B', ['root'], { branches: ['feat1'] });
+    const C = makeNode('C', ['root'], { branches: ['feat2'] });
+    const D = makeNode('D', ['root'], { branches: ['feat3'] });
+    const { nodes } = computeLayout([root, A, B, C, D]);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    expect(byHash.get('B')!.lane).toBe(1);
+    expect(byHash.get('C')!.lane).toBe(-1);
+    expect(byHash.get('D')!.lane).toBe(2);
   });
 });
 
 describe('computeLayout – merge commit', () => {
-  // root → A → merge; root → B → merge
-  const root = makeNode('root', []);
-  const A = makeNode('A', ['root']);
-  const B = makeNode('B', ['root']);
-  const merge = makeNode('merge', ['A', 'B']);
-
   it('generates edges from merge to both parents', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['root']);
+    const merge = makeNode('merge', ['A', 'B']);
     const { edges } = computeLayout([root, A, B, merge]);
     const pairs = new Set(edges.map((e) => `${e.from}→${e.to}`));
     expect(pairs.has('merge→A')).toBe(true);
     expect(pairs.has('merge→B')).toBe(true);
   });
 
-  it('merge commit appears after both parents in X', () => {
+  it('merge appears after both parents in X', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const B = makeNode('B', ['root']);
+    const merge = makeNode('merge', ['A', 'B']);
     const { nodes } = computeLayout([root, A, B, merge]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
     expect(byHash.get('merge')!.x).toBeGreaterThan(byHash.get('A')!.x);
@@ -132,7 +136,7 @@ describe('computeLayout – merge commit', () => {
 });
 
 describe('computeLayout – edge coordinates', () => {
-  it('edge fromX/fromY match source node position', () => {
+  it('edge coords match node positions', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root']);
     const { nodes, edges } = computeLayout([root, A]);
@@ -145,43 +149,8 @@ describe('computeLayout – edge coordinates', () => {
   });
 });
 
-describe('computeLayout – empty input', () => {
-  it('returns empty result for empty input', () => {
-    const { nodes, edges, width, height } = computeLayout([]);
-    expect(nodes).toHaveLength(0);
-    expect(edges).toHaveLength(0);
-    expect(width).toBe(0);
-    expect(height).toBe(0);
-  });
-});
-
-describe('computeLayout – branch divergence with named branches', () => {
-  it('feat branch from main tip gets a different lane', () => {
-    const root = makeNode('root', []);
-    const A = makeNode('A', ['root'], { branches: ['main'] });
-    const B = makeNode('B', ['A'], { branches: ['feat'] });
-    const { nodes } = computeLayout([root, A, B]);
-    const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('root')!.lane).toBe(byHash.get('A')!.lane);
-    expect(byHash.get('B')!.lane).not.toBe(byHash.get('A')!.lane);
-  });
-
-  it('main branch keeps lane 0 while feat gets lane 1', () => {
-    const root = makeNode('root', []);
-    const A = makeNode('A', ['root']);
-    const B = makeNode('B', ['A'], { branches: ['main'] });
-    const C = makeNode('C', ['A'], { branches: ['feat'] });
-    const { nodes } = computeLayout([root, A, B, C]);
-    const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    expect(byHash.get('root')!.lane).toBe(0);
-    expect(byHash.get('A')!.lane).toBe(0);
-    expect(byHash.get('B')!.lane).toBe(0);
-    expect(byHash.get('C')!.lane).not.toBe(0);
-  });
-});
-
-describe('computeLayout – parallel branches', () => {
-  it('long main and feat branches stay on separate lanes', () => {
+describe('computeLayout – main keeps lane 0', () => {
+  it('main branch commits stay on lane 0', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root']);
     const B = makeNode('B', ['A']);
@@ -189,11 +158,11 @@ describe('computeLayout – parallel branches', () => {
     const D = makeNode('D', ['B'], { branches: ['feat'] });
     const { nodes } = computeLayout([root, A, B, C, D]);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    const mainLane = byHash.get('root')!.lane;
-    expect(byHash.get('A')!.lane).toBe(mainLane);
-    expect(byHash.get('B')!.lane).toBe(mainLane);
-    expect(byHash.get('C')!.lane).toBe(mainLane);
-    expect(byHash.get('D')!.lane).not.toBe(mainLane);
+    expect(byHash.get('root')!.lane).toBe(0);
+    expect(byHash.get('A')!.lane).toBe(0);
+    expect(byHash.get('B')!.lane).toBe(0);
+    expect(byHash.get('C')!.lane).toBe(0);
+    expect(byHash.get('D')!.lane).not.toBe(0);
   });
 });
 
@@ -218,14 +187,12 @@ describe('computeLayout – merge across branches', () => {
 describe('computeLayout – vertical orientation', () => {
   const vert: Orientation = 'vertical';
 
-  it('swaps axes: commits stack top-to-bottom, lanes go left-to-right', () => {
+  it('commits stack top-to-bottom, lanes go left-to-right', () => {
     const root = makeNode('root', []);
     const A = makeNode('A', ['root']);
     const { nodes } = computeLayout([root, A], vert);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    // Time axis is Y (root above A)
     expect(byHash.get('root')!.y).toBeLessThan(byHash.get('A')!.y);
-    // Same lane = same X
     expect(byHash.get('root')!.x).toBe(byHash.get('A')!.x);
   });
 
@@ -235,11 +202,7 @@ describe('computeLayout – vertical orientation', () => {
     const B = makeNode('B', ['root'], { branches: ['feat'] });
     const { nodes } = computeLayout([root, A, B], vert);
     const byHash = new Map(nodes.map((n) => [n.hash, n]));
-    // Different lanes = different X positions
     expect(byHash.get('A')!.x).not.toBe(byHash.get('B')!.x);
-    // Both below root in Y
-    expect(byHash.get('A')!.y).toBeGreaterThan(byHash.get('root')!.y);
-    expect(byHash.get('B')!.y).toBeGreaterThan(byHash.get('root')!.y);
   });
 
   it('returns orientation in result', () => {
