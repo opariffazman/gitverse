@@ -3,11 +3,14 @@ import type { GraphNode, GraphEdge } from './types';
 export const NODE_SPACING_X = 80;
 export const LANE_SPACING_Y = 50;
 
+export type Orientation = 'horizontal' | 'vertical';
+
 export type LayoutResult = {
   nodes: GraphNode[];
   edges: GraphEdge[];
   width: number;
   height: number;
+  orientation: Orientation;
 };
 
 /**
@@ -26,9 +29,12 @@ export type LayoutResult = {
  * 5. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
  * 6. Generate edges from each node to each of its parents.
  */
-export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
+export function computeLayout(
+  inputNodes: GraphNode[],
+  orientation: Orientation = 'horizontal',
+): LayoutResult {
   if (inputNodes.length === 0) {
-    return { nodes: [], edges: [], width: 0, height: 0 };
+    return { nodes: [], edges: [], width: 0, height: 0, orientation };
   }
 
   // Build lookup map
@@ -155,12 +161,17 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
   }
 
   // --- Assign x, y positions ---
+  const commitSpacing = orientation === 'horizontal' ? NODE_SPACING_X : 70;
+  const laneSpacing = orientation === 'horizontal' ? LANE_SPACING_Y : 60;
+
   const positioned: GraphNode[] = [];
   topoOrder.forEach((hash, index) => {
     const node = nodeMap.get(hash)!;
     const lane = laneOf.get(hash) ?? 0;
-    const x = (index + 1) * NODE_SPACING_X;
-    const y = lane * LANE_SPACING_Y + LANE_SPACING_Y;
+    const x =
+      orientation === 'horizontal' ? (index + 1) * commitSpacing : lane * laneSpacing + laneSpacing;
+    const y =
+      orientation === 'horizontal' ? lane * laneSpacing + laneSpacing : (index + 1) * commitSpacing;
     positioned.push({ ...node, lane, x, y });
   });
 
@@ -186,8 +197,14 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
     }
   }
 
-  const maxX = positioned.reduce((m, n) => Math.max(m, n.x), 0) + NODE_SPACING_X;
-  const maxY = positioned.reduce((m, n) => Math.max(m, n.y), 0) + LANE_SPACING_Y;
+  const maxX = positioned.reduce((m, n) => Math.max(m, n.x), 0);
+  const maxY = positioned.reduce((m, n) => Math.max(m, n.y), 0);
 
-  return { nodes: positioned, edges, width: maxX, height: maxY };
+  return {
+    nodes: positioned,
+    edges,
+    width: maxX + (orientation === 'horizontal' ? commitSpacing : laneSpacing),
+    height: maxY + (orientation === 'horizontal' ? laneSpacing : commitSpacing),
+    orientation,
+  };
 }

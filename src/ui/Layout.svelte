@@ -6,6 +6,7 @@
   import Graph from './Graph.svelte';
 
   const isTerminalFocused = $derived($focusMode === 'terminal');
+  const blur = $derived(Math.round((($terminalOpacity - 0.3) / 0.7) * 8));
 </script>
 
 <div class="relative w-full h-full overflow-hidden bg-terminal-bg">
@@ -19,7 +20,7 @@
     class="absolute terminal-panel flex flex-col transition-all duration-300 ease-in-out"
     class:terminal-focused={isTerminalFocused}
     class:graph-focused={!isTerminalFocused}
-    style="background-color: rgba(13, 17, 23, {$terminalOpacity})"
+    style="background-color: rgba(13, 17, 23, {$terminalOpacity}); backdrop-filter: blur({blur}px); -webkit-backdrop-filter: blur({blur}px)"
   >
     <!-- Terminal title bar -->
     <div class="flex items-center justify-between px-3 py-2 border-b border-terminal-dim/30">

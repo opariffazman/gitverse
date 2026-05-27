@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
+import type { Orientation } from '$graph/layout';
 import type { GraphNode } from '$graph/types';
 
 // Helper to build a minimal GraphNode
@@ -211,5 +212,43 @@ describe('computeLayout – merge across branches', () => {
     const pairs = new Set(edges.map((e) => `${e.from}→${e.to}`));
     expect(pairs.has('M→C')).toBe(true);
     expect(pairs.has('M→D')).toBe(true);
+  });
+});
+
+describe('computeLayout – vertical orientation', () => {
+  const vert: Orientation = 'vertical';
+
+  it('swaps axes: commits stack top-to-bottom, lanes go left-to-right', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root']);
+    const { nodes } = computeLayout([root, A], vert);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    // Time axis is Y (root above A)
+    expect(byHash.get('root')!.y).toBeLessThan(byHash.get('A')!.y);
+    // Same lane = same X
+    expect(byHash.get('root')!.x).toBe(byHash.get('A')!.x);
+  });
+
+  it('branches go left-to-right in vertical mode', () => {
+    const root = makeNode('root', []);
+    const A = makeNode('A', ['root'], { branches: ['main'] });
+    const B = makeNode('B', ['root'], { branches: ['feat'] });
+    const { nodes } = computeLayout([root, A, B], vert);
+    const byHash = new Map(nodes.map((n) => [n.hash, n]));
+    // Different lanes = different X positions
+    expect(byHash.get('A')!.x).not.toBe(byHash.get('B')!.x);
+    // Both below root in Y
+    expect(byHash.get('A')!.y).toBeGreaterThan(byHash.get('root')!.y);
+    expect(byHash.get('B')!.y).toBeGreaterThan(byHash.get('root')!.y);
+  });
+
+  it('returns orientation in result', () => {
+    const { orientation } = computeLayout([makeNode('a', [])], vert);
+    expect(orientation).toBe('vertical');
+  });
+
+  it('returns horizontal orientation by default', () => {
+    const { orientation } = computeLayout([makeNode('a', [])]);
+    expect(orientation).toBe('horizontal');
   });
 });

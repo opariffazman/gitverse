@@ -1,21 +1,40 @@
 <script lang="ts">
   import { engine, engineVersion } from '$store/engine';
   import { computeLayout } from '$graph/layout';
+  import type { Orientation } from '$graph/layout';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
 
-  // Lane colours cycling through 6 values
   const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
   const NODE_RADIUS = 12;
   const GRAPH_PADDING = 40;
 
-  // Derived layout from engine state
+  let isMobile = $state(false);
+
+  $effect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    isMobile = mq.matches;
+    function onChange(e: MediaQueryListEvent) {
+      isMobile = e.matches;
+    }
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  });
+
+  const orientation: Orientation = $derived(isMobile ? 'vertical' : 'horizontal');
+
   const layout = $derived.by(() => {
     const eng = $engine;
     void $engineVersion;
     const allCommits = eng.allCommits();
     if (allCommits.length === 0) {
-      return { nodes: [], edges: [], width: 0, height: 0 };
+      return {
+        nodes: [],
+        edges: [],
+        width: 0,
+        height: 0,
+        orientation: orientation as Orientation,
+      };
     }
 
     const headHash = (() => {
@@ -28,7 +47,6 @@
       }
     })();
 
-    // Build commit → branches map
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const branchMap = new Map<string, string[]>();
     for (const [name, hash] of eng.allBranches()) {
@@ -36,7 +54,6 @@
       branchMap.set(hash, [...(branchMap.get(hash) ?? []), name]);
     }
 
-    // Build commit → tags map
     // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const tagMap = new Map<string, string[]>();
     for (const [name, hash] of eng.allTags()) {
@@ -56,10 +73,9 @@
       y: 0,
     }));
 
-    return computeLayout(inputNodes);
+    return computeLayout(inputNodes, orientation);
   });
 
-  // Selected node for detail popover
   let selectedNode = $state<GraphNode | null>(null);
 
   function selectNode(node: GraphNode) {
@@ -82,8 +98,12 @@
   }
 
   function edgePath(edge: GraphEdge): string {
-    const midX = (edge.fromX + edge.toX) / 2;
-    return `M ${edge.fromX} ${edge.fromY} C ${midX} ${edge.fromY}, ${midX} ${edge.toY}, ${edge.toX} ${edge.toY}`;
+    if (orientation === 'horizontal') {
+      const midX = (edge.fromX + edge.toX) / 2;
+      return `M ${edge.fromX} ${edge.fromY} C ${midX} ${edge.fromY}, ${midX} ${edge.toY}, ${edge.toX} ${edge.toY}`;
+    }
+    const midY = (edge.fromY + edge.toY) / 2;
+    return `M ${edge.fromX} ${edge.fromY} C ${edge.fromX} ${midY}, ${edge.toX} ${midY}, ${edge.toX} ${edge.toY}`;
   }
 </script>
 
@@ -115,6 +135,7 @@
         <!-- Nodes -->
         {#each layout.nodes as node (node.hash)}
           {@const color = laneColor(node.lane)}
+          {@const isVert = orientation === 'vertical'}
 
           <!-- HEAD glow ring -->
           {#if node.isHEAD}
@@ -136,14 +157,17 @@
             </circle>
           {/if}
 
-          <!-- Branch labels above node -->
+          <!-- Branch labels -->
           {#each node.branches as branch, bi (branch)}
             {@const isHeadBranch = node.isHEAD && headBranch === branch}
             {@const label = isHeadBranch ? `HEAD → ${branch}` : branch}
             {@const pillWidth = Math.max(label.length * 5.6 + 14, 36)}
+            {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - pillWidth / 2}
+            {@const ly = isVert ? node.y - 8 + bi * 18 : node.y - NODE_RADIUS - 22 - bi * 18}
+            {@const tx = isVert ? lx + pillWidth / 2 : node.x}
             <rect
-              x={node.x - pillWidth / 2}
-              y={node.y - NODE_RADIUS - 22 - bi * 18}
+              x={lx}
+              y={ly}
               width={pillWidth}
               height={16}
               rx={4}
@@ -151,8 +175,8 @@
               opacity={isHeadBranch ? 0.95 : 0.85}
             />
             <text
-              x={node.x}
-              y={node.y - NODE_RADIUS - 22 - bi * 18 + 11}
+              x={tx}
+              y={ly + 11}
               text-anchor="middle"
               font-family="monospace"
               font-size="9"
@@ -164,10 +188,14 @@
           <!-- Detached HEAD label -->
           {#if node.isHEAD && !headBranch}
             {@const pillWidth = 4 * 5.6 + 14}
-            {@const headY = node.y - NODE_RADIUS - 22 - node.branches.length * 18}
+            {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - pillWidth / 2}
+            {@const ly = isVert
+              ? node.y - 8 - 18
+              : node.y - NODE_RADIUS - 22 - node.branches.length * 18 - 13}
+            {@const tx = isVert ? lx + pillWidth / 2 : node.x}
             <rect
-              x={node.x - pillWidth / 2}
-              y={headY - 13}
+              x={lx}
+              y={ly}
               width={pillWidth}
               height={16}
               rx={4}
@@ -177,8 +205,8 @@
               stroke-dasharray="3 2"
             />
             <text
-              x={node.x}
-              y={headY - 1}
+              x={tx}
+              y={ly + 11}
               text-anchor="middle"
               font-family="monospace"
               font-size="9"
@@ -187,20 +215,18 @@
             >
           {/if}
 
-          <!-- Tag labels below node -->
+          <!-- Tag labels -->
           {#each node.tags ?? [] as tag, ti (tag)}
-            <rect
-              x={node.x - 20}
-              y={node.y + NODE_RADIUS + 4 + ti * 18}
-              width={40}
-              height={14}
-              rx={3}
-              fill="#f59e0b"
-              opacity="0.85"
-            />
+            {@const tagWidth = Math.max(tag.length * 4.8 + 10, 40)}
+            {@const lx = isVert ? node.x + NODE_RADIUS + 6 : node.x - tagWidth / 2}
+            {@const ly = isVert
+              ? node.y - 8 + (node.branches.length + ti) * 18 + (node.branches.length > 0 ? 4 : 0)
+              : node.y + NODE_RADIUS + 4 + ti * 18}
+            {@const tx = isVert ? lx + tagWidth / 2 : node.x}
+            <rect x={lx} y={ly} width={tagWidth} height={14} rx={3} fill="#f59e0b" opacity="0.85" />
             <text
-              x={node.x}
-              y={node.y + NODE_RADIUS + 4 + ti * 18 + 10}
+              x={tx}
+              y={ly + 10}
               text-anchor="middle"
               font-family="monospace"
               font-size="8"
@@ -239,7 +265,6 @@
     </svg>
   {/if}
 
-  <!-- Commit detail popover -->
   {#if selectedNode}
     <CommitDetail node={selectedNode} onclose={() => (selectedNode = null)} />
   {/if}
