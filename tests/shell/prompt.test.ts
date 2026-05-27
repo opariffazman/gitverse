@@ -1,0 +1,105 @@
+import { describe, it, expect, beforeEach } from 'vitest';
+import { GitEngine } from '$engine/index';
+import { generatePrompt, type PromptSegment } from '$shell/prompt';
+
+let engine: GitEngine;
+
+function segmentText(segments: PromptSegment[]): string {
+  return segments.map((s) => s.text).join('');
+}
+
+function segmentByText(segments: PromptSegment[], text: string): PromptSegment | undefined {
+  return segments.find((s) => s.text.includes(text));
+}
+
+beforeEach(() => {
+  engine = new GitEngine();
+});
+
+describe('prompt — clean state', () => {
+  it('shows repo name, branch icon, branch, and cursor', () => {
+    const segs = generatePrompt(engine);
+    const full = segmentText(segs);
+    expect(full).toContain('gitverse');
+    expect(full).toContain('');
+    expect(full).toContain('main');
+    expect(full).toContain('❯');
+  });
+
+  it('repo name is dim', () => {
+    const segs = generatePrompt(engine);
+    expect(segs[0].text).toBe('gitverse ');
+    expect(segs[0].color).toBe('dim');
+  });
+
+  it('branch icon is cyan', () => {
+    const segs = generatePrompt(engine);
+    const icon = segmentByText(segs, '');
+    expect(icon?.color).toBe('cyan');
+  });
+
+  it('branch name is green when clean', () => {
+    const segs = generatePrompt(engine);
+    const branch = segmentByText(segs, 'main');
+    expect(branch?.color).toBe('green');
+  });
+
+  it('no +N ~N ?N segments when clean', () => {
+    const segs = generatePrompt(engine);
+    const full = segmentText(segs);
+    expect(full).not.toMatch(/\+\d/);
+    expect(full).not.toMatch(/~\d/);
+    expect(full).not.toMatch(/\?\d/);
+  });
+});
+
+describe('prompt — dirty state', () => {
+  it('shows ?N for untracked files', () => {
+    engine.getVFS().createFile('new.txt', 'content');
+    const segs = generatePrompt(engine);
+    const untracked = segmentByText(segs, '?1');
+    expect(untracked).toBeDefined();
+    expect(untracked?.color).toBe('dim');
+  });
+
+  it('shows +N for staged files in green', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    engine.execute('git add a.txt');
+    const segs = generatePrompt(engine);
+    const staged = segmentByText(segs, '+1');
+    expect(staged).toBeDefined();
+    expect(staged?.color).toBe('green');
+  });
+
+  it('shows ~N for modified files in yellow', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    engine.execute('git add .');
+    engine.execute('git commit -m "init"');
+    engine.getVFS().createFile('a.txt', 'modified');
+    const segs = generatePrompt(engine);
+    const modified = segmentByText(segs, '~1');
+    expect(modified).toBeDefined();
+    expect(modified?.color).toBe('yellow');
+  });
+
+  it('branch name is yellow when dirty', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    const segs = generatePrompt(engine);
+    const branch = segmentByText(segs, 'main');
+    expect(branch?.color).toBe('yellow');
+  });
+});
+
+describe('prompt — detached HEAD', () => {
+  it('shows short hash in red when detached', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    engine.execute('git add .');
+    engine.execute('git commit -m "first"');
+    const commitHash = engine.log()[0].hash;
+    engine.execute('git checkout ' + commitHash);
+    const segs = generatePrompt(engine);
+    const hash = segmentByText(segs, commitHash.slice(0, 7));
+    expect(hash).toBeDefined();
+    expect(hash?.color).toBe('red');
+  });
+});

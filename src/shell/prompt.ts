@@ -2,28 +2,9 @@ import type { GitEngine } from '$engine/index';
 
 export type PromptSegment = {
   text: string;
-  color: 'dim' | 'green' | 'yellow' | 'red' | 'blue' | 'grey' | 'fg';
+  color: 'dim' | 'green' | 'yellow' | 'red' | 'blue' | 'grey' | 'fg' | 'cyan';
 };
 
-/**
- * Generate a powerlevel10k-style prompt as an array of colored segments.
- *
- * Layout:
- *   ~/gitverse  <branch>[ ✓| ✗][file counts]  $
- *
- * - `~/gitverse ` — always shown in dim
- * - ` ` — spacer in fg
- * - branch name:
- *     green  = attached HEAD, working tree clean
- *     yellow = attached HEAD, working tree dirty
- *     red    = detached HEAD
- * - ` ✓` (green) or ` ✗` (red) — clean/dirty indicator
- * - `[1A 2M 3?]` — file counts segment in grey (omitted when counts are all zero)
- *   - A = staged (added)
- *   - M = modified
- *   - ? = untracked
- * - ` $ ` — prompt character in fg
- */
 export function generatePrompt(engine: GitEngine): PromptSegment[] {
   const head = engine.getHEAD();
   const dirty = engine.isDirty();
@@ -31,49 +12,38 @@ export function generatePrompt(engine: GitEngine): PromptSegment[] {
   const modified = engine.getModifiedFiles();
   const untracked = engine.getUntrackedFiles();
 
-  // Determine branch display text and color
-  let branchText: string;
-  let branchColor: PromptSegment['color'];
-
-  if (!head.attached) {
-    // Detached HEAD — show short hash
-    branchText = head.target.slice(0, 7);
-    branchColor = 'red';
-  } else {
-    branchText = head.target;
-    branchColor = dirty ? 'yellow' : 'green';
-  }
-
   const segments: PromptSegment[] = [];
 
-  // Directory segment
-  segments.push({ text: '~/gitverse ', color: 'dim' });
+  // Repo name
+  segments.push({ text: 'gitverse ', color: 'dim' });
 
-  // Spacer
-  segments.push({ text: ' ', color: 'fg' });
+  // Branch icon (Nerd Font U+E0A0)
+  segments.push({ text: ' ', color: 'cyan' });
 
-  // Branch name
-  segments.push({ text: branchText, color: branchColor });
-
-  // Clean/dirty indicator
-  if (dirty) {
-    segments.push({ text: ' ✗', color: 'red' });
+  // Branch name or detached hash
+  if (!head.attached) {
+    segments.push({ text: head.target.slice(0, 7), color: 'red' });
   } else {
-    segments.push({ text: ' ✓', color: 'green' });
+    segments.push({ text: head.target, color: dirty ? 'yellow' : 'green' });
   }
 
-  // File counts — only shown when there is something to show
-  const counts: string[] = [];
-  if (staged.length > 0) counts.push(`${staged.length}A`);
-  if (modified.length > 0) counts.push(`${modified.length}M`);
-  if (untracked.length > 0) counts.push(`${untracked.length}?`);
-
-  if (counts.length > 0) {
-    segments.push({ text: ` [${counts.join(' ')}]`, color: 'grey' });
+  // Staged count
+  if (staged.length > 0) {
+    segments.push({ text: ' +' + staged.length, color: 'green' });
   }
 
-  // Prompt character
-  segments.push({ text: ' $ ', color: 'fg' });
+  // Modified count
+  if (modified.length > 0) {
+    segments.push({ text: ' ~' + modified.length, color: 'yellow' });
+  }
+
+  // Untracked count
+  if (untracked.length > 0) {
+    segments.push({ text: ' ?' + untracked.length, color: 'dim' });
+  }
+
+  // Cursor
+  segments.push({ text: ' ❯ ', color: 'cyan' });
 
   return segments;
 }
