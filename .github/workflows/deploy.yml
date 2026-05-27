@@ -6,6 +6,7 @@ on:
 
 jobs:
   deploy:
+    if: ${{ !contains(github.ref_name, '-rc') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
