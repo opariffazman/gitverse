@@ -1,14 +1,17 @@
 <script lang="ts">
   import { focusMode, toggleFocus } from '$store/ui';
   import Terminal from './Terminal.svelte';
+  import FilePanel from './FilePanel.svelte';
+  import MobileToolbar from './MobileToolbar.svelte';
+  import Graph from './Graph.svelte';
 
   const isTerminalFocused = $derived($focusMode === 'terminal');
 </script>
 
 <div class="relative w-full h-full overflow-hidden bg-terminal-bg">
   <!-- Background: graph layer -->
-  <div class="absolute inset-0 flex items-center justify-center">
-    <p class="font-mono text-terminal-dim text-lg select-none">Git Graph</p>
+  <div class="absolute inset-0 overflow-auto">
+    <Graph />
   </div>
 
   <!-- Foreground: terminal panel -->
@@ -28,6 +31,12 @@
         {isTerminalFocused ? '⇱ graph' : '⇲ terminal'}
       </button>
     </div>
+
+    <!-- File status panel -->
+    <FilePanel />
+
+    <!-- Mobile toolbar (hidden on md+) -->
+    <MobileToolbar />
 
     <!-- Terminal content -->
     <div class="flex-1 overflow-hidden">

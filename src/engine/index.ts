@@ -495,4 +495,45 @@ export class GitEngine {
       this.getStagedFiles().length > 0
     );
   }
+
+  // -------------------------------------------------------------------------
+  // Graph data accessors
+  // -------------------------------------------------------------------------
+
+  /**
+   * Returns all commits in the object store (not just those reachable from HEAD).
+   */
+  allCommits(): Commit[] {
+    return this.objects.allCommits();
+  }
+
+  /**
+   * Returns all branch names and their target commit hashes.
+   */
+  allBranches(): Map<string, string> {
+    const result = new Map<string, string>();
+    for (const name of this.refs.listBranches()) {
+      try {
+        result.set(name, this.refs.resolveBranch(name));
+      } catch {
+        // skip branches with empty/invalid targets
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns all tag names and their target commit hashes.
+   */
+  allTags(): Map<string, string> {
+    const result = new Map<string, string>();
+    for (const name of this.refs.listTags()) {
+      try {
+        result.set(name, this.refs.resolveTag(name));
+      } catch {
+        // skip
+      }
+    }
+    return result;
+  }
 }
