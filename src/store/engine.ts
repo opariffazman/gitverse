@@ -13,9 +13,26 @@ export type TerminalLine = {
   input?: string;
   output?: string;
   isError?: boolean;
+  color?: 'cyan' | 'dim';
 };
 
 let lineIdCounter = 0;
+
+const WELCOME_BANNER = `██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
+██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
+██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
+██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝
+╚██████╔╝██║   ██║    ╚████╔╝ ███████╗██║  ██║███████║███████╗
+ ╚═════╝ ╚═╝   ╚═╝     ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝`;
+
+const WELCOME_SUBTITLE = "interactive git sandbox — type 'help' for commands";
+
+function createInitialLines(): TerminalLine[] {
+  return [
+    { id: ++lineIdCounter, output: WELCOME_BANNER, color: 'cyan' },
+    { id: ++lineIdCounter, output: WELCOME_SUBTITLE, color: 'dim' },
+  ];
+}
 
 function createEngineStore() {
   const eng = new GitEngine();
@@ -25,7 +42,7 @@ function createEngineStore() {
 
 export const engine = createEngineStore();
 export const history = writable(new CommandHistory());
-export const terminalLines = writable<TerminalLine[]>([]);
+export const terminalLines = writable<TerminalLine[]>(createInitialLines());
 export const engineVersion = writable(0);
 
 export const prompt = derived(engine, ($engine) => {

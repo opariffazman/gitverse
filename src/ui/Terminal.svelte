@@ -171,8 +171,10 @@
     {:else if line.output !== undefined && line.output !== ''}
       <div
         class="leading-6 whitespace-pre-wrap break-all"
-        class:text-terminal-red={line.isError}
-        class:text-terminal-fg={!line.isError}
+        class:text-cyan-400={line.color === 'cyan'}
+        class:text-terminal-dim={line.color === 'dim'}
+        class:text-terminal-red={line.isError && !line.color}
+        class:text-terminal-fg={!line.isError && !line.color}
       >
         {line.output}
       </div>
