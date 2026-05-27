@@ -26,6 +26,7 @@ function createEngineStore() {
 export const engine = createEngineStore();
 export const history = writable(new CommandHistory());
 export const terminalLines = writable<TerminalLine[]>([]);
+export const engineVersion = writable(0);
 
 export const prompt = derived(engine, ($engine) => {
   return generatePrompt($engine);
@@ -74,6 +75,7 @@ export function executeCommand(command: string): void {
 
   // Notify engine store subscribers about possible state change
   engine.set(eng);
+  engineVersion.update((v) => v + 1);
 
   // Persist state asynchronously after every command
   autoSave(serialize(eng));

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { engine } from '$store/engine';
+  import { engine, engineVersion } from '$store/engine';
   import { computeLayout } from '$graph/layout';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
@@ -7,10 +7,12 @@
   // Lane colours cycling through 6 values
   const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
   const NODE_RADIUS = 12;
+  const GRAPH_PADDING = 40;
 
   // Derived layout from engine state
   const layout = $derived.by(() => {
     const eng = $engine;
+    void $engineVersion;
     const allCommits = eng.allCommits();
     if (allCommits.length === 0) {
       return { nodes: [], edges: [], width: 0, height: 0 };
@@ -81,95 +83,98 @@
     </div>
   {:else}
     <svg
-      width={layout.width}
-      height={layout.height}
+      width={layout.width + GRAPH_PADDING * 2}
+      height={layout.height + GRAPH_PADDING * 2}
       class="block"
       style="min-width: 100%; min-height: 100%;"
     >
-      <!-- Edges -->
-      {#each layout.edges as edge (edge.from + '→' + edge.to)}
-        {@const fromNode = layout.nodes.find((n) => n.hash === edge.from)}
-        <path
-          d={edgePath(edge)}
-          fill="none"
-          stroke={fromNode ? laneColor(fromNode.lane) : '#888'}
-          stroke-width="2"
-          opacity="0.6"
-        />
-      {/each}
-
-      <!-- Nodes -->
-      {#each layout.nodes as node (node.hash)}
-        {@const color = laneColor(node.lane)}
-        <!-- Branch labels above node -->
-        {#each node.branches as branch, bi (branch)}
-          <rect
-            x={node.x - 24}
-            y={node.y - NODE_RADIUS - 22 - bi * 18}
-            width={48}
-            height={16}
-            rx={4}
-            fill={color}
-            opacity="0.85"
+      <g transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
+        <!-- Edges -->
+        {#each layout.edges as edge (edge.from + '→' + edge.to)}
+          {@const fromNode = layout.nodes.find((n) => n.hash === edge.from)}
+          <path
+            d={edgePath(edge)}
+            fill="none"
+            stroke={fromNode ? laneColor(fromNode.lane) : '#888'}
+            stroke-width="2"
+            opacity="0.6"
           />
-          <text
-            x={node.x}
-            y={node.y - NODE_RADIUS - 22 - bi * 18 + 11}
-            text-anchor="middle"
-            font-family="monospace"
-            font-size="9"
-            fill="#0d1117">{branch}</text
-          >
         {/each}
 
-        <!-- Tag labels below node -->
-        {#each node.tags ?? [] as tag, ti (tag)}
-          <rect
-            x={node.x - 20}
-            y={node.y + NODE_RADIUS + 4 + ti * 18}
-            width={40}
-            height={14}
-            rx={3}
-            fill="#f59e0b"
-            opacity="0.85"
+        <!-- Nodes -->
+        {#each layout.nodes as node (node.hash)}
+          {@const color = laneColor(node.lane)}
+          <!-- Branch labels above node -->
+          {#each node.branches as branch, bi (branch)}
+            {@const pillWidth = Math.max(branch.length * 5.6 + 14, 36)}
+            <rect
+              x={node.x - pillWidth / 2}
+              y={node.y - NODE_RADIUS - 22 - bi * 18}
+              width={pillWidth}
+              height={16}
+              rx={4}
+              fill={color}
+              opacity="0.85"
+            />
+            <text
+              x={node.x}
+              y={node.y - NODE_RADIUS - 22 - bi * 18 + 11}
+              text-anchor="middle"
+              font-family="monospace"
+              font-size="9"
+              fill="#0d1117">{branch}</text
+            >
+          {/each}
+
+          <!-- Tag labels below node -->
+          {#each node.tags ?? [] as tag, ti (tag)}
+            <rect
+              x={node.x - 20}
+              y={node.y + NODE_RADIUS + 4 + ti * 18}
+              width={40}
+              height={14}
+              rx={3}
+              fill="#f59e0b"
+              opacity="0.85"
+            />
+            <text
+              x={node.x}
+              y={node.y + NODE_RADIUS + 4 + ti * 18 + 10}
+              text-anchor="middle"
+              font-family="monospace"
+              font-size="8"
+              fill="#0d1117">{tag}</text
+            >
+          {/each}
+
+          <!-- Commit circle -->
+          <circle
+            cx={node.x}
+            cy={node.y}
+            r={NODE_RADIUS}
+            fill={color}
+            stroke={node.isHEAD ? '#ffffff' : color}
+            stroke-width={node.isHEAD ? 3 : 1}
+            style="cursor: pointer;"
+            onclick={() => selectNode(node)}
+            role="button"
+            tabindex="0"
+            aria-label={`Commit ${node.hash}: ${node.message}`}
+            onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
           />
+
+          <!-- Short hash label inside circle -->
           <text
             x={node.x}
-            y={node.y + NODE_RADIUS + 4 + ti * 18 + 10}
+            y={node.y + 4}
             text-anchor="middle"
             font-family="monospace"
             font-size="8"
-            fill="#0d1117">{tag}</text
+            fill="#0d1117"
+            pointer-events="none">{node.hash.slice(0, 4)}</text
           >
         {/each}
-
-        <!-- Commit circle -->
-        <circle
-          cx={node.x}
-          cy={node.y}
-          r={NODE_RADIUS}
-          fill={color}
-          stroke={node.isHEAD ? '#ffffff' : color}
-          stroke-width={node.isHEAD ? 3 : 1}
-          style="cursor: pointer;"
-          onclick={() => selectNode(node)}
-          role="button"
-          tabindex="0"
-          aria-label={`Commit ${node.hash}: ${node.message}`}
-          onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
-        />
-
-        <!-- Short hash label inside circle -->
-        <text
-          x={node.x}
-          y={node.y + 4}
-          text-anchor="middle"
-          font-family="monospace"
-          font-size="8"
-          fill="#0d1117"
-          pointer-events="none">{node.hash.slice(0, 4)}</text
-        >
-      {/each}
+      </g>
     </svg>
   {/if}
 
