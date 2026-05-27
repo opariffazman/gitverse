@@ -19,10 +19,12 @@ export type LayoutResult = {
  * Algorithm:
  * 1. Topological sort (parents before children via Kahn's algorithm on reversed edges).
  * 2. X position: (topoIndex + 1) * NODE_SPACING_X.
- * 3. Lane assignment: inherit parent lane when parent has no other children,
- *    else assign next free lane.
- * 4. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
- * 5. Generate edges from each node to each of its parents.
+ * 3. Branch membership: walk backward from branch tips to assign commits
+ *    to branches. Main/master gets priority.
+ * 4. Lane assignment: inherit parent lane only when on the same branch.
+ *    Different branch always gets a new lane.
+ * 5. Y position: lane * LANE_SPACING_Y + LANE_SPACING_Y.
+ * 6. Generate edges from each node to each of its parents.
  */
 export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
   if (inputNodes.length === 0) {
@@ -85,8 +87,34 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
     if (!topoOrder.includes(hash)) topoOrder.push(hash);
   }
 
+  // --- Branch membership ---
+  // Walk backward from each branch tip to assign commits to branches.
+  // Main/master processed first so they claim the primary lane.
+  const branchTips = new Map<string, string>();
+  for (const n of nodeMap.values()) {
+    for (const b of n.branches) {
+      branchTips.set(b, n.hash);
+    }
+  }
+
+  const branchOrder = [...branchTips.keys()].sort((a, b) => {
+    if (a === 'main' || a === 'master') return -1;
+    if (b === 'main' || b === 'master') return 1;
+    return a.localeCompare(b);
+  });
+
+  const commitBranch = new Map<string, string>();
+  for (const branch of branchOrder) {
+    let current: string | undefined = branchTips.get(branch);
+    while (current && nodeMap.has(current) && !commitBranch.has(current)) {
+      commitBranch.set(current, branch);
+      current = nodeMap.get(current)!.parents[0];
+    }
+  }
+
   // --- Lane assignment ---
-  // Track how many children each node has been assigned to (for lane inheritance)
+  // Inherit parent lane only when on the same branch and parent hasn't
+  // already given its lane to another child. Different branch = new lane.
   const childCountAssigned = new Map<string, number>();
   const laneOf = new Map<string, number>();
   let nextLane = 0;
@@ -94,31 +122,29 @@ export function computeLayout(inputNodes: GraphNode[]): LayoutResult {
   for (const hash of topoOrder) {
     const node = nodeMap.get(hash)!;
     const validParents = node.parents.filter((p) => nodeMap.has(p));
+    const myBranch = commitBranch.get(hash);
 
     let assignedLane: number;
 
     if (validParents.length === 0) {
-      // Root commit: assign next available lane
       assignedLane = nextLane++;
     } else {
-      // Try to inherit lane from first parent if that parent hasn't been
-      // used to assign a lane to another child yet.
       const firstParent = validParents[0];
       const parentLane = laneOf.get(firstParent);
+      const parentBranch = commitBranch.get(firstParent);
       const parentChildCount = childCountAssigned.get(firstParent) ?? 0;
+      const sameBranch = myBranch === parentBranch;
 
-      if (parentChildCount === 0 && parentLane !== undefined) {
-        // Inherit parent's lane
+      if (parentChildCount === 0 && parentLane !== undefined && sameBranch) {
         assignedLane = parentLane;
       } else {
-        // Need a new lane
         assignedLane = nextLane++;
       }
 
-      // Increment child count for first parent
-      childCountAssigned.set(firstParent, parentChildCount + 1);
+      if (sameBranch) {
+        childCountAssigned.set(firstParent, parentChildCount + 1);
+      }
 
-      // Also increment for other parents (they still count as used)
       for (let i = 1; i < validParents.length; i++) {
         const p = validParents[i];
         childCountAssigned.set(p, (childCountAssigned.get(p) ?? 0) + 1);
