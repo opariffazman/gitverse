@@ -2,7 +2,7 @@
 
 Browser-based git sandbox. Live DAG visualization. Full three-area model (working dir → staging index → committed tree). Virtual file system, interactive SVG graph. No tutorials, no levels — pure sandbox.
 
-**Stack:** Svelte 5 · TypeScript (strict) · UnoCSS · d3-dag · Vite · Cloudflare Workers
+**Stack:** Svelte 5 · TypeScript (strict) · UnoCSS · d3-dag · Vite · GitHub Pages
 
 ## What It Does
 
@@ -22,12 +22,12 @@ Engine (pure TS) ← Shell (router) ← Renderer (Svelte 5)
 
 17 commands implemented:
 
-| Category | Commands |
-|----------|----------|
-| Core | `git init` `git add` `git commit` `git status` `git log` `git diff` |
-| Branch | `git branch` `git checkout` `git switch` |
+| Category | Commands                                                                                  |
+| -------- | ----------------------------------------------------------------------------------------- |
+| Core     | `git init` `git add` `git commit` `git status` `git log` `git diff`                       |
+| Branch   | `git branch` `git checkout` `git switch`                                                  |
 | Advanced | `git merge` `git rebase` `git reset` `git stash` `git tag` `git cherry-pick` `git revert` |
-| File | `git rm` `git mv` |
+| File     | `git rm` `git mv`                                                                         |
 
 File builtins: `ls` `cat` `touch` `rm` `mv` `clear` `help` `sim change`
 
@@ -112,17 +112,17 @@ tests/
 
 ## Tech
 
-| Layer | Choice | Version |
-|-------|--------|---------|
-| Framework | Svelte 5 | 5.55.9 |
-| Language | TypeScript (strict) | 6.0.3 |
-| Styling | UnoCSS | 66.7.0 |
-| Visualization | SVG + d3-dag | 1.2.1 |
-| Build | Vite | 8.0.14 |
-| PWA | vite-plugin-pwa | 1.3.0 |
-| Testing | Vitest + Playwright | 4.1.7 / 1.60.0 |
-| Deploy | GitHub Pages | actions v4 |
-| Storage | IndexedDB (idb-keyval) | 6.2.4 |
+| Layer         | Choice                 | Version        |
+| ------------- | ---------------------- | -------------- |
+| Framework     | Svelte 5               | 5.55.9         |
+| Language      | TypeScript (strict)    | 6.0.3          |
+| Styling       | UnoCSS                 | 66.7.0         |
+| Visualization | SVG + d3-dag           | 1.2.1          |
+| Build         | Vite                   | 8.0.14         |
+| PWA           | vite-plugin-pwa        | 1.3.0          |
+| Testing       | Vitest + Playwright    | 4.1.7 / 1.60.0 |
+| Deploy        | GitHub Pages           | actions v4     |
+| Storage       | IndexedDB (idb-keyval) | 6.2.4          |
 
 ## Deploy
 
@@ -131,6 +131,7 @@ Runs on GitHub Pages. Deployed automatically via CI.
 **Setup:** enable GitHub Pages on repo → source: `gh-pages` branch.
 
 CI/CD:
+
 - **ci.yml** — lint + typecheck + test on every push/PR
 - **preview.yml** — PR preview deploy to GitHub Pages (`/pr-preview/pr-N/`), auto-cleanup on close
 - **release.yml** — RC → stable version bump + tag push on PR merge
@@ -138,14 +139,14 @@ CI/CD:
 
 ## Numbers
 
-| Metric | Count |
-|--------|-------|
-| Source lines | ~4,800 |
-| Test lines | ~3,500 |
-| Git commands | 17 |
-| File builtins | 8 |
-| Svelte components | 5 |
-| Total commits | 64 |
+| Metric            | Count  |
+| ----------------- | ------ |
+| Source lines      | ~4,800 |
+| Test lines        | ~3,500 |
+| Git commands      | 17     |
+| File builtins     | 8      |
+| Svelte components | 5      |
+| Total commits     | 64     |
 
 ## License
 

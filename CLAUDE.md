@@ -18,17 +18,17 @@ Engine emits state → Renderer subscribes. Shell dispatches → Engine processe
 
 ## Tech Stack
 
-| Layer         | Choice                   | Version         |
-| ------------- | ------------------------ | --------------- |
-| Framework     | Svelte 5                 | 5.55.9          |
-| Language      | TypeScript (strict)      | 6.0.3           |
-| Styling       | UnoCSS                   | 66.7.0          |
-| Visualization | SVG + d3-dag             | 1.2.1           |
-| Build         | Vite                     | 8.0.14          |
-| PWA           | vite-plugin-pwa          | 1.3.0           |
-| Testing       | Vitest + Playwright      | 4.1.7 / 1.60.0  |
-| Deploy        | GitHub Pages             | actions v4      |
-| Storage       | IndexedDB via idb-keyval | 6.2.4           |
+| Layer         | Choice                   | Version        |
+| ------------- | ------------------------ | -------------- |
+| Framework     | Svelte 5                 | 5.55.9         |
+| Language      | TypeScript (strict)      | 6.0.3          |
+| Styling       | UnoCSS                   | 66.7.0         |
+| Visualization | SVG + d3-dag             | 1.2.1          |
+| Build         | Vite                     | 8.0.14         |
+| PWA           | vite-plugin-pwa          | 1.3.0          |
+| Testing       | Vitest + Playwright      | 4.1.7 / 1.60.0 |
+| Deploy        | GitHub Pages             | actions v4     |
+| Storage       | IndexedDB via idb-keyval | 6.2.4          |
 
 ## Commands
 
