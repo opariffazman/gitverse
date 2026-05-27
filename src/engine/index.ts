@@ -157,7 +157,7 @@ export class GitEngine {
 
     switch (command) {
       case 'add':
-        result = cmdAdd(args, opts, this.vfs, this.objects, this.index);
+        result = cmdAdd(args, opts, this.vfs, this.objects, this.index, this.getCommittedTree());
         break;
 
       case 'commit':
