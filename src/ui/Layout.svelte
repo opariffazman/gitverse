@@ -6,18 +6,6 @@
   import Graph from './Graph.svelte';
 
   const isTerminalFocused = $derived($focusMode === 'terminal');
-
-  let keyboardOffset = $state(0);
-
-  $effect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    function onResize() {
-      keyboardOffset = window.innerHeight - vv!.height;
-    }
-    vv.addEventListener('resize', onResize);
-    return () => vv.removeEventListener('resize', onResize);
-  });
 </script>
 
 <div class="relative w-full h-full overflow-hidden bg-terminal-bg">
@@ -31,7 +19,7 @@
     class="absolute terminal-panel flex flex-col transition-all duration-300 ease-in-out"
     class:terminal-focused={isTerminalFocused}
     class:graph-focused={!isTerminalFocused}
-    style="background-color: rgba(13, 17, 23, {$terminalOpacity}); --kb-offset: {keyboardOffset}px"
+    style="background-color: rgba(13, 17, 23, {$terminalOpacity})"
   >
     <!-- Terminal title bar -->
     <div class="flex items-center justify-between px-3 py-2 border-b border-terminal-dim/30">
@@ -94,7 +82,7 @@
       top: 2%;
       left: 5%;
       right: 5%;
-      bottom: calc(2% + var(--kb-offset, 0px));
+      bottom: 2%;
     }
 
     .graph-focused {
