@@ -85,7 +85,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 
   // --- top-level command completion ---
   if (!trimmed.includes(' ')) {
-    const allCommands = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help', 'sim'];
+    const allCommands = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help'];
     return allCommands.filter((c) => c.startsWith(trimmed) && c !== trimmed);
   }
 

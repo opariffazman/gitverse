@@ -81,11 +81,10 @@ describe('parseInput – builtins', () => {
     expect(parseInput('help')).toEqual({ type: 'builtin', command: 'help', args: [] });
   });
 
-  it('sim change file', () => {
+  it('sim is now unknown', () => {
     expect(parseInput('sim change readme.txt')).toEqual({
-      type: 'builtin',
+      type: 'unknown',
       command: 'sim',
-      args: ['change', 'readme.txt'],
     });
   });
 
