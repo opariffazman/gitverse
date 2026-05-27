@@ -11,6 +11,7 @@ import { cmdLog } from './commands/log';
 import { cmdDiff } from './commands/diff';
 import { cmdBranch } from './commands/branch';
 import { cmdCheckout } from './commands/checkout';
+import { cmdMerge } from './commands/merge';
 
 // ---------------------------------------------------------------------------
 // Command parsing
@@ -201,6 +202,17 @@ export class GitEngine {
       case 'checkout':
       case 'switch':
         result = cmdCheckout(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+        );
+        break;
+
+      case 'merge':
+        result = cmdMerge(
           args,
           opts,
           this.refs,
