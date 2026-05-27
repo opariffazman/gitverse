@@ -1,7 +1,7 @@
 import type { GraphNode, GraphEdge } from './types';
 
-export const NODE_SPACING_X = 120;
-export const LANE_SPACING_Y = 80;
+export const NODE_SPACING_X = 168;
+export const LANE_SPACING_Y = 112;
 
 export type Orientation = 'horizontal' | 'vertical';
 
