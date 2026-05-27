@@ -27,6 +27,7 @@
     })();
 
     // Build commit → branches map
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const branchMap = new Map<string, string[]>();
     for (const [name, hash] of eng.allBranches()) {
       if (!hash) continue;
@@ -34,6 +35,7 @@
     }
 
     // Build commit → tags map
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity
     const tagMap = new Map<string, string[]>();
     for (const [name, hash] of eng.allTags()) {
       if (!hash) continue;
