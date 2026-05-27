@@ -46,6 +46,21 @@ describe('GitEngine – git add & commit', () => {
     expect(staged).toContain('b.txt');
   });
 
+  it('git add . returns empty output', () => {
+    engine.getVFS().createFile('a.txt', 'aaa');
+    engine.getVFS().createFile('b.txt', 'bbb');
+    const result = engine.execute('git add .');
+    expect(result.output).toBe('');
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('git add <file> returns empty output', () => {
+    engine.getVFS().createFile('c.txt', 'ccc');
+    const result = engine.execute('git add c.txt');
+    expect(result.output).toBe('');
+    expect(result.exitCode).toBe(0);
+  });
+
   it('commit creates a commit and advances HEAD', () => {
     engine.getVFS().createFile('readme.md', '# hello');
     engine.execute('git add readme.md');
