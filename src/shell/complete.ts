@@ -8,6 +8,7 @@ const GIT_SUBCOMMANDS = [
   'cherry-pick',
   'commit',
   'diff',
+  'init',
   'log',
   'merge',
   'mv',
@@ -40,6 +41,24 @@ const FILE_SUBCOMMANDS = new Set(['add', 'rm', 'mv', 'diff', 'cat', 'touch']);
  */
 export function getCompletions(input: string, engine: GitEngine): string[] {
   const trimmed = input;
+  const tokens = trimmed.split(' ').filter((t) => t.length > 0);
+  const partial = tokens.length > 0 ? tokens[tokens.length - 1] : '';
+
+  // --- pre-init filter: only allow builtins + git init ---
+  if (!engine.isInitialized()) {
+    const TOP_LEVEL_PREINIT = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help'];
+    if (tokens.length <= 1) {
+      return TOP_LEVEL_PREINIT.filter((c) => c.startsWith(partial)).map((c) => c + ' ');
+    }
+    if (tokens[0] === 'git') {
+      const gitPartial = tokens[1] || '';
+      return ['init'].filter((c) => c.startsWith(gitPartial)).map((c) => `git ${c} `);
+    }
+    if (FILE_SUBCOMMANDS.has(tokens[0])) {
+      return completeFilePaths(engine, tokens[0] + ' ', tokens[tokens.length - 1] || '');
+    }
+    return [];
+  }
 
   // --- git completions ---
   if (trimmed === 'git') {

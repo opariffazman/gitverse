@@ -8,6 +8,7 @@ import { GitEngine } from '$engine/index';
 /** Create engine with one commit on main so HEAD resolves to a real commit. */
 function engineWithCommit(): { engine: GitEngine; commitHash: string } {
   const engine = new GitEngine();
+  engine.execute('git init');
   engine.getVFS().createFile('readme.md', '# hello');
   engine.execute('git add readme.md');
   engine.execute('git commit -m "initial"');
@@ -70,6 +71,7 @@ describe('git branch – create', () => {
 
   it('cannot create a branch without any commits', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git branch feature');
     expect(result.exitCode).not.toBe(0);
   });
@@ -187,6 +189,7 @@ describe('git checkout – restores working directory', () => {
     // (single-parent linear history), we test that WD/index is restored to
     // the target branch's commit tree.
     const engine = new GitEngine();
+    engine.execute('git init');
 
     // Commit A on main: only file-a.txt
     engine.getVFS().createFile('file-a.txt', 'content-a');
@@ -213,6 +216,7 @@ describe('git checkout – restores working directory', () => {
 
   it('index is reset to match target commit tree on checkout', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     engine.getVFS().createFile('file-a.txt', 'content-a');
     engine.execute('git add file-a.txt');
@@ -233,6 +237,7 @@ describe('git checkout – restores working directory', () => {
 
   it('files from target branch appear after checkout', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     // Commit on main
     engine.getVFS().createFile('main-file.txt', 'main');

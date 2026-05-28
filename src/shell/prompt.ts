@@ -6,6 +6,13 @@ export type PromptSegment = {
 };
 
 export function generatePrompt(engine: GitEngine): PromptSegment[] {
+  if (!engine.isInitialized()) {
+    return [
+      { text: 'gitverse ', color: 'dim' },
+      { text: '❯ ', color: 'cyan' },
+    ];
+  }
+
   const head = engine.getHEAD();
   const dirty = engine.isDirty();
   const staged = engine.getStagedFiles();

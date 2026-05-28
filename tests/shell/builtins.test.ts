@@ -7,6 +7,7 @@ let engine: GitEngine;
 
 beforeEach(() => {
   engine = new GitEngine();
+  engine.execute('git init');
 });
 
 describe('ls', () => {
@@ -37,6 +38,49 @@ describe('ls', () => {
     const r = executeBuiltin(engine, 'ls', ['nonexistent']);
     expect(r.exitCode).toBe(0);
     expect(r.output).toBe('');
+  });
+
+  it('hides dotfiles by default', () => {
+    engine.getVFS().createDir('.git');
+    engine.getVFS().createFile('readme.md', '# hello');
+    const result = executeBuiltin(engine, 'ls', []);
+    expect(result.output).not.toContain('.git');
+    expect(result.output).toContain('readme.md');
+  });
+
+  it('shows dotfiles with -a flag', () => {
+    engine.getVFS().createDir('.git');
+    engine.getVFS().createFile('readme.md', '# hello');
+    const result = executeBuiltin(engine, 'ls', ['-a']);
+    expect(result.output).toContain('.git');
+    expect(result.output).toContain('readme.md');
+  });
+
+  it('shows long format with -l flag', () => {
+    engine.getVFS().createDir('src');
+    engine.getVFS().createFile('readme.md', '# hello');
+    const result = executeBuiltin(engine, 'ls', ['-l']);
+    expect(result.output).toContain('drwxr-xr-x');
+    expect(result.output).toContain('-rw-r--r--');
+    expect(result.output).toContain('src/');
+    expect(result.output).toContain('readme.md');
+  });
+
+  it('combines -la flags', () => {
+    engine.getVFS().createDir('.git');
+    engine.getVFS().createFile('readme.md', '# hello');
+    const result = executeBuiltin(engine, 'ls', ['-la']);
+    expect(result.output).toContain('.git');
+    expect(result.output).toContain('drwxr-xr-x');
+    expect(result.output).toContain('-rw-r--r--');
+  });
+
+  it('handles separate -l -a flags', () => {
+    engine.getVFS().createDir('.git');
+    engine.getVFS().createFile('readme.md', '# hello');
+    const result = executeBuiltin(engine, 'ls', ['-l', '-a']);
+    expect(result.output).toContain('.git');
+    expect(result.output).toContain('drwxr-xr-x');
   });
 });
 
@@ -111,6 +155,13 @@ describe('rm', () => {
     const r = executeBuiltin(engine, 'rm', ['bye.txt']);
     expect(r.exitCode).toBe(0);
     expect(engine.getVFS().exists('bye.txt')).toBe(false);
+  });
+
+  it('refuses to delete .git directory', () => {
+    engine.getVFS().createDir('.git');
+    const result = executeBuiltin(engine, 'rm', ['.git/']);
+    expect(result.exitCode).toBe(1);
+    expect(engine.getVFS().exists('.git/')).toBe(true);
   });
 });
 

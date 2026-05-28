@@ -15,8 +15,8 @@ export class RefStore {
   private tags: Map<string, string>; // name -> commit hash
 
   constructor() {
-    this.head = { attached: true, target: 'main' };
-    this.branches = new Map([['main', '']]);
+    this.head = { attached: false, target: '' };
+    this.branches = new Map();
     this.tags = new Map();
   }
 

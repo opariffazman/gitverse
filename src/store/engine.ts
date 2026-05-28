@@ -18,20 +18,16 @@ export type TerminalLine = {
 
 let lineIdCounter = 0;
 
-const WELCOME_BANNER = `██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
-██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
-██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
-██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝
-╚██████╔╝██║   ██║    ╚████╔╝ ███████╗██║  ██║███████║███████╗
- ╚═════╝ ╚═╝   ╚═╝     ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝`;
-
-const WELCOME_SUBTITLE = "interactive git sandbox — type 'help' for commands";
+const WELCOME_BANNER = `┌─────────────────────────────────────┐
+│         Welcome to Gitverse         │
+│     A browser-based git sandbox     │
+│                                     │
+│     Type 'git init' to begin        │
+│     Type 'help' for commands        │
+└─────────────────────────────────────┘`;
 
 function createInitialLines(): TerminalLine[] {
-  return [
-    { id: ++lineIdCounter, output: WELCOME_BANNER, color: 'cyan' },
-    { id: ++lineIdCounter, output: WELCOME_SUBTITLE, color: 'dim' },
-  ];
+  return [{ id: ++lineIdCounter, output: WELCOME_BANNER, color: 'cyan' }];
 }
 
 function createEngineStore() {

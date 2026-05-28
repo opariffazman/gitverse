@@ -7,6 +7,7 @@ import { GitEngine } from '$engine/index';
 
 function engineWithBase(): GitEngine {
   const engine = new GitEngine();
+  engine.execute('git init');
   engine.getVFS().createFile('base.txt', 'base content');
   engine.execute('git add base.txt');
   engine.execute('git commit -m "base"');
@@ -258,6 +259,7 @@ describe('git cherry-pick', () => {
 
   it('target commit entries override HEAD entries on collision', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     // Base with shared.txt = "original"
     engine.getVFS().createFile('shared.txt', 'original');
@@ -361,6 +363,7 @@ describe('git revert', () => {
 
   it('revert restores content changed by the target commit', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     // Initial: shared.txt = "original"
     engine.getVFS().createFile('shared.txt', 'original');

@@ -10,6 +10,7 @@ import { GitEngine } from '$engine/index';
  */
 function engineWithCommit(): GitEngine {
   const engine = new GitEngine();
+  engine.execute('git init');
   engine.getVFS().createFile('readme.md', '# hello');
   engine.execute('git add readme.md');
   engine.execute('git commit -m "initial"');
@@ -93,6 +94,7 @@ describe('git merge – fast-forward', () => {
 describe('git merge – three-way', () => {
   it('creates a merge commit with two parents', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     // Commit A: base
     engine.getVFS().createFile('base.txt', 'base content');
@@ -127,6 +129,7 @@ describe('git merge – three-way', () => {
 
   it('merge commit message mentions the merged branch', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     engine.getVFS().createFile('base.txt', 'base');
     engine.execute('git add base.txt');
@@ -152,6 +155,7 @@ describe('git merge – three-way', () => {
 
   it('merged tree includes files from both branches', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     engine.getVFS().createFile('shared.txt', 'shared');
     engine.execute('git add shared.txt');
@@ -177,6 +181,7 @@ describe('git merge – three-way', () => {
 
   it('HEAD advances to merge commit after three-way merge', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');
@@ -205,6 +210,7 @@ describe('git merge – three-way', () => {
 
   it('index and VFS are clean after three-way merge', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
 
     engine.getVFS().createFile('a.txt', 'a');
     engine.execute('git add a.txt');

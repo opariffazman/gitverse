@@ -21,6 +21,7 @@ import { cmdMv } from './commands/mv';
 import { cmdRebase } from './commands/rebase';
 import { cmdCherryPick } from './commands/cherry-pick';
 import { cmdRevert } from './commands/revert';
+import { cmdInit } from './commands/init';
 
 // ---------------------------------------------------------------------------
 // Command parsing
@@ -111,6 +112,7 @@ export class GitEngine {
   private listeners: Set<() => void>;
   /** Stash stack (LIFO). Index 0 is the most recent entry. */
   stashStack: StashEntry[];
+  private initialized = false;
 
   constructor() {
     this.vfs = new VirtualFileSystem();
@@ -119,6 +121,18 @@ export class GitEngine {
     this.index = new Map();
     this.listeners = new Set();
     this.stashStack = [];
+  }
+
+  // -------------------------------------------------------------------------
+  // Initialization state
+  // -------------------------------------------------------------------------
+
+  isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  setInitialized(value: boolean): void {
+    this.initialized = value;
   }
 
   // -------------------------------------------------------------------------
@@ -153,9 +167,23 @@ export class GitEngine {
   execute(input: string): CommandResult {
     const { command, args, opts } = parseGitCommand(input.trim());
 
+    if (command !== 'init' && !this.initialized) {
+      return {
+        output: 'fatal: not a git repository (or any of the parent directories): .git',
+        exitCode: 1,
+      };
+    }
+
     let result: CommandResult;
 
     switch (command) {
+      case 'init':
+        result = cmdInit(this);
+        if (result.exitCode === 0 && !this.refs.hasBranch('main')) {
+          this.refs.createBranch('main', '');
+          this.refs.attachHEAD('main');
+        }
+        break;
       case 'add':
         result = cmdAdd(args, opts, this.vfs, this.objects, this.index, this.getCommittedTree());
         break;

@@ -14,6 +14,7 @@ function segmentByText(segments: PromptSegment[], text: string): PromptSegment |
 
 beforeEach(() => {
   engine = new GitEngine();
+  engine.execute('git init');
 });
 
 describe('prompt — clean state', () => {
@@ -101,6 +102,25 @@ describe('prompt — detached HEAD', () => {
     const hash = segmentByText(segs, commitHash.slice(0, 7));
     expect(hash).toBeDefined();
     expect(hash?.color).toBe('red');
+  });
+});
+
+describe('uninitialized state', () => {
+  it('shows no branch segment when uninitialized', () => {
+    const engine = new GitEngine();
+    const segments = generatePrompt(engine);
+    const text = segmentText(segments);
+    expect(text).not.toContain('main');
+    expect(text).toContain('gitverse');
+    expect(text).toContain('❯');
+  });
+
+  it('shows branch after init', () => {
+    const engine = new GitEngine();
+    engine.execute('git init');
+    const segments = generatePrompt(engine);
+    const text = segmentText(segments);
+    expect(text).toContain('main');
   });
 });
 

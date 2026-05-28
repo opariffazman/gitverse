@@ -11,6 +11,7 @@ describe('git log – empty repository', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('returns a message when there are no commits', () => {
@@ -31,6 +32,7 @@ describe('git log – full format (default)', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'alpha');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "first commit"');
@@ -74,6 +76,7 @@ describe('git log – --oneline format', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'alpha');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "first commit"');
@@ -119,6 +122,7 @@ describe('git log – branch decorations', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
     engine.getVFS().createFile('a.txt', 'alpha');
     engine.execute('git add a.txt');
     engine.execute('git commit -m "initial"');
@@ -203,6 +207,7 @@ describe('git diff – working directory vs index/committed', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('shows nothing when working tree is clean', () => {
@@ -241,6 +246,7 @@ describe('git diff --staged / --cached', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('shows nothing when nothing is staged', () => {

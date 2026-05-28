@@ -6,6 +6,7 @@ describe('GitEngine – initial state', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('starts on the main branch (attached HEAD)', () => {
@@ -28,6 +29,7 @@ describe('GitEngine – git add & commit', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('stages a specific file and shows it in getStagedFiles', () => {
@@ -118,6 +120,7 @@ describe('GitEngine – git status output', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('shows untracked files', () => {
@@ -167,6 +170,7 @@ describe('GitEngine – file state helpers', () => {
 
   beforeEach(() => {
     engine = new GitEngine();
+    engine.execute('git init');
   });
 
   it('getUntrackedFiles returns files not in index', () => {
@@ -212,6 +216,7 @@ describe('GitEngine – file state helpers', () => {
 describe('GitEngine – subscribe notifications', () => {
   it('fires listener on add', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const listener = vi.fn();
     engine.subscribe(listener);
     engine.getVFS().createFile('a.txt', 'a');
@@ -221,6 +226,7 @@ describe('GitEngine – subscribe notifications', () => {
 
   it('fires listener on commit', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const listener = vi.fn();
     engine.subscribe(listener);
     engine.getVFS().createFile('a.txt', 'a');
@@ -232,6 +238,7 @@ describe('GitEngine – subscribe notifications', () => {
 
   it('unsubscribe stops notifications', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const listener = vi.fn();
     const unsub = engine.subscribe(listener);
     unsub();
@@ -244,12 +251,14 @@ describe('GitEngine – subscribe notifications', () => {
 describe('GitEngine – unknown command', () => {
   it('returns non-zero exit code for unknown command', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git foobar');
     expect(result.exitCode).not.toBe(0);
   });
 
   it('returns error message for unknown command', () => {
     const engine = new GitEngine();
+    engine.execute('git init');
     const result = engine.execute('git foobar');
     expect(result.output).toMatch(/not a git command|unknown command/i);
   });

@@ -10,23 +10,24 @@ describe('RefStore', () => {
 
   // --- HEAD ---
 
-  it('starts with HEAD attached to main', () => {
+  it('starts with HEAD detached and empty target', () => {
     const head = store.getHEAD();
-    expect(head.attached).toBe(true);
-    expect(head.target).toBe('main');
+    expect(head.attached).toBe(false);
+    expect(head.target).toBe('');
   });
 
   it('getHEAD returns a copy, not the internal reference', () => {
     const head = store.getHEAD();
-    head.attached = false;
+    head.attached = true;
     head.target = 'tampered';
     const head2 = store.getHEAD();
-    expect(head2.attached).toBe(true);
-    expect(head2.target).toBe('main');
+    expect(head2.attached).toBe(false);
+    expect(head2.target).toBe('');
   });
 
   it('resolveHEAD follows attached branch to its commit hash', () => {
-    store.updateBranch('main', 'abc123');
+    store.createBranch('main', 'abc123');
+    store.attachHEAD('main');
     expect(store.resolveHEAD()).toBe('abc123');
   });
 
@@ -71,7 +72,7 @@ describe('RefStore', () => {
     store.createBranch('alpha', 'aaa');
     store.createBranch('beta', 'bbb');
     const branches = store.listBranches();
-    expect(branches).toEqual(['alpha', 'beta', 'main', 'zebra']);
+    expect(branches).toEqual(['alpha', 'beta', 'zebra']);
   });
 
   it('updateBranch changes the target commit', () => {
@@ -91,7 +92,8 @@ describe('RefStore', () => {
   });
 
   it('deleteBranch throws when deleting current attached branch', () => {
-    // HEAD is attached to 'main' by default
+    store.createBranch('main', 'abc');
+    store.attachHEAD('main');
     expect(() => store.deleteBranch('main')).toThrow();
   });
 

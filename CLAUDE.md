@@ -67,7 +67,7 @@ src/
 ├── shell/            # Command routing + builtins
 │   ├── parser.ts     # Input tokenization
 │   ├── router.ts     # Git vs builtin dispatch
-│   ├── builtins.ts   # ls, cat, touch, rm, mv, clear, help, sim
+│   ├── builtins.ts   # ls, cat, touch, rm, mv, clear, help
 │   ├── history.ts    # Command history
 │   ├── complete.ts   # Tab autocomplete
 │   └── prompt.ts     # Powerlevel10k-style prompt
