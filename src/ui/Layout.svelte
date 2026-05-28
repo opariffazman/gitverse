@@ -4,8 +4,18 @@
 </script>
 
 <div class="relative flex flex-col w-full h-full bg-terminal-bg">
+  <!-- Desktop: top-right -->
   <pre
-    class="absolute top-3 right-4 z-10 font-mono text-terminal-dim/40 text-xs leading-tight select-none pointer-events-none max-sm:hidden">{`
+    class="absolute top-3 right-4 z-10 font-mono text-terminal-dim/60 text-xs leading-tight select-none pointer-events-none max-sm:hidden">{`
+   ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
+  ██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
+  ██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
+  ██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝
+  ╚██████╔╝██║   ██║    ╚████╔╝ ███████╗██║  ██║███████║███████╗
+   ╚═════╝ ╚═╝   ╚═╝     ╚═══╝  ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝`.trim()}</pre>
+  <!-- Mobile: centered -->
+  <pre
+    class="absolute top-2 left-1/2 -translate-x-1/2 z-10 font-mono text-terminal-dim/60 text-[5px] leading-tight select-none pointer-events-none sm:hidden">{`
    ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
   ██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
   ██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
