@@ -63,17 +63,17 @@ resolveCommitLabel(label: string): string | null
 
 ### "Everywhere" — where labels appear
 
-| Location | Before | After |
-| --- | --- | --- |
-| Graph node circle | `node.hash.slice(0, 4)` | `C3` |
-| Detail panel headline | `node.hash.slice(0, 7)` | `C3` (with short hash shown small for reference) |
-| Detail panel parents | `parent.slice(0, 7)` | `C1, C2` |
-| `git log` (full) | `commit <full hash>` | `commit C3` |
-| `git log --oneline` | `<shortHash> <msg>` | `C3 <msg>` |
-| `commit` message | `[main 1a2b3c4] msg` | `[main C3] msg` |
-| `checkout` message | `HEAD is now at 1a2b3c4 …` | `HEAD is now at C3 …` |
-| `reset` message | short hash | `C3` |
-| `revert` / `cherry-pick` / `merge` messages | short hash | `C3` |
+| Location                                    | Before                     | After                                            |
+| ------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| Graph node circle                           | `node.hash.slice(0, 4)`    | `C3`                                             |
+| Detail panel headline                       | `node.hash.slice(0, 7)`    | `C3` (with short hash shown small for reference) |
+| Detail panel parents                        | `parent.slice(0, 7)`       | `C1, C2`                                         |
+| `git log` (full)                            | `commit <full hash>`       | `commit C3`                                      |
+| `git log --oneline`                         | `<shortHash> <msg>`        | `C3 <msg>`                                       |
+| `commit` message                            | `[main 1a2b3c4] msg`       | `[main C3] msg`                                  |
+| `checkout` message                          | `HEAD is now at 1a2b3c4 …` | `HEAD is now at C3 …`                            |
+| `reset` message                             | short hash                 | `C3`                                             |
+| `revert` / `cherry-pick` / `merge` messages | short hash                 | `C3`                                             |
 
 The graph node and detail headline need the label without an engine round-trip
 per render. The `Graph.svelte` layout builder will attach a `label` field to each
@@ -86,7 +86,7 @@ Because the terminal now shows `C3` instead of a hash, the user must be able to
 type `git checkout C3`, `git reset C3`, etc. The engine resolves C-labels to
 hashes **only at commit-ish argument positions**, so it never hijacks
 new-name arguments (e.g. `git branch C3` still creates a branch named `C3` if the
-user really wants — branch/tag *creation* names are not label-expanded).
+user really wants — branch/tag _creation_ names are not label-expanded).
 
 Approach: a single helper `GitEngine.expandCommitish(token: string): string` that
 returns the resolved hash if `token` is a C-label that resolves, else returns
@@ -98,7 +98,7 @@ returns the resolved hash if `token` is a C-label that resolves, else returns
 - `cherry-pick` — the commit(s).
 - `revert` — the commit(s).
 - `log` — a start ref argument, if present.
-- `branch <name> <start-point>` / `tag <name> <commit>` — the *start-point/target*
+- `branch <name> <start-point>` / `tag <name> <commit>` — the _start-point/target_
   arg only, never the new name.
 
 Real short/long hashes continue to work everywhere they did before; label
@@ -112,7 +112,7 @@ expansion is additive.
   insensitivity; unknown label → null.
 - Command tests updated to expect `C{n}` in output (log, checkout, reset, etc.).
 - New tests: `git checkout C2` and `git reset C1` resolve correctly; `git branch
-  C3` is **not** label-expanded (creates branch named `C3`).
+C3` is **not** label-expanded (creates branch named `C3`).
 
 ---
 
@@ -192,25 +192,25 @@ A small button in the **top-left** corner (the logo occupies top-right on deskto
 
 ## File change summary
 
-| File | Change |
-| --- | --- |
-| `src/engine/objects.ts` | `commitOrdinal(hash)` |
-| `src/engine/index.ts` | `commitLabel`, `resolveCommitLabel`, `expandCommitish`; apply expansion in dispatch/commands |
-| `src/engine/commands/log.ts` | headline uses label |
-| `src/engine/commands/checkout.ts` | message uses label; expand target |
-| `src/engine/commands/reset.ts` | message uses label; expand target |
-| `src/engine/commands/commit.ts` | message uses label (if it prints a hash) |
-| `src/engine/commands/merge.ts` | message + expand target |
-| `src/engine/commands/cherry-pick.ts` | message + expand target |
-| `src/engine/commands/revert.ts` | message + expand target |
-| `src/engine/commands/branch.ts` / `tag.ts` | expand start-point/target arg only |
-| `src/graph/types.ts` | `GraphNode.label?: string` |
-| `src/ui/Graph.svelte` | render label in node; click → checkout via `executeCommand`; pass label to detail |
-| `src/ui/CommitDetail.svelte` | show label headline + parents as labels; keep short hash small |
-| `src/ui/ResetButton.svelte` | **new** — confirm + reset |
-| `src/ui/Layout.svelte` | mount `ResetButton` top-left |
-| `src/store/engine.ts` | `resetSession()` |
-| `src/persistence/storage.ts` | `clearAutoSave()`, `clearHistory()` |
+| File                                       | Change                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `src/engine/objects.ts`                    | `commitOrdinal(hash)`                                                                        |
+| `src/engine/index.ts`                      | `commitLabel`, `resolveCommitLabel`, `expandCommitish`; apply expansion in dispatch/commands |
+| `src/engine/commands/log.ts`               | headline uses label                                                                          |
+| `src/engine/commands/checkout.ts`          | message uses label; expand target                                                            |
+| `src/engine/commands/reset.ts`             | message uses label; expand target                                                            |
+| `src/engine/commands/commit.ts`            | message uses label (if it prints a hash)                                                     |
+| `src/engine/commands/merge.ts`             | message + expand target                                                                      |
+| `src/engine/commands/cherry-pick.ts`       | message + expand target                                                                      |
+| `src/engine/commands/revert.ts`            | message + expand target                                                                      |
+| `src/engine/commands/branch.ts` / `tag.ts` | expand start-point/target arg only                                                           |
+| `src/graph/types.ts`                       | `GraphNode.label?: string`                                                                   |
+| `src/ui/Graph.svelte`                      | render label in node; click → checkout via `executeCommand`; pass label to detail            |
+| `src/ui/CommitDetail.svelte`               | show label headline + parents as labels; keep short hash small                               |
+| `src/ui/ResetButton.svelte`                | **new** — confirm + reset                                                                    |
+| `src/ui/Layout.svelte`                     | mount `ResetButton` top-left                                                                 |
+| `src/store/engine.ts`                      | `resetSession()`                                                                             |
+| `src/persistence/storage.ts`               | `clearAutoSave()`, `clearHistory()`                                                          |
 
 ## Risks / tradeoffs
 
@@ -221,6 +221,6 @@ A small button in the **top-left** corner (the logo occupies top-right on deskto
   fully lost.
 - **Label expansion scope:** expansion is applied only at commit-ish positions to
   avoid clobbering new-name args. The one deliberate carve-out is that
-  branch/tag *names* are never expanded.
+  branch/tag _names_ are never expanded.
 - **Orphan gaps:** rebase can leave numbering gaps in the visible graph. Accepted
   as low-impact for a sandbox.
