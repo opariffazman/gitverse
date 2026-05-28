@@ -228,8 +228,8 @@
                       begin="{(i * flowDur) / flowDots}s"
                       repeatCount="indefinite"
                     >
-                      <!-- Safari may require xlink:href; standard SVG 2 uses href -->
-                      <mpath href="#head-flow-path" />
+                      <!-- xlink:href for Safari/older browsers; href is standard SVG 2 -->
+                      <mpath xlink:href="#head-flow-path" href="#head-flow-path" />
                     </animateMotion>
                   </g>
                 {/each}
