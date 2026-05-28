@@ -86,15 +86,24 @@ export async function listSandboxes(): Promise<string[]> {
 
 /**
  * Persist the command history array.
+ * Errors are swallowed so that a storage failure never breaks the UI.
  */
 export async function saveHistory(entries: string[]): Promise<void> {
-  await set(HISTORY_KEY, entries);
+  try {
+    await set(HISTORY_KEY, entries);
+  } catch {
+    // storage unavailable – silently ignore
+  }
 }
 
 /**
- * Load the command history array. Returns [] if not found.
+ * Load the command history array. Returns [] if not found or unavailable.
  */
 export async function loadHistory(): Promise<string[]> {
-  const value = await get<string[]>(HISTORY_KEY);
-  return value ?? [];
+  try {
+    const value = await get<string[]>(HISTORY_KEY);
+    return value ?? [];
+  } catch {
+    return [];
+  }
 }

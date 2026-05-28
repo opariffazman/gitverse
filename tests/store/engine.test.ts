@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { get } from 'svelte/store';
 import { GitEngine } from '$engine/index';
 import { serialize } from '$persistence/serializer';
+import { CommandHistory } from '$shell/history';
 
 // Control what the persistence layer returns without touching IndexedDB.
 const autoLoadMock = vi.fn();
@@ -22,6 +23,8 @@ describe('store hydrate', () => {
     loadHistoryMock.mockReset();
     loadHistoryMock.mockResolvedValue([]);
     saveHistoryMock.mockReset();
+    // Reset the shared history singleton so tests don't depend on order.
+    history.set(new CommandHistory());
   });
 
   it('restores persisted engine state on boot', async () => {

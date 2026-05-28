@@ -43,14 +43,22 @@ export const engineVersion = writable(0);
 
 /**
  * Restore the previous session (engine + command history) from IndexedDB.
- * Call once on boot. A missing or corrupt save leaves defaults in place.
+ * Awaited once before mount, so the UI renders already-populated and no
+ * command can race the restore. A missing or corrupt save leaves defaults.
  */
 export async function hydrate(): Promise<void> {
   const json = await autoLoad();
   if (json) {
     try {
-      engine.set(deserialize(json));
+      const restored = deserialize(json);
+      engine.set(restored);
       engineVersion.update((v) => v + 1);
+      // Replace the "git init to begin" banner — it contradicts a restored repo.
+      if (restored.isInitialized()) {
+        terminalLines.set([
+          { id: ++lineIdCounter, output: 'Session restored from your last visit.', color: 'dim' },
+        ]);
+      }
     } catch {
       // corrupt save – keep the fresh engine
     }
