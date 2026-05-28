@@ -10,14 +10,14 @@ Engine auto-initializes with a `main` branch — `git init` is listed in README 
 
 ## Design Decisions
 
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Init mechanism | Engine-level `initialized` flag | Single source of truth, explicit, testable |
-| Pre-init commands | File builtins + `git init` + `help` + `clear` | Sandbox-friendly — set up files before init |
-| `.git/` representation | Directory marker in VFS | Visible with `ls -a`, can't explore contents |
-| Graph on init | Hollow/dashed phantom node | Visual feedback that repo exists, no commits yet |
-| Welcome UX | ASCII banner + empty prompt | Guides new users, branded first impression |
-| `sim change` in README | Remove | Not implemented, out of scope |
+| Decision               | Choice                                        | Rationale                                        |
+| ---------------------- | --------------------------------------------- | ------------------------------------------------ |
+| Init mechanism         | Engine-level `initialized` flag               | Single source of truth, explicit, testable       |
+| Pre-init commands      | File builtins + `git init` + `help` + `clear` | Sandbox-friendly — set up files before init      |
+| `.git/` representation | Directory marker in VFS                       | Visible with `ls -a`, can't explore contents     |
+| Graph on init          | Hollow/dashed phantom node                    | Visual feedback that repo exists, no commits yet |
+| Welcome UX             | ASCII banner + empty prompt                   | Guides new users, branded first impression       |
+| `sim change` in README | Remove                                        | Not implemented, out of scope                    |
 
 ## 1. Engine State Change
 
@@ -90,12 +90,14 @@ Builtins bypass engine entirely (routed by shell), so they work pre-init by defa
 ### Prompt (`src/shell/prompt.ts`)
 
 When `!engine.isInitialized()`:
+
 - No branch icon segment
 - No branch name segment
 - No status count segments
 - Just: `gitverse` (dim) + `❯ ` (cyan)
 
 When `engine.isInitialized()`:
+
 - Current behavior unchanged (branch icon, name, status counts)
 
 ## 4. `.git/` Directory Marker
@@ -103,6 +105,7 @@ When `engine.isInitialized()`:
 `git init` calls `vfs.createDir('.git')`. This makes `.git/` appear in VFS.
 
 Behavior:
+
 - `ls -a` shows `.git/` (hidden by default without `-a`)
 - `ls .git` returns empty (no children in VFS)
 - `cat .git` returns error (it's a directory)
@@ -169,17 +172,20 @@ type GraphNode = {
 ### Graph Data Generation
 
 When initialized but zero commits:
+
 - Generate single phantom node: `{ id: 'phantom-main', type: 'phantom', ... }`
 - Attach `main` branch label to it
 - No parent edges
 
 When first commit is created:
+
 - Phantom node disappears, replaced by real commit node
 - Standard graph behavior from here
 
 ### Graph Rendering (`src/ui/Graph.svelte`)
 
 Phantom node styling:
+
 - Hollow circle (no fill, or transparent fill)
 - Dashed stroke
 - No commit hash displayed
@@ -213,51 +219,53 @@ No changes to storage layer. `initialized` flag serializes/deserializes with eng
 ### Pre-init (`src/shell/complete.ts`)
 
 When `!engine.isInitialized()`:
+
 - Top-level completions: `git`, `ls`, `cat`, `touch`, `rm`, `mv`, `clear`, `help`
 - Git subcommand completions: only `init`
 - No branch completions
 - File completions still work (for file builtins)
 
 When initialized:
+
 - Current behavior + `init` added to git subcommand list
 
 ## 10. README Command Audit
 
 ### Commands verified as implemented:
 
-| Command | Status | Notes |
-|---------|--------|-------|
-| `git init` | **To implement** | This spec |
-| `git add` | Working | Supports `.` and specific paths |
-| `git commit` | Working | Requires `-m "message"` |
-| `git status` | Working | Shows three-area diff |
-| `git log` | Working | Supports `--oneline` |
-| `git diff` | Working | Supports `--staged`/`--cached` |
-| `git branch` | Working | Supports `-d`, `-D` |
-| `git checkout` | Working | Supports `-b` |
-| `git switch` | Working | Alias of checkout |
-| `git merge` | Working | Fast-forward + three-way |
-| `git rebase` | Working | Replays commits |
-| `git reset` | Working | `--soft`, `--mixed`, `--hard` |
-| `git stash` | Working | `push`, `pop`, `list`, `drop` |
-| `git tag` | Working | Lightweight tags |
-| `git cherry-pick` | Working | Single commit |
-| `git revert` | Working | Creates inverse commit |
-| `git rm` | Working | Removes from VFS + index |
-| `git mv` | Working | Moves in VFS + index |
+| Command           | Status           | Notes                           |
+| ----------------- | ---------------- | ------------------------------- |
+| `git init`        | **To implement** | This spec                       |
+| `git add`         | Working          | Supports `.` and specific paths |
+| `git commit`      | Working          | Requires `-m "message"`         |
+| `git status`      | Working          | Shows three-area diff           |
+| `git log`         | Working          | Supports `--oneline`            |
+| `git diff`        | Working          | Supports `--staged`/`--cached`  |
+| `git branch`      | Working          | Supports `-d`, `-D`             |
+| `git checkout`    | Working          | Supports `-b`                   |
+| `git switch`      | Working          | Alias of checkout               |
+| `git merge`       | Working          | Fast-forward + three-way        |
+| `git rebase`      | Working          | Replays commits                 |
+| `git reset`       | Working          | `--soft`, `--mixed`, `--hard`   |
+| `git stash`       | Working          | `push`, `pop`, `list`, `drop`   |
+| `git tag`         | Working          | Lightweight tags                |
+| `git cherry-pick` | Working          | Single commit                   |
+| `git revert`      | Working          | Creates inverse commit          |
+| `git rm`          | Working          | Removes from VFS + index        |
+| `git mv`          | Working          | Moves in VFS + index            |
 
 ### Builtins verified:
 
-| Builtin | Status | Notes |
-|---------|--------|-------|
-| `ls` | Working, **enhance** | Add `-a`, `-l`, `-h` flags |
-| `cat` | Working | No changes |
-| `touch` | Working | Auto-generates content |
-| `rm` | Working | No changes |
-| `mv` | Working | No changes |
-| `clear` | Working | No changes |
-| `help` | Working | Update to include `git init` |
-| `sim change` | **Not implemented** | Remove from README |
+| Builtin      | Status               | Notes                        |
+| ------------ | -------------------- | ---------------------------- |
+| `ls`         | Working, **enhance** | Add `-a`, `-l`, `-h` flags   |
+| `cat`        | Working              | No changes                   |
+| `touch`      | Working              | Auto-generates content       |
+| `rm`         | Working              | No changes                   |
+| `mv`         | Working              | No changes                   |
+| `clear`      | Working              | No changes                   |
+| `help`       | Working              | Update to include `git init` |
+| `sim change` | **Not implemented**  | Remove from README           |
 
 ### README changes needed:
 
@@ -293,22 +301,22 @@ Update `beforeEach` in all engine test files. Add new test file `tests/engine/in
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/engine/index.ts` | Add `initialized` flag, `_initialize()`, init check in `execute()`, dispatch `git init` |
-| `src/engine/refs.ts` | Constructor starts empty (no branches, no HEAD target) |
-| `src/engine/commands/init.ts` | **New file** — `cmdInit` handler |
-| `src/shell/builtins.ts` | Enhance `ls` with `-a`, `-l` flags, protect `.git/` from `rm` |
-| `src/shell/prompt.ts` | Handle uninitialized state (no branch segment) |
-| `src/shell/complete.ts` | Filter completions pre-init |
-| `src/graph/types.ts` | Add `'phantom'` to node type |
-| `src/graph/layout.ts` | Handle phantom node generation |
-| `src/ui/Graph.svelte` | Render phantom node (hollow, dashed) |
-| `src/store/engine.ts` | Update welcome banner for uninitialized state |
-| `src/persistence/serializer.ts` | Add `initialized` to wire format, backwards compat |
-| `tests/engine/init.test.ts` | **New file** — init-specific tests |
-| `tests/engine/*.test.ts` | Add `git init` to setup in all existing tests |
-| `tests/shell/builtins.test.ts` | Add `ls` flag tests |
-| `tests/shell/prompt.test.ts` | Add uninitialized prompt test |
-| `README.md` | Remove `sim change`, update builtins count |
-| `CLAUDE.md` | Remove `sim` from builtins list |
+| File                            | Change                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/engine/index.ts`           | Add `initialized` flag, `_initialize()`, init check in `execute()`, dispatch `git init` |
+| `src/engine/refs.ts`            | Constructor starts empty (no branches, no HEAD target)                                  |
+| `src/engine/commands/init.ts`   | **New file** — `cmdInit` handler                                                        |
+| `src/shell/builtins.ts`         | Enhance `ls` with `-a`, `-l` flags, protect `.git/` from `rm`                           |
+| `src/shell/prompt.ts`           | Handle uninitialized state (no branch segment)                                          |
+| `src/shell/complete.ts`         | Filter completions pre-init                                                             |
+| `src/graph/types.ts`            | Add `'phantom'` to node type                                                            |
+| `src/graph/layout.ts`           | Handle phantom node generation                                                          |
+| `src/ui/Graph.svelte`           | Render phantom node (hollow, dashed)                                                    |
+| `src/store/engine.ts`           | Update welcome banner for uninitialized state                                           |
+| `src/persistence/serializer.ts` | Add `initialized` to wire format, backwards compat                                      |
+| `tests/engine/init.test.ts`     | **New file** — init-specific tests                                                      |
+| `tests/engine/*.test.ts`        | Add `git init` to setup in all existing tests                                           |
+| `tests/shell/builtins.test.ts`  | Add `ls` flag tests                                                                     |
+| `tests/shell/prompt.test.ts`    | Add uninitialized prompt test                                                           |
+| `README.md`                     | Remove `sim change`, update builtins count                                              |
+| `CLAUDE.md`                     | Remove `sim` from builtins list                                                         |

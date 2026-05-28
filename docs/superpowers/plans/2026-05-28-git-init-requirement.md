@@ -29,6 +29,7 @@ Task 8 (README/CLAUDE.md) ── independent
 ### Task 1: Engine Init Foundation
 
 **Files:**
+
 - Modify: `src/engine/refs.ts:17-21` (constructor)
 - Modify: `src/engine/index.ts:115-122` (constructor), `src/engine/index.ts:153-254` (execute)
 - Create: `src/engine/commands/init.ts`
@@ -213,6 +214,7 @@ git commit -m "feat: add git init command with initialized flag and command gati
 ### Task 2: `ls` Flag Enhancement
 
 **Files:**
+
 - Modify: `src/shell/builtins.ts:27-34` (ls case)
 - Modify: `tests/shell/builtins.test.ts` (add ls flag tests)
 
@@ -326,6 +328,7 @@ git commit -m "feat: add -a and -l flags to ls builtin"
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `src/shell/prompt.ts:8-55`
 - Modify: `src/shell/complete.ts:4-28`
 - Modify: `src/shell/builtins.ts:77-92` (rm case)
@@ -453,6 +456,7 @@ git commit -m "feat: prompt hides branch pre-init, autocomplete filters pre-init
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `src/persistence/serializer.ts:44-49` (WireState), `src/persistence/serializer.ts:55-93` (serialize), `src/persistence/serializer.ts:99-129` (deserialize)
 - Modify: `tests/persistence/serializer.test.ts`
 
@@ -557,6 +561,7 @@ git commit -m "feat: serialize/deserialize initialized flag with backwards compa
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `src/graph/types.ts:1-11`
 - Modify: `src/ui/Graph.svelte` (node generation + rendering)
 - Modify: `tests/graph/layout.test.ts`
@@ -662,8 +667,8 @@ In `src/ui/Graph.svelte`, in the SVG node rendering section (around line 244), a
   cy={node.y}
   r={NODE_RADIUS}
   fill={node.type === 'phantom' ? 'transparent' : color}
-  stroke={node.type === 'phantom' ? '#484f58' : (node.isHEAD ? '#22d3ee' : color)}
-  stroke-width={node.type === 'phantom' ? 2 : (node.isHEAD ? 3 : 1.5)}
+  stroke={node.type === 'phantom' ? '#484f58' : node.isHEAD ? '#22d3ee' : color}
+  stroke-width={node.type === 'phantom' ? 2 : node.isHEAD ? 3 : 1.5}
   stroke-dasharray={node.type === 'phantom' ? '6 3' : 'none'}
   style="cursor: pointer;"
   onclick={() => node.type !== 'phantom' && selectNode(node)}
@@ -681,7 +686,8 @@ For the hash text inside the node, hide it for phantom:
     font-family="monospace"
     font-size="14"
     fill="#0d1117"
-    pointer-events="none">{node.hash.slice(0, 4)}</text>
+    pointer-events="none">{node.hash.slice(0, 4)}</text
+  >
 {/if}
 ```
 
@@ -703,6 +709,7 @@ git commit -m "feat: phantom node on graph after git init with zero commits"
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `src/store/engine.ts:30-35` (createInitialLines)
 
 - [ ] **Step 1: Update welcome banner for uninitialized state**
@@ -729,6 +736,7 @@ Remove the old `WELCOME_SUBTITLE` line if it exists — single banner is suffici
 
 Run: `npm run dev`
 Open browser. Verify:
+
 - Welcome banner appears
 - Prompt shows `gitverse ❯` (no branch)
 - Type `git init` — prompt changes to show `main` branch
@@ -748,6 +756,7 @@ git commit -m "feat: welcome banner with git init hint for uninitialized state"
 **Depends on:** Task 1
 
 **Files:**
+
 - Modify: `tests/engine/core.test.ts`
 - Modify: `tests/engine/branch-checkout.test.ts`
 - Modify: `tests/engine/merge.test.ts`
@@ -777,7 +786,7 @@ Pattern — in each test file's `beforeEach`:
 ```typescript
 beforeEach(() => {
   engine = new GitEngine();
-  engine.execute('git init');  // ADD THIS LINE
+  engine.execute('git init'); // ADD THIS LINE
 });
 ```
 
@@ -825,6 +834,7 @@ git commit -m "test: add git init to all existing test setups"
 **Independent — no dependencies**
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `CLAUDE.md`
 
