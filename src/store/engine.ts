@@ -4,8 +4,8 @@ import { CommandHistory } from '$shell/history';
 import { ShellRouter } from '$shell/router';
 import { generatePrompt } from '$shell/prompt';
 import type { PromptSegment } from '$shell/prompt';
-import { serialize } from '$persistence/serializer';
-import { autoSave } from '$persistence/storage';
+import { serialize, deserialize } from '$persistence/serializer';
+import { autoSave, autoLoad, saveHistory, loadHistory } from '$persistence/storage';
 
 export type TerminalLine = {
   id: number;
@@ -41,6 +41,37 @@ export const history = writable(new CommandHistory());
 export const terminalLines = writable<TerminalLine[]>(createInitialLines());
 export const engineVersion = writable(0);
 
+/**
+ * Restore the previous session (engine + command history) from IndexedDB.
+ * Awaited once before mount, so the UI renders already-populated and no
+ * command can race the restore. A missing or corrupt save leaves defaults.
+ */
+export async function hydrate(): Promise<void> {
+  const json = await autoLoad();
+  if (json) {
+    try {
+      const restored = deserialize(json);
+      engine.set(restored);
+      engineVersion.update((v) => v + 1);
+      // Replace the "git init to begin" banner — it contradicts a restored repo.
+      if (restored.isInitialized()) {
+        terminalLines.set([
+          { id: ++lineIdCounter, output: 'Session restored from your last visit.', color: 'dim' },
+        ]);
+      }
+    } catch {
+      // corrupt save – keep the fresh engine
+    }
+  }
+
+  const entries = await loadHistory();
+  if (entries.length > 0) {
+    const hist = get(history);
+    hist.restore(entries);
+    history.set(hist);
+  }
+}
+
 export const prompt = derived(engine, ($engine) => {
   return generatePrompt($engine);
 });
@@ -56,8 +87,9 @@ export function executeCommand(command: string): void {
   // Execute command via router
   const result = router.execute(command);
 
-  // Push command to history
+  // Push command to history and persist it
   hist.push(command);
+  saveHistory(hist.getEntries());
 
   // Handle clear special case
   if (command.trim() === 'clear') {
