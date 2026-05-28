@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, LabelFn } from './types';
 import type { ObjectStore } from '../objects';
 import type { RefStore } from '../refs';
 
@@ -15,6 +15,7 @@ export function cmdCommit(
   refs: RefStore,
   index: Map<string, string>,
   getCommittedTree: () => Map<string, string>,
+  label: LabelFn,
 ): CommandResult {
   // Require -m flag
   const messageArgs = opts.get('-m');
@@ -79,7 +80,7 @@ export function cmdCommit(
   }
 
   return {
-    output: `[${head.attached ? head.target : 'HEAD detached'} ${commitHash.slice(0, 7)}] ${message}`,
+    output: `[${head.attached ? head.target : 'HEAD detached'} ${label(commitHash)}] ${message}`,
     exitCode: 0,
   };
 }

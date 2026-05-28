@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn, LabelFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 import type { VirtualFileSystem } from '../vfs';
@@ -67,6 +67,8 @@ export function cmdCheckout(
   objects: ObjectStore,
   vfs: VirtualFileSystem,
   index: Map<string, string>,
+  expand: ExpandFn,
+  label: LabelFn,
 ): CommandResult {
   const createAndSwitch = opts.has('-b');
 
@@ -77,9 +79,14 @@ export function cmdCheckout(
     };
   }
 
-  // Determine target name
+  // Determine target name. C-labels are expanded only for the checkout target,
+  // never for the new branch name created via -b.
   const bFlag = opts.get('-b');
-  const targetName = createAndSwitch ? (bFlag && bFlag.length > 0 ? bFlag[0] : args[0]) : args[0];
+  const targetName = createAndSwitch
+    ? bFlag && bFlag.length > 0
+      ? bFlag[0]
+      : args[0]
+    : expand(args[0]);
 
   if (!targetName) {
     return {
@@ -145,7 +152,7 @@ export function cmdCheckout(
     refs.detachHEAD(targetName);
 
     return {
-      output: `HEAD is now at ${targetName.slice(0, 7)} (detached HEAD)`,
+      output: `HEAD is now at ${label(targetName)} (detached HEAD)`,
       exitCode: 0,
     };
   }

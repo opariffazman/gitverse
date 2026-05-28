@@ -176,6 +176,11 @@ export class GitEngine {
 
     let result: CommandResult;
 
+    // Presentation/addressing helpers handed to commands so they can render
+    // C-labels in output and accept them at commit-ish argument positions.
+    const label = (hash: string) => this.commitLabel(hash);
+    const expand = (token: string) => this.expandCommitish(token);
+
     switch (command) {
       case 'init':
         result = cmdInit(this);
@@ -189,8 +194,14 @@ export class GitEngine {
         break;
 
       case 'commit':
-        result = cmdCommit(args, opts, this.objects, this.refs, this.index, () =>
-          this.getCommittedTree(),
+        result = cmdCommit(
+          args,
+          opts,
+          this.objects,
+          this.refs,
+          this.index,
+          () => this.getCommittedTree(),
+          label,
         );
         break;
 
@@ -207,7 +218,7 @@ export class GitEngine {
         break;
 
       case 'log':
-        result = cmdLog(args, opts, this.log(), this.refs);
+        result = cmdLog(args, opts, this.log(), this.refs, label);
         break;
 
       case 'diff':
@@ -220,15 +231,24 @@ export class GitEngine {
 
       case 'checkout':
       case 'switch':
-        result = cmdCheckout(args, opts, this.refs, this.objects, this.vfs, this.index);
+        result = cmdCheckout(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+          expand,
+          label,
+        );
         break;
 
       case 'merge':
-        result = cmdMerge(args, opts, this.refs, this.objects, this.vfs, this.index);
+        result = cmdMerge(args, opts, this.refs, this.objects, this.vfs, this.index, expand, label);
         break;
 
       case 'reset':
-        result = cmdReset(args, opts, this.refs, this.objects, this.vfs, this.index);
+        result = cmdReset(args, opts, this.refs, this.objects, this.vfs, this.index, expand, label);
         break;
 
       case 'stash':
@@ -244,7 +264,7 @@ export class GitEngine {
         break;
 
       case 'tag':
-        result = cmdTag(args, opts, this.refs, this.objects);
+        result = cmdTag(args, opts, this.refs, this.objects, expand);
         break;
 
       case 'rm':
@@ -260,11 +280,29 @@ export class GitEngine {
         break;
 
       case 'cherry-pick':
-        result = cmdCherryPick(args, opts, this.refs, this.objects, this.vfs, this.index);
+        result = cmdCherryPick(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+          expand,
+          label,
+        );
         break;
 
       case 'revert':
-        result = cmdRevert(args, opts, this.refs, this.objects, this.vfs, this.index);
+        result = cmdRevert(
+          args,
+          opts,
+          this.refs,
+          this.objects,
+          this.vfs,
+          this.index,
+          expand,
+          label,
+        );
         break;
 
       default:
@@ -287,6 +325,36 @@ export class GitEngine {
 
   getHEAD(): HEAD {
     return this.refs.getHEAD();
+  }
+
+  // -------------------------------------------------------------------------
+  // Commit labels (C1, C2, …) — presentation/addressing layer over hashes
+  // -------------------------------------------------------------------------
+
+  /** Friendly label for a commit hash, e.g. "C3". Falls back to short hash. */
+  commitLabel(hash: string): string {
+    const ordinal = this.objects.commitOrdinal(hash);
+    return ordinal !== null ? `C${ordinal}` : hash.slice(0, 7);
+  }
+
+  /** Resolve a label like "C3" (case-insensitive) to a commit hash, or null. */
+  resolveCommitLabel(label: string): string | null {
+    const match = /^C(\d+)$/i.exec(label.trim());
+    if (!match) return null;
+    const n = parseInt(match[1], 10);
+    const commit = this.objects.allCommits()[n - 1];
+    return commit ? commit.hash : null;
+  }
+
+  /**
+   * Resolve a C-label to its commit hash at commit-ish argument positions.
+   * Returns the token unchanged if it is not a label, does not resolve, or
+   * collides with a real branch/tag name (real refs always win).
+   */
+  expandCommitish(token: string): string {
+    if (!token) return token;
+    if (this.refs.hasBranch(token) || this.refs.hasTag(token)) return token;
+    return this.resolveCommitLabel(token) ?? token;
   }
 
   // -------------------------------------------------------------------------

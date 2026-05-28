@@ -1,7 +1,14 @@
 <script lang="ts">
   import type { GraphNode } from '$graph/types';
+  import { engine, engineVersion } from '$store/engine';
 
   let { node, onclose }: { node: GraphNode; onclose: () => void } = $props();
+
+  const parentLabels = $derived.by(() => {
+    const eng = $engine;
+    void $engineVersion;
+    return node.parents.map((hash) => eng.commitLabel(hash));
+  });
 </script>
 
 <div
@@ -17,9 +24,10 @@
     aria-label="Close">✕</button
   >
 
-  <!-- Hash -->
-  <div class="mb-2 text-yellow-400 font-bold text-sm">
-    {node.hash.slice(0, 7)}
+  <!-- Label + short hash for reference -->
+  <div class="mb-2 flex items-baseline gap-2">
+    <span class="text-yellow-400 font-bold text-sm">{node.label ?? node.hash.slice(0, 7)}</span>
+    <span class="text-terminal-dim/60 text-[10px]">{node.hash.slice(0, 7)}</span>
   </div>
 
   <!-- Message -->
@@ -49,13 +57,12 @@
     </div>
   {/if}
 
-  <!-- Parent hashes -->
+  <!-- Parent labels -->
   {#if node.parents.length > 0}
     <div class="mt-2 text-terminal-dim">
       <span class="opacity-60">parents: </span>
-      {#each node.parents as parent, i (parent)}
-        <span class="opacity-50">{parent.slice(0, 7)}{i < node.parents.length - 1 ? ', ' : ''}</span
-        >
+      {#each parentLabels as parent, i (node.parents[i])}
+        <span class="opacity-50">{parent}{i < parentLabels.length - 1 ? ', ' : ''}</span>
       {/each}
     </div>
   {/if}

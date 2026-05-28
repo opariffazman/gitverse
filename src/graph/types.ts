@@ -3,6 +3,8 @@ export type GraphNode = {
   type: 'commit' | 'phantom';
   parents: string[];
   message: string;
+  /** Friendly creation-order label (e.g. "C3"). Absent for phantom nodes. */
+  label?: string;
   branches: string[];
   tags?: string[];
   isHEAD: boolean;

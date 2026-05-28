@@ -197,3 +197,37 @@ describe('ObjectStore - serialization helpers', () => {
     expect(store.readCommit('1234567').message).toBe('restored');
   });
 });
+
+describe('ObjectStore - commitOrdinal', () => {
+  function makeCommit(store: ObjectStore, message: string): string {
+    const tree = store.writeTree(new Map());
+    return store.writeCommit({ tree, parents: [], message, timestamp: 0 });
+  }
+
+  it('returns a stable 1-based index in creation order', () => {
+    const store = new ObjectStore();
+    const c1 = makeCommit(store, 'first');
+    const c2 = makeCommit(store, 'second');
+    const c3 = makeCommit(store, 'third');
+    expect(store.commitOrdinal(c1)).toBe(1);
+    expect(store.commitOrdinal(c2)).toBe(2);
+    expect(store.commitOrdinal(c3)).toBe(3);
+  });
+
+  it('returns null for an unknown hash', () => {
+    const store = new ObjectStore();
+    expect(store.commitOrdinal('deadbee')).toBeNull();
+  });
+
+  it('survives a restore replay in original order', () => {
+    const store = new ObjectStore();
+    const c1 = makeCommit(store, 'first');
+    const c2 = makeCommit(store, 'second');
+
+    const restored = new ObjectStore();
+    restored.restoreCommit(store.readCommit(c1));
+    restored.restoreCommit(store.readCommit(c2));
+    expect(restored.commitOrdinal(c1)).toBe(1);
+    expect(restored.commitOrdinal(c2)).toBe(2);
+  });
+});

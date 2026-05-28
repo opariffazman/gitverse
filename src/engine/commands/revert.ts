@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn, LabelFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 import type { VirtualFileSystem } from '../vfs';
@@ -66,6 +66,8 @@ export function cmdRevert(
   objects: ObjectStore,
   vfs: VirtualFileSystem,
   index: Map<string, string>,
+  expand: ExpandFn,
+  label: LabelFn,
 ): CommandResult {
   if (args.length === 0) {
     return {
@@ -74,7 +76,7 @@ export function cmdRevert(
     };
   }
 
-  const targetHash = args[0];
+  const targetHash = expand(args[0]);
 
   if (!objects.hasCommit(targetHash)) {
     return {
@@ -167,7 +169,7 @@ export function cmdRevert(
   restoreWorkingDirectory(revertCommitHash, objects, vfs, index);
 
   return {
-    output: `[${head.attached ? head.target : 'HEAD detached'} ${revertCommitHash.slice(0, 7)}] ${revertMessage}`,
+    output: `[${head.attached ? head.target : 'HEAD detached'} ${label(revertCommitHash)}] ${revertMessage}`,
     exitCode: 0,
   };
 }

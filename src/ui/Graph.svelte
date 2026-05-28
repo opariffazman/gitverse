@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { engine, engineVersion } from '$store/engine';
+  import { engine, engineVersion, executeCommand } from '$store/engine';
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import type { GraphNode, GraphEdge } from '$graph/types';
@@ -87,6 +87,7 @@
       type: 'commit' as const,
       parents: c.parents,
       message: c.message,
+      label: eng.commitLabel(c.hash),
       branches: branchMap.get(c.hash) ?? [],
       tags: tagMap.get(c.hash) ?? [],
       isHEAD: c.hash === headHash,
@@ -107,10 +108,6 @@
     selectedHash ? (layout.nodes.find((n) => n.hash === selectedHash) ?? null) : null,
   );
 
-  function selectNode(node: GraphNode) {
-    selectedHash = selectedHash === node.hash ? null : node.hash;
-  }
-
   const headBranch = $derived.by(() => {
     const eng = $engine;
     void $engineVersion;
@@ -121,6 +118,39 @@
       return null;
     }
   });
+
+  const headCommitHash = $derived.by(() => {
+    const eng = $engine;
+    void $engineVersion;
+    try {
+      const h = eng.getHEAD();
+      return h.attached ? (eng.allBranches().get(h.target) ?? '') : h.target;
+    } catch {
+      return '';
+    }
+  });
+
+  function selectNode(node: GraphNode) {
+    if (node.type === 'phantom') return;
+
+    // Always show this node's detail.
+    selectedHash = node.hash;
+
+    // Clicking the commit HEAD already points at is a no-op checkout — just show detail.
+    if (node.hash === headCommitHash) return;
+
+    let command: string;
+    if (node.branches.length > 0) {
+      // Attach to a branch at this commit; prefer the HEAD branch if it lives here.
+      const branch =
+        headBranch && node.branches.includes(headBranch) ? headBranch : node.branches[0];
+      command = `git checkout ${branch}`;
+    } else {
+      // Detach HEAD at the commit, addressed by its friendly label.
+      command = `git checkout ${node.label ?? node.hash}`;
+    }
+    executeCommand(command);
+  }
 
   function laneColor(lane: number): string {
     return LANE_COLORS[((lane % LANE_COLORS.length) + LANE_COLORS.length) % LANE_COLORS.length];
@@ -286,11 +316,11 @@
               onclick={() => selectNode(node)}
               role="button"
               tabindex="0"
-              aria-label={`Commit ${node.hash}: ${node.message}`}
+              aria-label={`Commit ${node.label ?? node.hash}: ${node.message}`}
               onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
             />
 
-            <!-- Short hash label inside circle -->
+            <!-- Friendly label inside circle -->
             <text
               x={node.x}
               y={node.y + 5}
@@ -298,7 +328,7 @@
               font-family="monospace"
               font-size="14"
               fill="#0d1117"
-              pointer-events="none">{node.hash.slice(0, 4)}</text
+              pointer-events="none">{node.label ?? node.hash.slice(0, 4)}</text
             >
           {/if}
         {/each}
