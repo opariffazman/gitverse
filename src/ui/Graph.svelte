@@ -216,6 +216,9 @@
               opacity="0.55"
             />
           {:else}
+            <!-- {#key} remounts the whole layer when the path changes: SMIL animateMotion
+                 snapshots its mpath geometry at start and won't re-read a mutated d. The remount
+                 also makes the inner index-keyed each safe — old dots are discarded wholesale. -->
             {#key activeFlow.d}
               <g aria-hidden="true" pointer-events="none">
                 <path id="head-flow-path" d={activeFlow.d} fill="none" stroke="none" />
