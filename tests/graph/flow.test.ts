@@ -86,8 +86,17 @@ describe('buildActiveFlow', () => {
     expect(flow!.d.endsWith('200 50')).toBe(true);
   });
 
-  it('ignores phantom nodes', () => {
-    const nodes = [makeNode('', [], { type: 'phantom', x: 168, y: 112 })];
-    expect(buildActiveFlow(nodes, '', 'horizontal')).toBeNull();
+  it('ignores phantom nodes when walking the chain', () => {
+    const nodes = [
+      makeNode('p', [], { type: 'phantom', x: 0, y: 0 }),
+      makeNode('a', ['p'], { x: 100, y: 50 }),
+      makeNode('b', ['a'], { x: 200, y: 50, isHEAD: true }),
+    ];
+    const flow = buildActiveFlow(nodes, 'b', 'horizontal');
+    expect(flow).not.toBeNull();
+    // phantom 'p' (a's recorded parent) is excluded, so the chain stops at root 'a'
+    expect(flow!.segmentCount).toBe(1);
+    expect(flow!.d.startsWith('M 100 50')).toBe(true);
+    expect(flow!.d.endsWith('200 50')).toBe(true);
   });
 });
