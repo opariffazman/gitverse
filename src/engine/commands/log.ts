@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, LabelFn } from './types';
 import type { Commit } from '../objects';
 import type { RefStore } from '../refs';
 
@@ -20,6 +20,7 @@ export function cmdLog(
   opts: Map<string, string[]>,
   commits: Commit[],
   refs: RefStore,
+  label: LabelFn,
 ): CommandResult {
   if (commits.length === 0) {
     return {
@@ -99,15 +100,14 @@ export function cmdLog(
 
   if (oneline) {
     for (const commit of commits) {
-      const shortHash = commit.hash.slice(0, 7);
       const decoration = buildDecoration(commit.hash);
-      lines.push(`${shortHash}${decoration} ${commit.message}`);
+      lines.push(`${label(commit.hash)}${decoration} ${commit.message}`);
     }
   } else {
     for (let i = 0; i < commits.length; i++) {
       const commit = commits[i];
       const decoration = buildDecoration(commit.hash);
-      lines.push(`commit ${commit.hash}${decoration}`);
+      lines.push(`commit ${label(commit.hash)}${decoration}`);
       lines.push(commit.message);
       if (i < commits.length - 1) {
         lines.push('');

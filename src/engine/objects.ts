@@ -144,6 +144,16 @@ export class ObjectStore {
     return [...this.commits.values()].map((c) => ({ ...c, parents: [...c.parents] }));
   }
 
+  /**
+   * 1-based creation-order index for a commit hash, or null if unknown.
+   * Creation order = Map insertion order, which survives serialize/deserialize
+   * because restoreCommit replays commits in their original order.
+   */
+  commitOrdinal(hash: string): number | null {
+    const idx = [...this.commits.keys()].indexOf(hash);
+    return idx === -1 ? null : idx + 1;
+  }
+
   // -------------------------------------------------------------------------
   // Serialization helpers (used by Task 15 persistence layer)
   // -------------------------------------------------------------------------

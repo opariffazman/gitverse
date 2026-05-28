@@ -52,11 +52,11 @@ describe('git log – full format (default)', () => {
     expect(idx1).toBeLessThan(idx2);
   });
 
-  it('includes full commit hash in output', () => {
+  it('shows friendly commit labels in output', () => {
     const result = engine.execute('git log');
-    const commits = engine.log();
-    // Full hash (7+ chars) should appear
-    expect(result.output).toContain(commits[0].hash);
+    // Commits are addressed as C1, C2, … instead of raw hashes.
+    expect(result.output).toContain('commit C2');
+    expect(result.output).toContain('commit C1');
   });
 
   it('includes commit message in output', () => {
@@ -93,19 +93,18 @@ describe('git log – --oneline format', () => {
     expect(lines).toHaveLength(2);
   });
 
-  it('shows 7-char short hash', () => {
+  it('shows commit labels', () => {
     const result = engine.execute('git log --oneline');
-    const commits = engine.log();
-    const shortHash = commits[0].hash.slice(0, 7);
-    expect(result.output).toContain(shortHash);
+    expect(result.output).toContain('C1');
+    expect(result.output).toContain('C2');
   });
 
-  it('shows commit message on same line as hash', () => {
+  it('shows commit message on same line as label', () => {
     const result = engine.execute('git log --oneline');
     const lines = result.output.split('\n').filter((l) => l.trim() !== '');
-    // Each line should contain hash + message
+    // Each line should start with a C-label and contain its message.
     for (const line of lines) {
-      expect(line).toMatch(/\w{7}.*commit/);
+      expect(line).toMatch(/^C\d+.*commit/);
     }
   });
 

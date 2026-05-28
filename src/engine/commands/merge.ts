@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn, LabelFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 import type { VirtualFileSystem } from '../vfs';
@@ -101,6 +101,8 @@ export function cmdMerge(
   objects: ObjectStore,
   vfs: VirtualFileSystem,
   index: Map<string, string>,
+  expand: ExpandFn,
+  label: LabelFn,
 ): CommandResult {
   // Require exactly one positional argument
   if (args.length === 0) {
@@ -110,7 +112,7 @@ export function cmdMerge(
     };
   }
 
-  const targetName = args[0];
+  const targetName = expand(args[0]);
 
   // Resolve target branch
   if (!refs.hasBranch(targetName)) {
@@ -157,7 +159,7 @@ export function cmdMerge(
     restoreWorkingDirectory(targetHash, objects, vfs, index);
 
     return {
-      output: `Updating ${headHash.slice(0, 7)}..${targetHash.slice(0, 7)}\nFast-forward\n Merged branch '${targetName}'`,
+      output: `Updating ${label(headHash)}..${label(targetHash)}\nFast-forward\n Merged branch '${targetName}'`,
       exitCode: 0,
     };
   }

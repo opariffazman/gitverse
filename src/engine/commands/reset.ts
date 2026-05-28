@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn, LabelFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 import type { VirtualFileSystem, FileEntry } from '../vfs';
@@ -17,6 +17,8 @@ export function cmdReset(
   objects: ObjectStore,
   vfs: VirtualFileSystem,
   index: Map<string, string>,
+  expand: ExpandFn,
+  label: LabelFn,
 ): CommandResult {
   // Determine mode
   const isSoft = opts.has('--soft');
@@ -45,6 +47,9 @@ export function cmdReset(
       exitCode: 1,
     };
   }
+
+  // Accept a C-label at the commit-ish position.
+  target = expand(target);
 
   // Resolve the target commit hash
   let commitHash: string;
@@ -129,7 +134,7 @@ export function cmdReset(
   vfs.restore(snap);
 
   return {
-    output: `HEAD is now at ${commitHash.slice(0, 7)}`,
+    output: `HEAD is now at ${label(commitHash)}`,
     exitCode: 0,
   };
 }

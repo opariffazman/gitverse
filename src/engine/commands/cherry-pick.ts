@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn, LabelFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 import type { VirtualFileSystem } from '../vfs';
@@ -63,6 +63,8 @@ export function cmdCherryPick(
   objects: ObjectStore,
   vfs: VirtualFileSystem,
   index: Map<string, string>,
+  expand: ExpandFn,
+  label: LabelFn,
 ): CommandResult {
   if (args.length === 0) {
     return {
@@ -71,7 +73,7 @@ export function cmdCherryPick(
     };
   }
 
-  const targetHash = args[0];
+  const targetHash = expand(args[0]);
 
   if (!objects.hasCommit(targetHash)) {
     return {
@@ -121,7 +123,7 @@ export function cmdCherryPick(
   restoreWorkingDirectory(newCommitHash, objects, vfs, index);
 
   return {
-    output: `[${head.attached ? head.target : 'HEAD detached'} ${newCommitHash.slice(0, 7)}] ${targetCommit.message}`,
+    output: `[${head.attached ? head.target : 'HEAD detached'} ${label(newCommitHash)}] ${targetCommit.message}`,
     exitCode: 0,
   };
 }

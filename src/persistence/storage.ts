@@ -43,6 +43,17 @@ export async function autoLoad(): Promise<string | null> {
   }
 }
 
+/**
+ * Remove the auto-save slot. Errors are swallowed like the other helpers.
+ */
+export async function clearAutoSave(): Promise<void> {
+  try {
+    await del(AUTOSAVE_KEY);
+  } catch {
+    // storage unavailable – silently ignore
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Named sandboxes
 // ---------------------------------------------------------------------------
@@ -105,5 +116,16 @@ export async function loadHistory(): Promise<string[]> {
     return value ?? [];
   } catch {
     return [];
+  }
+}
+
+/**
+ * Remove the persisted command history. Errors are swallowed like the others.
+ */
+export async function clearHistory(): Promise<void> {
+  try {
+    await del(HISTORY_KEY);
+  } catch {
+    // storage unavailable – silently ignore
   }
 }

@@ -5,7 +5,14 @@ import { ShellRouter } from '$shell/router';
 import { generatePrompt } from '$shell/prompt';
 import type { PromptSegment } from '$shell/prompt';
 import { serialize, deserialize } from '$persistence/serializer';
-import { autoSave, autoLoad, saveHistory, loadHistory } from '$persistence/storage';
+import {
+  autoSave,
+  autoLoad,
+  saveHistory,
+  loadHistory,
+  clearAutoSave,
+  clearHistory,
+} from '$persistence/storage';
 
 export type TerminalLine = {
   id: number;
@@ -75,6 +82,19 @@ export async function hydrate(): Promise<void> {
 export const prompt = derived(engine, ($engine) => {
   return generatePrompt($engine);
 });
+
+/**
+ * Wipe the sandbox back to a clean slate: fresh engine, welcome banner,
+ * empty history, and cleared IndexedDB so a reload stays clean.
+ */
+export function resetSession(): void {
+  engine.set(new GitEngine());
+  engineVersion.update((v) => v + 1);
+  terminalLines.set(createInitialLines());
+  history.set(new CommandHistory());
+  clearAutoSave();
+  clearHistory();
+}
 
 export function executeCommand(command: string): void {
   const eng = get(engine);

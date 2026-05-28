@@ -153,10 +153,10 @@ describe('git reset --hard', () => {
     expect(engine.getVFS().readFile('readme.md')).toBe('# hello');
   });
 
-  it('output includes the short commit hash', () => {
+  it('output includes the commit label', () => {
     const { engine, c1Hash } = engineWithTwoCommits();
     const result = engine.execute(`git reset --hard ${c1Hash}`);
-    expect(result.output).toContain(c1Hash.slice(0, 7));
+    expect(result.output).toContain(engine.commitLabel(c1Hash));
   });
 });
 

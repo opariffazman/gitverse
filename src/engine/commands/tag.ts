@@ -1,4 +1,4 @@
-import type { CommandResult } from './types';
+import type { CommandResult, ExpandFn } from './types';
 import type { RefStore } from '../refs';
 import type { ObjectStore } from '../objects';
 
@@ -12,6 +12,7 @@ export function cmdTag(
   _opts: Map<string, string[]>,
   refs: RefStore,
   objects: ObjectStore,
+  expand: ExpandFn,
 ): CommandResult {
   // List tags
   if (args.length === 0) {
@@ -26,8 +27,8 @@ export function cmdTag(
   let targetHash: string;
 
   if (args.length >= 2) {
-    // Tag at specific commit / ref
-    const ref = args[1];
+    // Tag at specific commit / ref (the target, not the tag name, may be a C-label)
+    const ref = expand(args[1]);
     if (objects.hasCommit(ref)) {
       targetHash = ref;
     } else {

@@ -8,14 +8,25 @@ import { CommandHistory } from '$shell/history';
 const autoLoadMock = vi.fn();
 const loadHistoryMock = vi.fn();
 const saveHistoryMock = vi.fn();
+const clearAutoSaveMock = vi.fn();
+const clearHistoryMock = vi.fn();
 vi.mock('$persistence/storage', () => ({
   autoLoad: () => autoLoadMock(),
   autoSave: vi.fn(),
   loadHistory: () => loadHistoryMock(),
   saveHistory: (entries: string[]) => saveHistoryMock(entries),
+  clearAutoSave: () => clearAutoSaveMock(),
+  clearHistory: () => clearHistoryMock(),
 }));
 
-import { engine, history, hydrate, executeCommand } from '$store/engine';
+import {
+  engine,
+  history,
+  terminalLines,
+  hydrate,
+  executeCommand,
+  resetSession,
+} from '$store/engine';
 
 describe('store hydrate', () => {
   beforeEach(() => {
@@ -76,5 +87,30 @@ describe('store hydrate', () => {
     expect(saveHistoryMock).toHaveBeenCalled();
     const lastSaved = saveHistoryMock.mock.calls.at(-1)![0] as string[];
     expect(lastSaved).toContain('git status');
+  });
+});
+
+describe('resetSession', () => {
+  beforeEach(() => {
+    clearAutoSaveMock.mockReset();
+    clearHistoryMock.mockReset();
+  });
+
+  it('wipes the engine, history, terminal, and persisted storage', () => {
+    // Dirty the session first.
+    executeCommand('git init');
+    executeCommand('git status');
+    expect(get(engine).isInitialized()).toBe(true);
+
+    resetSession();
+
+    const live = get(engine);
+    expect(live.isInitialized()).toBe(false);
+    expect(live.allCommits()).toHaveLength(0);
+    expect(get(history).getEntries()).toEqual([]);
+    // Welcome banner restored (single line).
+    expect(get(terminalLines)).toHaveLength(1);
+    expect(clearAutoSaveMock).toHaveBeenCalled();
+    expect(clearHistoryMock).toHaveBeenCalled();
   });
 });

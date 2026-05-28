@@ -1,9 +1,15 @@
 <script lang="ts">
   import Terminal from './Terminal.svelte';
   import Graph from './Graph.svelte';
+  import ResetButton from './ResetButton.svelte';
 </script>
 
 <div class="relative flex flex-col w-full h-full bg-terminal-bg">
+  <!-- Reset: top-left (logo sits top-right on desktop / top-center on mobile) -->
+  <div class="absolute top-3 left-4 z-20">
+    <ResetButton />
+  </div>
+
   <!-- Desktop: top-right -->
   <pre
     class="absolute top-3 right-4 z-10 font-mono text-terminal-dim/80 text-xs leading-tight select-none pointer-events-none max-sm:hidden">{` ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
