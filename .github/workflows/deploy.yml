@@ -4,10 +4,11 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -41,11 +42,11 @@ jobs:
           npm version ${{ steps.version.outputs.stable }}
           git push --follow-tags
       - name: Build
-        if: steps.version.outputs.is_rc == 'true'
+        if: github.event_name == 'workflow_dispatch' || steps.version.outputs.is_rc == 'true'
         run: npm run build
       - name: Deploy to GitHub Pages
-        if: steps.version.outputs.is_rc == 'true'
-        uses: JamesIves/github-pages-deploy-action@6c2d9db40f9296374acc17b90e6de2c4eeac0145 # v4.7.3
+        if: github.event_name == 'workflow_dispatch' || steps.version.outputs.is_rc == 'true'
+        uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f # v4.8.0
         with:
           folder: dist
           clean-exclude: pr-preview
