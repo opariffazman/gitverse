@@ -125,7 +125,9 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
       }
 
       const contentTokens = redirect === null ? args : args.slice(0, redirectIdx);
-      // No quote-aware tokenizer here; quotes only group words, so drop them all.
+      // Strip ALL double-quotes (not just one outer pair): the shell tokenizer
+      // splits on whitespace before we see the input, so there is no quote-aware
+      // tokenizer here — quotes only group words and are dropped.
       const content = contentTokens.join(' ').replace(/"/g, '');
 
       if (redirect === null) {

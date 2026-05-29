@@ -51,7 +51,8 @@ Argument parsing (args = tokens after `echo`):
 1. Find the redirect: the first token equal to `>` or `>>`, **or** a token starting
    with `>`/`>>` (glued form like `>file` / `>>file`).
 2. `content` = the tokens **before** the redirect joined by a single space. Strip
-   one matching pair of leading/trailing double-quotes from the joined string (so
+   **all** double-quotes from the joined string (no quote-aware tokenizer in the
+   shell layer — quotes only group words and are dropped, so
    `echo "hello world" > f` writes `hello world`).
 3. `target` = the token **after** the redirect (or the glued remainder).
 
@@ -172,6 +173,6 @@ Keep the `commitNodes.length === 0` condition and the conditional `aria-label`
 
 ## 8. Out of Scope / Future
 
-- Quote-aware tokenization beyond stripping one outer pair.
+- Quote-aware tokenization (full shell quoting rules; current impl strips all double-quotes).
 - `simulate` auto-mutation command/button.
 - Persisted/dismissible tips; modified-but-unstaged commit message nuance.
