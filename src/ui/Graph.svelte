@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { engine, engineVersion } from '$store/engine';
   import { prefillTerminal } from '$store/ui';
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import { buildActiveFlow, cubicSegment } from '$graph/flow';
+  import { type Transform, zoomAt, panBy, fitTransform, followHeadPan } from '$graph/viewport';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
 
@@ -115,9 +117,6 @@
     return computeLayout(inputNodes, orientation);
   });
 
-  const svgWidth = $derived(layout.width + GRAPH_PADDING * 2);
-  const svgHeight = $derived(layout.height + GRAPH_PADDING * 2);
-
   let selectedHash = $state<string | null>(null);
 
   const selectedNode = $derived(
@@ -206,25 +205,116 @@
   function edgePath(edge: GraphEdge): string {
     return `M ${edge.fromX} ${edge.fromY} ${cubicSegment(edge.fromX, edge.fromY, edge.toX, edge.toY, orientation)}`;
   }
+
+  let transform = $state<Transform>({ panX: GRAPH_PADDING, panY: GRAPH_PADDING, k: 1 });
+  let followHead = $state(true);
+  let viewportEl: HTMLDivElement;
+  let dragging = $state(false);
+  let dragStart = { x: 0, y: 0, panX: 0, panY: 0 };
+
+  function viewSize() {
+    return { w: viewportEl?.clientWidth ?? 800, h: viewportEl?.clientHeight ?? 600 };
+  }
+  function fit() {
+    const { w, h } = viewSize();
+    transform = fitTransform(layout.width, layout.height, w, h, GRAPH_PADDING);
+    followHead = false;
+  }
+  function zoomButton(factor: number) {
+    const { w, h } = viewSize();
+    transform = zoomAt(transform, factor, w / 2, h / 2);
+    followHead = false;
+  }
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    const rect = viewportEl.getBoundingClientRect();
+    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    transform = zoomAt(transform, factor, e.clientX - rect.left, e.clientY - rect.top);
+    followHead = false;
+  }
+  function onPointerDown(e: PointerEvent) {
+    if ((e.target as Element).getAttribute('role') === 'button') return; // let node clicks/keys work
+    dragging = true;
+    dragStart = { x: e.clientX, y: e.clientY, panX: transform.panX, panY: transform.panY };
+    viewportEl.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: PointerEvent) {
+    if (!dragging) return;
+    transform = {
+      ...transform,
+      panX: dragStart.panX + (e.clientX - dragStart.x),
+      panY: dragStart.panY + (e.clientY - dragStart.y),
+    };
+    followHead = false;
+  }
+  function onPointerUp(e: PointerEvent) {
+    dragging = false;
+    viewportEl.releasePointerCapture?.(e.pointerId);
+  }
+  function onViewportKeydown(e: KeyboardEvent) {
+    const STEP = 40;
+    if (e.key === '+' || e.key === '=') zoomButton(1.1);
+    else if (e.key === '-' || e.key === '_') zoomButton(1 / 1.1);
+    else if (e.key === '0') fit();
+    else if (e.key === 'ArrowUp') transform = panBy(transform, 0, STEP);
+    else if (e.key === 'ArrowDown') transform = panBy(transform, 0, -STEP);
+    else if (e.key === 'ArrowLeft') transform = panBy(transform, STEP, 0);
+    else if (e.key === 'ArrowRight') transform = panBy(transform, -STEP, 0);
+    else return;
+    e.preventDefault();
+    if (e.key !== '0') followHead = false;
+  }
+  // Follow HEAD: when engine state changes and follow is engaged, recenter on HEAD.
+  // Tracked deps are $engineVersion, followHead, layout, headCommitHash — NOT transform.
+  // The current transform's zoom is read via untrack to avoid self-triggering this effect.
+  $effect(() => {
+    void $engineVersion;
+    if (!followHead) return;
+    const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+    if (!headNode) return;
+    const { w, h } = viewSize();
+    const cur = untrack(() => transform);
+    transform = followHeadPan(cur, headNode.x, headNode.y, w, h);
+  });
 </script>
 
-<div class="relative w-full h-full overflow-auto bg-terminal-bg">
+<!--
+  role="application" makes this a custom interactive pan/zoom canvas: it is intentionally
+  focusable (tabindex) and owns wheel/pointer/keyboard handlers so screen readers pass
+  keystrokes through. The two a11y rules below are false positives for that deliberate role.
+-->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div
+  bind:this={viewportEl}
+  class="relative w-full h-full overflow-hidden bg-terminal-bg touch-none"
+  role="application"
+  aria-label="Commit graph viewport. Arrow keys pan, plus and minus zoom, 0 fits."
+  tabindex="0"
+  onwheel={onWheel}
+  onpointerdown={onPointerDown}
+  onpointermove={onPointerMove}
+  onpointerup={onPointerUp}
+  onkeydown={onViewportKeydown}
+>
   {#if layout.nodes.length === 0}
     <div class="flex items-center justify-center w-full h-full">
       <p class="font-mono text-terminal-dim text-sm select-none">No commits yet</p>
     </div>
   {:else}
     <svg
-      width={svgWidth}
-      height={svgHeight}
+      width="100%"
+      height="100%"
       class="block"
-      style="min-width: 100%; min-height: 100%;"
       role="group"
       aria-label={graphSummary}
       onfocusin={() => (graphFocused = true)}
       onfocusout={() => (graphFocused = false)}
     >
-      <g bind:this={nodesGroupEl} transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
+      <g
+        bind:this={nodesGroupEl}
+        transform={`translate(${transform.panX}, ${transform.panY}) scale(${transform.k})`}
+      >
         <!-- Edges -->
         {#each layout.edges as edge (edge.from + '→' + edge.to)}
           {@const fromNode = layout.nodes.find((n) => n.hash === edge.from)}
@@ -436,4 +526,25 @@
   {#if selectedNode}
     <CommitDetail node={selectedNode} onclose={() => (selectedHash = null)} />
   {/if}
+
+  <div class="absolute bottom-3 right-3 z-20 flex flex-col gap-1">
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Zoom in"
+      onclick={() => zoomButton(1.2)}>+</button
+    >
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Zoom out"
+      onclick={() => zoomButton(1 / 1.2)}>−</button
+    >
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-xs leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Fit graph to view"
+      onclick={fit}>fit</button
+    >
+  </div>
 </div>
