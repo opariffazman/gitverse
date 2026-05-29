@@ -29,16 +29,24 @@ Engine (pure TS) ← Shell (router) ← Renderer (Svelte 5)
 | Advanced | `git merge` `git rebase` `git reset` `git stash` `git tag` `git cherry-pick` `git revert` |
 | File     | `git rm` `git mv`                                                                         |
 
-File builtins: `ls` `cat` `touch` `rm` `mv` `clear` `help`
+File builtins: `ls` `cat` `touch` `echo` `rm` `mv` `clear` `help`
+
+`echo text > file` (overwrite) and `echo text >> file` (append) simulate file content changes — the modify counterpart to `touch`.
+
+Common shorthands work too: `git commit -am`, `git switch -c <name>` / `git checkout -c`, `git add -A` / `-u`, and clustered short flags (`-am` = `-a -m`).
 
 ## Features
 
 - **Live SVG graph** — left-to-right DAG, d3-dag layout, animated transitions
-- **Terminal emulator** — history (Up/Down/Ctrl+R), tab autocomplete, ghost text suggestions
-- **Powerlevel10k prompt** — branch name, status icons, file counts (A/M/?/D)
+- **Pan + zoom** — drag to pan, wheel/pinch to zoom, no scrollbars. Follow-HEAD camera tracks the tip; `recenter` snaps back, `fit` frames the whole tree
+- **Click a node** — drops `git checkout Cx` into the terminal (you press Enter). Terminal stays the only place commands run
+- **Terminal** — history (Up/Down/Ctrl+R), tab autocomplete, ghost-text suggestions, context-aware placeholder
+- **Contextual hints** — dim nudges when stuck (no repo, nothing staged, unknown command) + one-time onboarding tips after `git init` and the first commit
+- **Accessibility (WCAG 2.1 AA)** — keyboard graph nav (Tab + arrows), screen-reader live regions, labeled input, reduced-motion support
+- **Powerlevel10k prompt** — branch name, status icons, file counts (A/M/?/D); detached HEAD shows friendly `Cx`
 - **Three-area model** — working dir, staging index, committed tree all tracked
+- **Rebase prime labels** — rewritten commits show `C2'` (same commit, new hash; stacks on repeat: `C2''`)
 - **Commit detail popover** — hash, message, parents, changed files
-- **Focus toggle** — graph-focused or terminal-focused layout (60/40 split)
 - **Persistence** — auto-save to IndexedDB, multiple sandbox slots, export/import
 - **PWA** — installable, works offline, service worker caching
 - **Responsive** — desktop + mobile layouts
@@ -78,7 +86,7 @@ src/
 ├── shell/            # Command routing + builtins
 │   ├── parser.ts     # Input tokenization
 │   ├── router.ts     # Git vs builtin dispatch
-│   ├── builtins.ts   # ls, cat, touch, rm, mv, clear, help, sim
+│   ├── builtins.ts   # ls, cat, touch, echo, rm, mv, clear, help
 │   ├── history.ts    # Command history + Ctrl+R search
 │   ├── complete.ts   # Tab autocomplete
 │   └── prompt.ts     # Powerlevel10k-style prompt
@@ -87,26 +95,31 @@ src/
 │   ├── Graph.svelte
 │   ├── CommitDetail.svelte
 │   ├── Layout.svelte
-│   └── Prompt.svelte
-├── graph/            # d3-dag layout logic
+│   ├── Prompt.svelte
+│   └── ResetButton.svelte
+├── graph/            # d3-dag layout + pan/zoom viewport math
 ├── store/            # Svelte stores (engine + UI state)
 ├── persistence/      # IndexedDB save/load + serialization
 ├── App.svelte
 └── main.ts
 tests/
-├── engine/           # 9 test files — headless engine tests
-├── shell/            # 4 test files — parser, router, builtins, prompt
-├── graph/            # Layout computation tests
-└── persistence/      # Serialization tests
+├── engine/           # 16 test files — headless engine tests
+├── shell/            # 5 test files — parser, router, builtins, echo, prompt
+├── graph/            # layout + pan/zoom viewport tests
+├── store/            # store behavior tests
+├── e2e/              # Playwright + axe-core a11y / interaction tests
+└── persistence/      # serialization tests
 ```
 
 ## Design Decisions
 
 - **No shell emulation** — curated git commands + minimal file builtins only
-- **Simulated file changes** — no text editing; `sim change` mutates tracked files
+- **Simulated file changes** — no text editor; `touch` creates, `echo text > file` / `>> file` writes/appends content
+- **Graph suggests, terminal executes** — clicking a node prefills `git checkout`, never auto-runs; one execution surface
+- **Git-accurate** — `commit -a`/`-am` stage tracked changes only (never untracked); hints point you to `git add` for new files
+- **Accessible by default** — WCAG 2.1 AA: keyboard graph nav, screen-reader live regions, reduced-motion
 - **Flat VFS** — files + one directory level max
-- **Left-to-right DAG** — mermaid gitGraph style, SVG rendered, d3-dag layout
-- **Layered UI** — graph background, semi-transparent terminal overlay
+- **Left-to-right DAG** — mermaid gitGraph style, SVG rendered, d3-dag layout, pan/zoom viewport
 - **Safe shortcuts** — skips Ctrl+W/N/T/Q (browser intercepts), Alt+Backspace for delete-word
 - **Local-only v1** — no remote ops (push/pull/fetch), deferred to v2
 
@@ -143,9 +156,9 @@ CI/CD:
 | Source lines      | ~4,800 |
 | Test lines        | ~3,500 |
 | Git commands      | 17     |
-| File builtins     | 7      |
-| Svelte components | 5      |
-| Total commits     | 64     |
+| File builtins     | 8      |
+| Svelte components | 6      |
+| Total commits     | 165    |
 
 ## License
 
