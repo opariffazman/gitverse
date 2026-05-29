@@ -95,6 +95,60 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
       return { output: '', exitCode: 0 };
     }
 
+    case 'echo': {
+      let redirect: '>' | '>>' | null = null;
+      let redirectIdx = -1;
+      let gluedTarget = '';
+      for (let i = 0; i < args.length; i++) {
+        const a = args[i];
+        if (a === '>>' || a.startsWith('>>')) {
+          redirect = '>>';
+          redirectIdx = i;
+          gluedTarget = a.slice(2);
+          break;
+        }
+        if (a === '>' || a.startsWith('>')) {
+          redirect = '>';
+          redirectIdx = i;
+          gluedTarget = a.slice(1);
+          break;
+        }
+      }
+
+      if (redirect === null) {
+        return { output: args.join(' '), exitCode: 0 };
+      }
+
+      let content = args.slice(0, redirectIdx).join(' ');
+      if (content.length >= 2 && content.startsWith('"') && content.endsWith('"')) {
+        content = content.slice(1, -1);
+      }
+
+      const target = gluedTarget || args[redirectIdx + 1];
+      if (!target) {
+        return { output: 'echo: missing redirect target', exitCode: 1 };
+      }
+
+      const slashIdx = target.indexOf('/');
+      if (slashIdx !== -1) {
+        const dir = target.substring(0, slashIdx);
+        if (!vfs.exists(dir + '/')) {
+          return {
+            output: `echo: cannot create '${target}': No such file or directory`,
+            exitCode: 1,
+          };
+        }
+      }
+
+      if (redirect === '>') {
+        vfs.createFile(target, content);
+      } else {
+        const existing = vfs.exists(target) ? vfs.readFile(target) : '';
+        vfs.createFile(target, existing === '' ? content : existing + '\n' + content);
+      }
+      return { output: '', exitCode: 0 };
+    }
+
     case 'rm': {
       if (args.length === 0) {
         return { output: 'rm: missing operand', exitCode: 1 };
@@ -167,6 +221,8 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         '    ls [dir]          — list files',
         '    cat <file>        — show file content',
         '    touch <file>      — create file (hint: use this to add files!)',
+        '    echo <text> > <file>   — write text to a file (overwrite)',
+        '    echo <text> >> <file>  — append text (use to modify tracked files!)',
         '    rm <file>         — delete file',
         '    mv <src> <dst>    — move/rename file',
         '    clear             — clear the terminal',

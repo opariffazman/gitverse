@@ -107,7 +107,11 @@ describe('parseInput – unknown', () => {
     expect(parseInput('nano')).toEqual({ type: 'unknown', command: 'nano' });
   });
 
-  it('echo → unknown', () => {
-    expect(parseInput('echo hello')).toEqual({ type: 'unknown', command: 'echo' });
+  it('echo → builtin', () => {
+    expect(parseInput('echo hello')).toEqual({
+      type: 'builtin',
+      command: 'echo',
+      args: ['hello'],
+    });
   });
 });
