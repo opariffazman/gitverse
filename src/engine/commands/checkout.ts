@@ -70,7 +70,7 @@ export function cmdCheckout(
   expand: ExpandFn,
   label: LabelFn,
 ): CommandResult {
-  const createAndSwitch = opts.has('-b');
+  const createAndSwitch = opts.has('-b') || opts.has('-c');
 
   if (args.length === 0 && !createAndSwitch) {
     return {
@@ -81,7 +81,7 @@ export function cmdCheckout(
 
   // Determine target name. C-labels are expanded only for the checkout target,
   // never for the new branch name created via -b.
-  const bFlag = opts.get('-b');
+  const bFlag = opts.get('-b') ?? opts.get('-c');
   const targetName = createAndSwitch
     ? bFlag && bFlag.length > 0
       ? bFlag[0]
