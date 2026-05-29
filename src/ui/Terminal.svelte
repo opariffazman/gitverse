@@ -252,7 +252,7 @@
         spellcheck={false}
         class="w-full bg-transparent border-none text-terminal-fg placeholder:text-terminal-dim caret-terminal-green font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-terminal-green/70 rounded-sm"
         value={inputValue}
-        placeholder={placeholder}
+        {placeholder}
         oninput={handleInput}
         onkeydown={handleKeydown}
       />
