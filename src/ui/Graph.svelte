@@ -2,12 +2,15 @@
   import { engine, engineVersion, executeCommand } from '$store/engine';
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
+  import { buildActiveFlow, cubicSegment } from '$graph/flow';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
 
   const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
   const NODE_RADIUS = 25;
   const GRAPH_PADDING = 80;
+  const FLOW_COLOR = '#22d3ee';
+  const FLOW_PER_SEGMENT_SEC = 2.4;
 
   let isMobile = $state(false);
 
@@ -16,6 +19,18 @@
     isMobile = mq.matches;
     function onChange(e: MediaQueryListEvent) {
       isMobile = e.matches;
+    }
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  });
+
+  let prefersReducedMotion = $state(false);
+
+  $effect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    prefersReducedMotion = mq.matches;
+    function onChange(e: MediaQueryListEvent) {
+      prefersReducedMotion = e.matches;
     }
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
@@ -130,6 +145,10 @@
     }
   });
 
+  const activeFlow = $derived(buildActiveFlow(layout.nodes, headCommitHash, orientation));
+  const flowDur = $derived(activeFlow ? activeFlow.segmentCount * FLOW_PER_SEGMENT_SEC : 0);
+  const flowDots = $derived(activeFlow ? activeFlow.segmentCount : 0);
+
   function selectNode(node: GraphNode) {
     if (node.type === 'phantom') return;
 
@@ -157,12 +176,7 @@
   }
 
   function edgePath(edge: GraphEdge): string {
-    if (orientation === 'horizontal') {
-      const midX = (edge.fromX + edge.toX) / 2;
-      return `M ${edge.fromX} ${edge.fromY} C ${midX} ${edge.fromY}, ${midX} ${edge.toY}, ${edge.toX} ${edge.toY}`;
-    }
-    const midY = (edge.fromY + edge.toY) / 2;
-    return `M ${edge.fromX} ${edge.fromY} C ${edge.fromX} ${midY}, ${edge.toX} ${midY}, ${edge.toX} ${edge.toY}`;
+    return `M ${edge.fromX} ${edge.fromY} ${cubicSegment(edge.fromX, edge.fromY, edge.toX, edge.toY, orientation)}`;
   }
 </script>
 
@@ -190,6 +204,42 @@
             opacity="0.6"
           />
         {/each}
+
+        <!-- Active-branch energy flow -->
+        {#if activeFlow}
+          {#if prefersReducedMotion}
+            <path
+              d={activeFlow.d}
+              fill="none"
+              stroke={FLOW_COLOR}
+              stroke-width="3"
+              opacity="0.55"
+            />
+          {:else}
+            <!-- {#key} remounts the whole layer when the path changes: SMIL animateMotion
+                 snapshots its mpath geometry at start and won't re-read a mutated d. The remount
+                 also makes the inner index-keyed each safe — old dots are discarded wholesale. -->
+            {#key activeFlow.d}
+              <g aria-hidden="true" pointer-events="none">
+                <path id="head-flow-path" d={activeFlow.d} fill="none" stroke="none" />
+                {#each Array(flowDots) as _unused, i (i)}
+                  <g>
+                    <circle r="9" fill={FLOW_COLOR} opacity="0.3" />
+                    <circle r="4" fill={FLOW_COLOR} />
+                    <animateMotion
+                      dur="{flowDur}s"
+                      begin="{(i * flowDur) / flowDots}s"
+                      repeatCount="indefinite"
+                    >
+                      <!-- xlink:href for Safari/older browsers; href is standard SVG 2 -->
+                      <mpath xlink:href="#head-flow-path" href="#head-flow-path" />
+                    </animateMotion>
+                  </g>
+                {/each}
+              </g>
+            {/key}
+          {/if}
+        {/if}
 
         <!-- Nodes -->
         {#each layout.nodes as node, ni (node.type === 'phantom' ? `phantom-${ni}` : node.hash)}
