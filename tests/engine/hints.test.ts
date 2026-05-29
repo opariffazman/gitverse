@@ -9,15 +9,24 @@ describe('contextual hints', () => {
     expect(res.hint).toContain('git init');
   });
 
-  it('nothing-to-commit suggests touch + git add', () => {
+  it('nothing staged WITH untracked files → untracked message + git add hint', () => {
+    const eng = new GitEngine();
+    eng.execute('git init');
+    eng.getVFS().createFile('a.txt', 'a'); // untracked, never added
+    const res = eng.execute('git commit -m "x"');
+    expect(res.output).toContain('nothing added to commit but untracked files present');
+    expect(res.hint).toContain('git add');
+  });
+
+  it('nothing staged with a truly clean tree → clean message, no hint', () => {
     const eng = new GitEngine();
     eng.execute('git init');
     eng.getVFS().createFile('a.txt', 'a');
     eng.execute('git add a.txt');
     eng.execute('git commit -m "base"');
-    const res = eng.execute('git commit -m "again"'); // nothing staged
-    expect(res.output).toContain('nothing to commit');
-    expect(res.hint).toContain('touch');
+    const res = eng.execute('git commit -m "again"'); // clean, no untracked
+    expect(res.output).toContain('nothing to commit, working tree clean');
+    expect(res.hint).toBeUndefined();
   });
 
   it('nothing-to-commit names the actual branch when not on main', () => {

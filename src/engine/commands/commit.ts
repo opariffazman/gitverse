@@ -16,6 +16,7 @@ export function cmdCommit(
   index: Map<string, string>,
   getCommittedTree: () => Map<string, string>,
   label: LabelFn,
+  untracked: string[],
 ): CommandResult {
   // Require -m flag
   const messageArgs = opts.get('-m');
@@ -52,10 +53,16 @@ export function cmdCommit(
   if (!hasChanges) {
     const head = refs.getHEAD();
     const branchLabel = head.attached ? head.target : 'HEAD (detached)';
+    if (untracked.length > 0) {
+      return {
+        output: `On branch ${branchLabel}\nnothing added to commit but untracked files present`,
+        exitCode: 1,
+        hint: "use 'git add <file>' to track new files — commit -am only re-commits already-tracked files",
+      };
+    }
     return {
       output: `On branch ${branchLabel}\nnothing to commit, working tree clean`,
       exitCode: 1,
-      hint: 'create or modify a file with touch, then git add',
     };
   }
 

@@ -221,6 +221,7 @@ export class GitEngine {
           this.index,
           () => this.getCommittedTree(),
           label,
+          this.getUntrackedFiles(),
         );
         break;
 
