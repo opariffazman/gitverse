@@ -38,9 +38,7 @@
   });
 
   const placeholder = $derived(
-    $engine.isInitialized()
-      ? "type a command — try 'help'"
-      : "type a command — try 'git init'",
+    $engine.isInitialized() ? "type a command — try 'help'" : "type a command — try 'git init'",
   );
 
   function scrollToBottom() {

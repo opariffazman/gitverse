@@ -135,31 +135,31 @@ test('reduced motion disables the HEAD pulse animation', async ({ page }) => {
   await expect(page.locator('circle animate')).toHaveCount(0);
 });
 
-test('empty-graph guide shows before and after init; placeholder is context-aware', async ({
+test('empty-graph shows bare "No commits yet"; placeholder de-touched after init', async ({
   page,
 }) => {
   const input = page.locator('#terminal-input');
 
-  // Before init: placeholder suggests git init, guide visible.
+  // Before init.
   await expect(input).toHaveAttribute('placeholder', /git init/);
   await expect(page.getByText('No commits yet')).toBeVisible();
-  await expect(page.getByText(/git commit -m "init"/)).toBeVisible();
+  await expect(page.getByText(/git commit -m "init"/)).toHaveCount(0); // 3-step guide gone
 
-  // After init (no commit yet): placeholder switches, guide STILL visible.
+  // After init: placeholder no longer mentions touch; bare "No commits yet" remains.
   await input.click();
   await input.fill('git init');
   await input.press('Enter');
-  await expect(input).toHaveAttribute('placeholder', /touch readme\.md/);
+  await expect(input).toHaveAttribute('placeholder', /help/);
+  await expect(input).not.toHaveAttribute('placeholder', /touch/);
   await expect(page.getByText('No commits yet')).toBeVisible();
+});
 
-  // After a commit: guide is gone.
-  await input.fill('touch readme.md');
+test('git init prints a one-time touch tip', async ({ page }) => {
+  const input = page.locator('#terminal-input');
+  await input.click();
+  await input.fill('git init');
   await input.press('Enter');
-  await input.fill('git add readme.md');
-  await input.press('Enter');
-  await input.fill('git commit -m "first"');
-  await input.press('Enter');
-  await expect(page.getByText('No commits yet')).toHaveCount(0);
+  await expect(page.getByText(/create a file with 'touch/)).toBeVisible();
 });
 
 test('unknown command shows a dim hint line', async ({ page }) => {
