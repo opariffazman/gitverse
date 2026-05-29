@@ -19,6 +19,7 @@
 - **Modify** `src/ui/Graph.svelte` — import the helpers, DRY `edgePath` onto `cubicSegment`, add reduced-motion state + `activeFlow` derived, render the flow layer between edges and nodes.
 
 Reference for existing conventions:
+
 - Existing pure layout module: `src/graph/layout.ts` (exports `Orientation`, spacing consts).
 - Existing test style + `makeNode` helper: `tests/graph/layout.test.ts`.
 - Existing SMIL precedent: HEAD glow `<animate>` at `src/ui/Graph.svelte:200-217`.
@@ -31,6 +32,7 @@ Reference for existing conventions:
 ## Task 1: Pure flow module (`src/graph/flow.ts`)
 
 **Files:**
+
 - Create: `src/graph/flow.ts`
 - Test: `tests/graph/flow.test.ts`
 
@@ -235,6 +237,7 @@ git commit -m "feat: pure active-branch flow path builder for graph energy effec
 No automated test — SMIL motion is visual. Verified by typecheck, build, and manual browser check. Follow the steps exactly.
 
 **Files:**
+
 - Modify: `src/ui/Graph.svelte`
 
 - [ ] **Step 1: Import the flow helpers**
@@ -242,14 +245,14 @@ No automated test — SMIL motion is visual. Verified by typecheck, build, and m
 In `src/ui/Graph.svelte`, find (line ~3):
 
 ```ts
-  import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
-  import type { Orientation } from '$graph/layout';
+import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
+import type { Orientation } from '$graph/layout';
 ```
 
 Add immediately after the `Orientation` import:
 
 ```ts
-  import { buildActiveFlow, cubicSegment } from '$graph/flow';
+import { buildActiveFlow, cubicSegment } from '$graph/flow';
 ```
 
 - [ ] **Step 2: Add flow constants**
@@ -257,16 +260,16 @@ Add immediately after the `Orientation` import:
 Find:
 
 ```ts
-  const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
-  const NODE_RADIUS = 25;
-  const GRAPH_PADDING = 80;
+const LANE_COLORS = ['#4ade80', '#60a5fa', '#c084fc', '#f87171', '#facc15', '#22d3ee'];
+const NODE_RADIUS = 25;
+const GRAPH_PADDING = 80;
 ```
 
 Add after `GRAPH_PADDING`:
 
 ```ts
-  const FLOW_COLOR = '#22d3ee';
-  const FLOW_PER_SEGMENT_SEC = 0.6;
+const FLOW_COLOR = '#22d3ee';
+const FLOW_PER_SEGMENT_SEC = 0.6;
 ```
 
 - [ ] **Step 3: DRY `edgePath` onto `cubicSegment`**
@@ -274,22 +277,22 @@ Add after `GRAPH_PADDING`:
 Replace the whole `edgePath` function (lines ~159-166):
 
 ```ts
-  function edgePath(edge: GraphEdge): string {
-    if (orientation === 'horizontal') {
-      const midX = (edge.fromX + edge.toX) / 2;
-      return `M ${edge.fromX} ${edge.fromY} C ${midX} ${edge.fromY}, ${midX} ${edge.toY}, ${edge.toX} ${edge.toY}`;
-    }
-    const midY = (edge.fromY + edge.toY) / 2;
-    return `M ${edge.fromX} ${edge.fromY} C ${edge.fromX} ${midY}, ${edge.toX} ${midY}, ${edge.toX} ${edge.toY}`;
+function edgePath(edge: GraphEdge): string {
+  if (orientation === 'horizontal') {
+    const midX = (edge.fromX + edge.toX) / 2;
+    return `M ${edge.fromX} ${edge.fromY} C ${midX} ${edge.fromY}, ${midX} ${edge.toY}, ${edge.toX} ${edge.toY}`;
   }
+  const midY = (edge.fromY + edge.toY) / 2;
+  return `M ${edge.fromX} ${edge.fromY} C ${edge.fromX} ${midY}, ${edge.toX} ${midY}, ${edge.toX} ${edge.toY}`;
+}
 ```
 
 with:
 
 ```ts
-  function edgePath(edge: GraphEdge): string {
-    return `M ${edge.fromX} ${edge.fromY} ${cubicSegment(edge.fromX, edge.fromY, edge.toX, edge.toY, orientation)}`;
-  }
+function edgePath(edge: GraphEdge): string {
+  return `M ${edge.fromX} ${edge.fromY} ${cubicSegment(edge.fromX, edge.fromY, edge.toX, edge.toY, orientation)}`;
+}
 ```
 
 - [ ] **Step 4: Add `prefersReducedMotion` state**
@@ -297,33 +300,33 @@ with:
 Find the `isMobile` effect (lines ~12-22):
 
 ```ts
-  let isMobile = $state(false);
+let isMobile = $state(false);
 
-  $effect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    isMobile = mq.matches;
-    function onChange(e: MediaQueryListEvent) {
-      isMobile = e.matches;
-    }
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  });
+$effect(() => {
+  const mq = window.matchMedia('(max-width: 640px)');
+  isMobile = mq.matches;
+  function onChange(e: MediaQueryListEvent) {
+    isMobile = e.matches;
+  }
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+});
 ```
 
 Add immediately after that closing `});`:
 
 ```ts
-  let prefersReducedMotion = $state(false);
+let prefersReducedMotion = $state(false);
 
-  $effect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    prefersReducedMotion = mq.matches;
-    function onChange(e: MediaQueryListEvent) {
-      prefersReducedMotion = e.matches;
-    }
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  });
+$effect(() => {
+  const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  prefersReducedMotion = mq.matches;
+  function onChange(e: MediaQueryListEvent) {
+    prefersReducedMotion = e.matches;
+  }
+  mq.addEventListener('change', onChange);
+  return () => mq.removeEventListener('change', onChange);
+});
 ```
 
 - [ ] **Step 5: Add the `activeFlow` derived value**
@@ -331,24 +334,24 @@ Add immediately after that closing `});`:
 Find the `headCommitHash` derived block (ends ~line 131):
 
 ```ts
-  const headCommitHash = $derived.by(() => {
-    const eng = $engine;
-    void $engineVersion;
-    try {
-      const h = eng.getHEAD();
-      return h.attached ? (eng.allBranches().get(h.target) ?? '') : h.target;
-    } catch {
-      return '';
-    }
-  });
+const headCommitHash = $derived.by(() => {
+  const eng = $engine;
+  void $engineVersion;
+  try {
+    const h = eng.getHEAD();
+    return h.attached ? (eng.allBranches().get(h.target) ?? '') : h.target;
+  } catch {
+    return '';
+  }
+});
 ```
 
 Add immediately after that closing `});`:
 
 ```ts
-  const activeFlow = $derived(buildActiveFlow(layout.nodes, headCommitHash, orientation));
-  const flowDur = $derived(activeFlow ? activeFlow.segmentCount * FLOW_PER_SEGMENT_SEC : 0);
-  const flowDots = $derived(activeFlow ? activeFlow.segmentCount : 0);
+const activeFlow = $derived(buildActiveFlow(layout.nodes, headCommitHash, orientation));
+const flowDur = $derived(activeFlow ? activeFlow.segmentCount * FLOW_PER_SEGMENT_SEC : 0);
+const flowDots = $derived(activeFlow ? activeFlow.segmentCount : 0);
 ```
 
 - [ ] **Step 6: Render the flow layer between edges and nodes**

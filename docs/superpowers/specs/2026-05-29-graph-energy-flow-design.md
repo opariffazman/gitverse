@@ -58,8 +58,8 @@ Algorithm:
    `Graph.svelte`, but in parent → child direction:
    - horizontal: control points at the mid-X between the two nodes.
    - vertical: control points at the mid-Y between the two nodes.
-   The first segment starts with `M <rootX> <rootY>`; subsequent segments append `C ...`
-   (the path stays connected because each segment's start equals the previous end).
+     The first segment starts with `M <rootX> <rootY>`; subsequent segments append `C ...`
+     (the path stays connected because each segment's start equals the previous end).
 6. Return `{ d, segmentCount }` where `segmentCount` is the number of hops.
 
 This function owns the curve geometry so the Svelte component stays declarative.
@@ -121,7 +121,7 @@ Surfaced during spec self-review — verify each in the browser during implement
    `<base>` element — verify there is no `<base>` tag, or use an absolute-to-current-URL
    ref if one exists.
 4. **Non-uniform speed on lane-change segments (LOW).** `animateMotion` advances at a
-   constant rate over the path *parameter*, not arc length. Commits are evenly spaced, so
+   constant rate over the path _parameter_, not arc length. Commits are evenly spaced, so
    straight mainline segments are near-equal length and look uniform, but a segment that
    also changes lane is longer and the dot will appear to briefly speed up. Acceptable for
    v1; revisit with `keyPoints`/`keyTimes` only if it reads badly.
