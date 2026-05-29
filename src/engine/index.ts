@@ -202,6 +202,9 @@ export class GitEngine {
           this.refs.createBranch('main', '');
           this.refs.attachHEAD('main');
         }
+        if (result.exitCode === 0) {
+          result.hint = "create a file with 'touch <name>', then 'git add' and 'git commit'";
+        }
         break;
       case 'add':
         result = cmdAdd(args, opts, this.vfs, this.objects, this.index, this.getCommittedTree());

@@ -41,3 +41,35 @@ describe('contextual hints', () => {
     expect(res.output).toContain('nothing to commit');
   });
 });
+
+describe('onboarding tips', () => {
+  it('git init carries a create-flow tip', () => {
+    const eng = new GitEngine();
+    const res = eng.execute('git init');
+    expect(res.exitCode).toBe(0);
+    expect(res.hint).toContain('touch');
+  });
+
+  it('the first (root) commit carries a modify-flow echo tip', () => {
+    const eng = new GitEngine();
+    eng.execute('git init');
+    eng.getVFS().createFile('a.txt', 'a');
+    eng.execute('git add a.txt');
+    const res = eng.execute('git commit -m "first"');
+    expect(res.exitCode).toBe(0);
+    expect(res.hint).toContain('echo');
+  });
+
+  it('a later (non-root) commit has no echo tip', () => {
+    const eng = new GitEngine();
+    eng.execute('git init');
+    eng.getVFS().createFile('a.txt', 'a');
+    eng.execute('git add a.txt');
+    eng.execute('git commit -m "first"');
+    eng.getVFS().createFile('b.txt', 'b');
+    eng.execute('git add b.txt');
+    const res = eng.execute('git commit -m "second"');
+    expect(res.exitCode).toBe(0);
+    expect(res.hint).toBeUndefined();
+  });
+});

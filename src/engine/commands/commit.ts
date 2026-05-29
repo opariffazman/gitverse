@@ -89,8 +89,12 @@ export function cmdCommit(
     refs.detachHEAD(commitHash);
   }
 
+  const isRoot = parents.length === 0;
   return {
     output: `[${head.attached ? head.target : 'HEAD detached'} ${label(commitHash)}] ${message}`,
     exitCode: 0,
+    ...(isRoot
+      ? { hint: "modify a tracked file with 'echo text >> <file>', then 'git commit -am'" }
+      : {}),
   };
 }
