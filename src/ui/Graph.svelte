@@ -353,7 +353,7 @@
   onpointercancel={onPointerUp}
   onkeydown={onViewportKeydown}
 >
-  {#if layout.nodes.length === 0}
+  {#if commitNodes.length === 0}
     <div class="flex items-center justify-center w-full h-full">
       <pre class="font-mono text-terminal-dim text-sm leading-6 select-none">{`No commits yet
 
