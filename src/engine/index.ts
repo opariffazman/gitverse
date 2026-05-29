@@ -22,6 +22,7 @@ import { cmdRebase } from './commands/rebase';
 import { cmdCherryPick } from './commands/cherry-pick';
 import { cmdRevert } from './commands/revert';
 import { cmdInit } from './commands/init';
+import { stageWorkingTree } from './commands/staging';
 
 // ---------------------------------------------------------------------------
 // Command parsing
@@ -206,6 +207,11 @@ export class GitEngine {
         break;
 
       case 'commit':
+        if (opts.has('-a')) {
+          stageWorkingTree(this.vfs, this.objects, this.index, this.getCommittedTree(), {
+            includeUntracked: false,
+          });
+        }
         result = cmdCommit(
           args,
           opts,
