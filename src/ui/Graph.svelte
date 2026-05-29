@@ -154,7 +154,9 @@
 
   let focusedIndex = $state(0);
   let graphFocused = $state(false);
+  let nodesGroupEl: SVGGElement | undefined = $state(undefined);
   const commitNodes = $derived(layout.nodes.filter((n) => n.type !== 'phantom'));
+  const commitNodeIndex = $derived(new Map(commitNodes.map((n, i) => [n, i])));
   // Clamp the roving tab stop so a shrinking commit list never strands tabindex.
   const tabStopIndex = $derived(
     commitNodes.length === 0 ? 0 : Math.min(focusedIndex, commitNodes.length - 1),
@@ -175,7 +177,7 @@
     else return;
     e.preventDefault();
     focusedIndex = next;
-    const el = document.getElementById(`commit-node-${next}`);
+    const el = nodesGroupEl?.querySelector<SVGCircleElement>(`#commit-node-${next}`);
     el?.focus();
   }
 
@@ -222,7 +224,7 @@
       onfocusin={() => (graphFocused = true)}
       onfocusout={() => (graphFocused = false)}
     >
-      <g transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
+      <g bind:this={nodesGroupEl} transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
         <!-- Edges -->
         {#each layout.edges as edge (edge.from + '→' + edge.to)}
           {@const fromNode = layout.nodes.find((n) => n.hash === edge.from)}
@@ -387,7 +389,7 @@
               stroke-dasharray="6 3"
             />
           {:else}
-            {@const cIdx = commitNodes.indexOf(node)}
+            {@const cIdx = commitNodeIndex.get(node) ?? 0}
             {#if graphFocused && cIdx === tabStopIndex}
               <circle
                 cx={node.x}
@@ -396,7 +398,6 @@
                 fill="none"
                 stroke="#ffffff"
                 stroke-width="2"
-                stroke-dasharray="3 2"
                 pointer-events="none"
               />
             {/if}
