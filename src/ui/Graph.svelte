@@ -146,6 +146,39 @@
     }
   });
 
+  const graphSummary = $derived.by(() => {
+    const n = layout.nodes.filter((nd) => nd.type !== 'phantom').length;
+    const head = headBranch ? `HEAD on ${headBranch}` : 'detached HEAD';
+    return `Commit graph: ${n} commit${n === 1 ? '' : 's'}, ${head}`;
+  });
+
+  let focusedIndex = $state(0);
+  let graphFocused = $state(false);
+  const commitNodes = $derived(layout.nodes.filter((n) => n.type !== 'phantom'));
+  // Clamp the roving tab stop so a shrinking commit list never strands tabindex.
+  const tabStopIndex = $derived(
+    commitNodes.length === 0 ? 0 : Math.min(focusedIndex, commitNodes.length - 1),
+  );
+
+  function onNodeKeydown(e: KeyboardEvent, node: GraphNode, index: number) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      selectNode(node);
+      return;
+    }
+    const last = commitNodes.length - 1;
+    let next = index;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = Math.min(index + 1, last);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = Math.max(index - 1, 0);
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = last;
+    else return;
+    e.preventDefault();
+    focusedIndex = next;
+    const el = document.getElementById(`commit-node-${next}`);
+    el?.focus();
+  }
+
   const activeFlow = $derived(buildActiveFlow(layout.nodes, headCommitHash, orientation));
   const flowDur = $derived(activeFlow ? activeFlow.segmentCount * FLOW_PER_SEGMENT_SEC : 0);
   const flowDots = $derived(activeFlow ? activeFlow.segmentCount : 0);
@@ -184,6 +217,10 @@
       height={svgHeight}
       class="block"
       style="min-width: 100%; min-height: 100%;"
+      role="group"
+      aria-label={graphSummary}
+      onfocusin={() => (graphFocused = true)}
+      onfocusout={() => (graphFocused = false)}
     >
       <g transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
         <!-- Edges -->
@@ -250,12 +287,14 @@
               stroke-width="2.5"
               opacity="0.5"
             >
-              <animate
-                attributeName="opacity"
-                values="0.3;0.7;0.3"
-                dur="2s"
-                repeatCount="indefinite"
-              />
+              {#if !prefersReducedMotion}
+                <animate
+                  attributeName="opacity"
+                  values="0.3;0.7;0.3"
+                  dur="2s"
+                  repeatCount="indefinite"
+                />
+              {/if}
             </circle>
           {/if}
 
@@ -348,7 +387,21 @@
               stroke-dasharray="6 3"
             />
           {:else}
+            {@const cIdx = commitNodes.indexOf(node)}
+            {#if graphFocused && cIdx === tabStopIndex}
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={NODE_RADIUS + 4}
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="2"
+                stroke-dasharray="3 2"
+                pointer-events="none"
+              />
+            {/if}
             <circle
+              id={`commit-node-${cIdx}`}
               cx={node.x}
               cy={node.y}
               r={NODE_RADIUS}
@@ -358,9 +411,9 @@
               style="cursor: pointer;"
               onclick={() => selectNode(node)}
               role="button"
-              tabindex="0"
-              aria-label={`Commit ${node.label ?? node.hash}: ${node.message}`}
-              onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
+              tabindex={cIdx === tabStopIndex ? 0 : -1}
+              aria-label={`Commit ${node.label ?? node.hash}: ${node.message}. Activate to prefill git checkout.`}
+              onkeydown={(e) => onNodeKeydown(e, node, cIdx)}
             />
 
             <!-- Friendly label inside circle -->
