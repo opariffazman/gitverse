@@ -39,7 +39,7 @@
 
   const placeholder = $derived(
     $engine.isInitialized()
-      ? "type a command — try 'touch readme.md' or 'help'"
+      ? "type a command — try 'help'"
       : "type a command — try 'git init'",
   );
 
