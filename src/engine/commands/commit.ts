@@ -16,6 +16,7 @@ export function cmdCommit(
   index: Map<string, string>,
   getCommittedTree: () => Map<string, string>,
   label: LabelFn,
+  untracked: string[],
 ): CommandResult {
   // Require -m flag
   const messageArgs = opts.get('-m');
@@ -50,8 +51,17 @@ export function cmdCommit(
   }
 
   if (!hasChanges) {
+    const head = refs.getHEAD();
+    const branchLabel = head.attached ? head.target : 'HEAD (detached)';
+    if (untracked.length > 0) {
+      return {
+        output: `On branch ${branchLabel}\nnothing added to commit but untracked files present`,
+        exitCode: 1,
+        hint: "use 'git add <file>' to track new files — commit -am only stages changes to already-tracked files",
+      };
+    }
     return {
-      output: 'On branch main\nnothing to commit, working tree clean',
+      output: `On branch ${branchLabel}\nnothing to commit, working tree clean`,
       exitCode: 1,
     };
   }
@@ -79,8 +89,12 @@ export function cmdCommit(
     refs.detachHEAD(commitHash);
   }
 
+  const isRoot = parents.length === 0;
   return {
     output: `[${head.attached ? head.target : 'HEAD detached'} ${label(commitHash)}] ${message}`,
     exitCode: 0,
+    ...(isRoot
+      ? { hint: "modify a tracked file with 'echo text >> <file>', then 'git commit -am'" }
+      : {}),
   };
 }

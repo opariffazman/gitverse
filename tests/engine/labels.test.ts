@@ -71,6 +71,57 @@ describe('GitEngine commit labels', () => {
   });
 });
 
+describe('GitEngine commit labels — rebase primes', () => {
+  it('labels a rebased commit with one prime', () => {
+    const eng = setup();
+    commit(eng, 'base.txt', 'base'); // C1
+    eng.execute('git checkout -b feature');
+    commit(eng, 'f1.txt', 'f1'); // C2 on feature
+    expect(eng.commitLabel(eng.allBranches().get('feature')!)).toBe('C2');
+
+    eng.execute('git checkout main');
+    commit(eng, 'm1.txt', 'm1'); // C3 on main (diverge)
+    eng.execute('git checkout feature');
+    eng.execute('git rebase main'); // C2 rewritten -> C2'
+
+    const tipHash = eng.allBranches().get('feature')!;
+    expect(eng.commitLabel(tipHash)).toBe("C2'");
+  });
+
+  it('stacks primes on repeated rebase', () => {
+    const eng = setup();
+    commit(eng, 'base.txt', 'base'); // C1
+    eng.execute('git checkout -b feature');
+    commit(eng, 'f1.txt', 'f1'); // C2 on feature
+
+    eng.execute('git checkout main');
+    commit(eng, 'm1.txt', 'm1'); // C3 on main
+    eng.execute('git checkout feature');
+    eng.execute('git rebase main'); // C2 -> C2' (C4 in ordinal)
+
+    eng.execute('git checkout main');
+    commit(eng, 'm2.txt', 'm2'); // C5 on main
+    eng.execute('git checkout feature');
+    eng.execute('git rebase main'); // C2' -> C2'' (C6 in ordinal)
+
+    const tipHash = eng.allBranches().get('feature')!;
+    expect(eng.commitLabel(tipHash)).toBe("C2''");
+  });
+
+  it('original commit keeps its plain label after rebase', () => {
+    const eng = setup();
+    commit(eng, 'base.txt', 'base'); // C1
+    eng.execute('git checkout -b feature');
+    const origC2 = commit(eng, 'f1.txt', 'f1'); // C2
+    eng.execute('git checkout main');
+    commit(eng, 'm1.txt', 'm1'); // C3
+    eng.execute('git checkout feature');
+    eng.execute('git rebase main'); // C2 rewritten -> C2'
+
+    expect(eng.commitLabel(origC2)).toBe('C2');
+  });
+});
+
 describe('C-labels as command arguments', () => {
   let eng: GitEngine;
   let c1: string;

@@ -6,3 +6,8 @@ dist/
 !.env.example
 .playwright-mcp/
 .playwright-cli/
+
+# Playwright e2e output
+test-results/
+playwright-report/
+playwright/.cache/

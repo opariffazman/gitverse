@@ -96,6 +96,14 @@ describe('ShellRouter – unknown commands', () => {
   });
 });
 
+describe('router — unknown command hint', () => {
+  it('unknown command suggests help', () => {
+    const res = router.execute('frobnicate');
+    expect(res.output).toContain('command not found');
+    expect(res.hint).toContain('help');
+  });
+});
+
 describe('ShellRouter – integration: git workflow', () => {
   it('add + commit via router', () => {
     engine.getVFS().createFile('app.js', 'console.log("hi")');

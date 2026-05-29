@@ -292,3 +292,52 @@ describe('git switch', () => {
     expect(result.exitCode).not.toBe(0);
   });
 });
+
+describe('git switch -c / checkout -c', () => {
+  function repo() {
+    const eng = new GitEngine();
+    eng.execute('git init');
+    eng.getVFS().createFile('a.txt', 'a');
+    eng.execute('git add a.txt');
+    eng.execute('git commit -m "base"');
+    return eng;
+  }
+
+  it('switch -c creates and switches to a new branch', () => {
+    const eng = repo();
+    const res = eng.execute('git switch -c feature');
+    expect(res.exitCode).toBe(0);
+    const head = eng.getHEAD();
+    expect(head.attached).toBe(true);
+    expect(head.target).toBe('feature');
+    expect([...eng.allBranches().keys()]).toContain('feature');
+  });
+
+  it('checkout -c also creates and switches', () => {
+    const eng = repo();
+    const res = eng.execute('git checkout -c feat2');
+    expect(res.exitCode).toBe(0);
+    expect(eng.getHEAD().target).toBe('feat2');
+  });
+
+  it('existing -b still works', () => {
+    const eng = repo();
+    expect(eng.execute('git checkout -b feat3').exitCode).toBe(0);
+    expect(eng.getHEAD().target).toBe('feat3');
+  });
+
+  it('-c with no name errors and names -c (not -b)', () => {
+    const eng = repo();
+    const res = eng.execute('git switch -c');
+    expect(res.exitCode).not.toBe(0);
+    expect(res.output).toContain('-c');
+    expect(res.output).not.toContain('-b');
+  });
+
+  it('-b with no name still names -b', () => {
+    const eng = repo();
+    const res = eng.execute('git checkout -b');
+    expect(res.exitCode).not.toBe(0);
+    expect(res.output).toContain('-b');
+  });
+});

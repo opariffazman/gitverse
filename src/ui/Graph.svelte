@@ -1,8 +1,18 @@
 <script lang="ts">
-  import { engine, engineVersion, executeCommand } from '$store/engine';
+  import { untrack } from 'svelte';
+  import { engine, engineVersion } from '$store/engine';
+  import { prefillTerminal } from '$store/ui';
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import { buildActiveFlow, cubicSegment } from '$graph/flow';
+  import {
+    type Transform,
+    zoomAt,
+    panBy,
+    fitTransform,
+    followHeadPan,
+    clampZoom,
+  } from '$graph/viewport';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
 
@@ -11,6 +21,8 @@
   const GRAPH_PADDING = 80;
   const FLOW_COLOR = '#22d3ee';
   const FLOW_PER_SEGMENT_SEC = 2.4;
+  const ZOOM_STEP_KEY = 1.1; // finer zoom step for +/- keys
+  const ZOOM_STEP_BTN = 1.2; // coarser step for on-screen buttons
 
   let isMobile = $state(false);
 
@@ -114,9 +126,6 @@
     return computeLayout(inputNodes, orientation);
   });
 
-  const svgWidth = $derived(layout.width + GRAPH_PADDING * 2);
-  const svgHeight = $derived(layout.height + GRAPH_PADDING * 2);
-
   let selectedHash = $state<string | null>(null);
 
   const selectedNode = $derived(
@@ -145,30 +154,64 @@
     }
   });
 
+  const graphSummary = $derived.by(() => {
+    const n = layout.nodes.filter((nd) => nd.type !== 'phantom').length;
+    const head = headBranch ? `HEAD on ${headBranch}` : 'detached HEAD';
+    return `Commit graph: ${n} commit${n === 1 ? '' : 's'}, ${head}`;
+  });
+
+  let focusedIndex = $state(0);
+  let graphFocused = $state(false);
+  let nodesGroupEl: SVGGElement | undefined = $state(undefined);
+  const commitNodes = $derived(layout.nodes.filter((n) => n.type !== 'phantom'));
+  const commitNodeIndex = $derived(new Map(commitNodes.map((n, i) => [n, i])));
+  // Clamp the roving tab stop so a shrinking commit list never strands tabindex.
+  const tabStopIndex = $derived(
+    commitNodes.length === 0 ? 0 : Math.min(focusedIndex, commitNodes.length - 1),
+  );
+
+  function onNodeKeydown(e: KeyboardEvent, node: GraphNode, index: number) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      // Stop the bubbled viewport handler from also acting on this key.
+      e.stopPropagation();
+      selectNode(node);
+      return;
+    }
+    const last = commitNodes.length - 1;
+    let next = index;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = Math.min(index + 1, last);
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = Math.max(index - 1, 0);
+    else if (e.key === 'Home') next = 0;
+    else if (e.key === 'End') next = last;
+    else return;
+    e.preventDefault();
+    // Stop the bubbled viewport handler from also panning on this key.
+    e.stopPropagation();
+    focusedIndex = next;
+    const el = nodesGroupEl?.querySelector<SVGCircleElement>(`#commit-node-${next}`);
+    el?.focus();
+  }
+
   const activeFlow = $derived(buildActiveFlow(layout.nodes, headCommitHash, orientation));
   const flowDur = $derived(activeFlow ? activeFlow.segmentCount * FLOW_PER_SEGMENT_SEC : 0);
   const flowDots = $derived(activeFlow ? activeFlow.segmentCount : 0);
 
   function selectNode(node: GraphNode) {
     if (node.type === 'phantom') return;
-
-    // Always show this node's detail.
     selectedHash = node.hash;
-
-    // Clicking the commit HEAD already points at is a no-op checkout — just show detail.
-    if (node.hash === headCommitHash) return;
-
     let command: string;
     if (node.branches.length > 0) {
-      // Attach to a branch at this commit; prefer the HEAD branch if it lives here.
       const branch =
         headBranch && node.branches.includes(headBranch) ? headBranch : node.branches[0];
       command = `git checkout ${branch}`;
     } else {
-      // Detach HEAD at the commit, addressed by its friendly label.
-      command = `git checkout ${node.label ?? node.hash}`;
+      // Prime labels (e.g. "C2'") are display-only and not addressable, so fall
+      // back to the hash for rewritten commits; the plain Cn label is fine.
+      const addressable = node.label && !node.label.includes("'");
+      command = `git checkout ${addressable ? node.label : node.hash}`;
     }
-    executeCommand(command);
+    prefillTerminal(command);
   }
 
   function laneColor(lane: number): string {
@@ -178,21 +221,158 @@
   function edgePath(edge: GraphEdge): string {
     return `M ${edge.fromX} ${edge.fromY} ${cubicSegment(edge.fromX, edge.fromY, edge.toX, edge.toY, orientation)}`;
   }
+
+  let transform = $state<Transform>({ panX: GRAPH_PADDING, panY: GRAPH_PADDING, k: 1 });
+  let followHead = $state(true);
+  let viewportEl: HTMLDivElement;
+  let dragging = $state(false);
+  let dragStart = { x: 0, y: 0, panX: 0, panY: 0 };
+  let dragPointerId: number | null = null;
+
+  function viewSize() {
+    return { w: viewportEl?.clientWidth ?? 800, h: viewportEl?.clientHeight ?? 600 };
+  }
+  function fit() {
+    const { w, h } = viewSize();
+    transform = fitTransform(layout.width, layout.height, w, h, GRAPH_PADDING);
+    followHead = false;
+  }
+  // Single zoom entry point: while following, zoom keeps HEAD centered (cursor
+  // ignored); otherwise zoom toward (cx, cy).
+  function applyZoom(factor: number, cx: number, cy: number) {
+    if (followHead) {
+      const k = clampZoom(transform.k * factor);
+      const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+      const { w, h } = viewSize();
+      transform = headNode
+        ? followHeadPan({ ...transform, k }, headNode.x, headNode.y, w, h)
+        : { ...transform, k };
+    } else {
+      transform = zoomAt(transform, factor, cx, cy);
+    }
+  }
+  function zoomButton(factor: number) {
+    const { w, h } = viewSize();
+    applyZoom(factor, w / 2, h / 2);
+  }
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    const rect = viewportEl.getBoundingClientRect();
+    const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+    applyZoom(factor, e.clientX - rect.left, e.clientY - rect.top);
+  }
+  function recenter() {
+    followHead = true;
+    const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+    if (!headNode) return;
+    const { w, h } = viewSize();
+    transform = followHeadPan(transform, headNode.x, headNode.y, w, h);
+  }
+  function onPointerDown(e: PointerEvent) {
+    // Let interactive children handle their own clicks/keys: SVG commit circles
+    // (role="button") and the overlaid zoom controls (native <button>). Without
+    // this, the bubbled pointerdown starts a viewport drag and the resulting
+    // pointer capture swallows the control's click.
+    if ((e.target as Element).closest('button, [role="button"]')) return;
+    if (dragPointerId !== null) return; // already dragging with another pointer; ignore second finger
+    dragPointerId = e.pointerId;
+    dragging = true;
+    dragStart = { x: e.clientX, y: e.clientY, panX: transform.panX, panY: transform.panY };
+    viewportEl.setPointerCapture(e.pointerId);
+  }
+  function onPointerMove(e: PointerEvent) {
+    if (!dragging || e.pointerId !== dragPointerId) return;
+    transform = {
+      ...transform,
+      panX: dragStart.panX + (e.clientX - dragStart.x),
+      panY: dragStart.panY + (e.clientY - dragStart.y),
+    };
+    followHead = false;
+  }
+  function onPointerUp(e: PointerEvent) {
+    // Also routed from onpointercancel; cancel carries the active drag's pointerId, so this is safe.
+    if (e.pointerId !== dragPointerId) return;
+    dragging = false;
+    dragPointerId = null;
+    viewportEl.releasePointerCapture?.(e.pointerId);
+  }
+  function onViewportKeydown(e: KeyboardEvent) {
+    const STEP = 40;
+    // +/- route through zoomButton → applyZoom, so they stay follow-aware.
+    if (e.key === '+' || e.key === '=') zoomButton(ZOOM_STEP_KEY);
+    else if (e.key === '-' || e.key === '_') zoomButton(1 / ZOOM_STEP_KEY);
+    else if (e.key === '0') recenter();
+    else if (e.key === 'f' || e.key === 'F') fit();
+    else if (e.key === 'ArrowUp') {
+      transform = panBy(transform, 0, STEP);
+      followHead = false;
+    } else if (e.key === 'ArrowDown') {
+      transform = panBy(transform, 0, -STEP);
+      followHead = false;
+    } else if (e.key === 'ArrowLeft') {
+      transform = panBy(transform, STEP, 0);
+      followHead = false;
+    } else if (e.key === 'ArrowRight') {
+      transform = panBy(transform, -STEP, 0);
+      followHead = false;
+    } else return;
+    e.preventDefault();
+  }
+  // Follow HEAD: when engine state changes and follow is engaged, recenter on HEAD.
+  // Tracked deps are $engineVersion, followHead, layout, headCommitHash — NOT transform.
+  // The current transform's zoom is read via untrack to avoid self-triggering this effect.
+  $effect(() => {
+    void $engineVersion;
+    if (!followHead) return;
+    const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+    if (!headNode) return;
+    const { w, h } = viewSize();
+    if (w === 0 || h === 0) return; // not yet laid out / collapsed; avoid recentering to top-left
+    const cur = untrack(() => transform);
+    transform = followHeadPan(cur, headNode.x, headNode.y, w, h);
+  });
 </script>
 
-<div class="relative w-full h-full overflow-auto bg-terminal-bg">
-  {#if layout.nodes.length === 0}
+<!--
+  role="application" makes this a custom interactive pan/zoom canvas: it is intentionally
+  focusable (tabindex) and owns wheel/pointer/keyboard handlers so screen readers pass
+  keystrokes through. The two a11y rules below are false positives for that deliberate role.
+-->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div
+  bind:this={viewportEl}
+  class="relative w-full h-full overflow-hidden bg-terminal-bg touch-none"
+  role="application"
+  aria-label={commitNodes.length === 0
+    ? 'Commit graph area — no commits yet'
+    : 'Commit graph viewport. Drag or arrow keys pan, plus and minus zoom, 0 recenters on HEAD, f fits the whole graph.'}
+  tabindex="0"
+  onwheel={onWheel}
+  onpointerdown={onPointerDown}
+  onpointermove={onPointerMove}
+  onpointerup={onPointerUp}
+  onpointercancel={onPointerUp}
+  onkeydown={onViewportKeydown}
+>
+  {#if commitNodes.length === 0}
     <div class="flex items-center justify-center w-full h-full">
       <p class="font-mono text-terminal-dim text-sm select-none">No commits yet</p>
     </div>
   {:else}
     <svg
-      width={svgWidth}
-      height={svgHeight}
+      width="100%"
+      height="100%"
       class="block"
-      style="min-width: 100%; min-height: 100%;"
+      role="group"
+      aria-label={graphSummary}
+      onfocusin={() => (graphFocused = true)}
+      onfocusout={() => (graphFocused = false)}
     >
-      <g transform="translate({GRAPH_PADDING}, {GRAPH_PADDING})">
+      <g
+        bind:this={nodesGroupEl}
+        transform={`translate(${transform.panX}, ${transform.panY}) scale(${transform.k})`}
+      >
         <!-- Edges -->
         {#each layout.edges as edge (edge.from + '→' + edge.to)}
           {@const fromNode = layout.nodes.find((n) => n.hash === edge.from)}
@@ -257,12 +437,14 @@
               stroke-width="2.5"
               opacity="0.5"
             >
-              <animate
-                attributeName="opacity"
-                values="0.3;0.7;0.3"
-                dur="2s"
-                repeatCount="indefinite"
-              />
+              {#if !prefersReducedMotion}
+                <animate
+                  attributeName="opacity"
+                  values="0.3;0.7;0.3"
+                  dur="2s"
+                  repeatCount="indefinite"
+                />
+              {/if}
             </circle>
           {/if}
 
@@ -355,7 +537,20 @@
               stroke-dasharray="6 3"
             />
           {:else}
+            {@const cIdx = commitNodeIndex.get(node) ?? 0}
+            {#if graphFocused && cIdx === tabStopIndex}
+              <circle
+                cx={node.x}
+                cy={node.y}
+                r={NODE_RADIUS + 4}
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="2"
+                pointer-events="none"
+              />
+            {/if}
             <circle
+              id={`commit-node-${cIdx}`}
               cx={node.x}
               cy={node.y}
               r={NODE_RADIUS}
@@ -365,9 +560,9 @@
               style="cursor: pointer;"
               onclick={() => selectNode(node)}
               role="button"
-              tabindex="0"
-              aria-label={`Commit ${node.label ?? node.hash}: ${node.message}`}
-              onkeydown={(e) => e.key === 'Enter' && selectNode(node)}
+              tabindex={cIdx === tabStopIndex ? 0 : -1}
+              aria-label={`Commit ${node.label ?? node.hash}: ${node.message}. Activate to prefill git checkout.`}
+              onkeydown={(e) => onNodeKeydown(e, node, cIdx)}
             />
 
             <!-- Friendly label inside circle -->
@@ -389,4 +584,33 @@
   {#if selectedNode}
     <CommitDetail node={selectedNode} onclose={() => (selectedHash = null)} />
   {/if}
+
+  <div class="absolute bottom-3 right-3 z-20 flex flex-col gap-1">
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Zoom in"
+      onclick={() => zoomButton(ZOOM_STEP_BTN)}>+</button
+    >
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Zoom out"
+      onclick={() => zoomButton(1 / ZOOM_STEP_BTN)}>−</button
+    >
+    <button
+      type="button"
+      aria-label={followHead
+        ? 'Recenter on HEAD (currently following)'
+        : 'Recenter on HEAD and resume following'}
+      class={`w-9 h-9 rounded border text-base leading-none focus-visible:ring-2 focus-visible:ring-terminal-green ${followHead ? 'border-[#22d3ee] text-[#22d3ee] bg-[#22d3ee]/10' : 'border-terminal-dim/40 text-terminal-fg bg-terminal-bg/90 hover:border-terminal-green'}`}
+      onclick={recenter}>◎</button
+    >
+    <button
+      type="button"
+      class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-xs leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
+      aria-label="Fit graph to view"
+      onclick={fit}>fit</button
+    >
+  </div>
 </div>

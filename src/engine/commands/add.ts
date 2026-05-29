@@ -1,30 +1,49 @@
 import type { CommandResult } from './types';
 import type { VirtualFileSystem } from '../vfs';
 import type { ObjectStore } from '../objects';
+import { stageWorkingTree } from './staging';
 
 /**
  * git add <path>  — stage a specific file
- * git add .       — stage all files in VFS
+ * git add .       — stage all files in VFS (including deletions)
+ * git add -A      — stage all changes (adds, modifications, deletions)
+ * git add -u      — stage tracked changes only (no new untracked files)
  *
  * Writes a blob for each file and maps path→blobHash in the index.
  */
 export function cmdAdd(
   args: string[],
-  _opts: Map<string, string[]>,
+  opts: Map<string, string[]>,
   vfs: VirtualFileSystem,
   objects: ObjectStore,
   index: Map<string, string>,
   committedTree?: Map<string, string>,
 ): CommandResult {
+  const tree = committedTree ?? new Map<string, string>();
+
+  if (opts.has('-A')) {
+    stageWorkingTree(vfs, objects, index, tree, { includeUntracked: true });
+    return { output: '', exitCode: 0 };
+  }
+  if (opts.has('-u')) {
+    stageWorkingTree(vfs, objects, index, tree, { includeUntracked: false });
+    return { output: '', exitCode: 0 };
+  }
+
   if (args.length === 0) {
     return { output: 'Nothing specified, nothing added.', exitCode: 1 };
   }
 
   const pathArg = args[0];
 
+  if (pathArg === '.') {
+    stageWorkingTree(vfs, objects, index, tree, { includeUntracked: true });
+    return { output: '', exitCode: 0 };
+  }
+
   const stageFile = (p: string) => {
     const content = vfs.readFile(p);
-    const committedHash = committedTree?.get(p);
+    const committedHash = tree.get(p);
     if (committedHash) {
       let committedContent: string | undefined;
       try {
@@ -39,13 +58,6 @@ export function cmdAdd(
     const blobHash = objects.writeBlob(content);
     index.set(p, blobHash);
   };
-
-  if (pathArg === '.') {
-    for (const p of vfs.allFilePaths()) {
-      stageFile(p);
-    }
-    return { output: '', exitCode: 0 };
-  }
 
   if (!vfs.exists(pathArg)) {
     return {

@@ -22,12 +22,13 @@ import { cmdRebase } from './commands/rebase';
 import { cmdCherryPick } from './commands/cherry-pick';
 import { cmdRevert } from './commands/revert';
 import { cmdInit } from './commands/init';
+import { stageWorkingTree } from './commands/staging';
 
 // ---------------------------------------------------------------------------
 // Command parsing
 // ---------------------------------------------------------------------------
 
-type ParsedCommand = {
+export type ParsedCommand = {
   command: string;
   args: string[];
   opts: Map<string, string[]>;
@@ -44,7 +45,7 @@ type ParsedCommand = {
  *     - The next token (if not another flag) is the option's value.
  *     - All other tokens are positional args.
  */
-function parseGitCommand(input: string): ParsedCommand {
+export function parseGitCommand(input: string): ParsedCommand {
   // Strip optional leading "git " prefix
   const stripped = input.startsWith('git ') ? input.slice(4) : input;
 
@@ -78,15 +79,27 @@ function parseGitCommand(input: string): ParsedCommand {
   const args: string[] = [];
   const opts: Map<string, string[]> = new Map();
 
-  let i = 1;
-  while (i < tokens.length) {
-    const token = tokens[i];
+  // Expand clustered short flags: "-am" -> "-a","-m". The value-collection loop
+  // below binds following values to the LAST flag, matching git (`-am "msg"`).
+  // Long flags ("--hard") and single short flags ("-m") are untouched.
+  const flagTokens: string[] = [];
+  for (let k = 1; k < tokens.length; k++) {
+    const t = tokens[k];
+    if (/^-[a-zA-Z]{2,}$/.test(t)) {
+      for (const ch of t.slice(1)) flagTokens.push(`-${ch}`);
+    } else {
+      flagTokens.push(t);
+    }
+  }
+
+  let i = 0;
+  while (i < flagTokens.length) {
+    const token = flagTokens[i];
     if (token.startsWith('-')) {
-      // Collect values for this flag until the next flag
       const values: string[] = [];
       i++;
-      while (i < tokens.length && !tokens[i].startsWith('-')) {
-        values.push(tokens[i]);
+      while (i < flagTokens.length && !flagTokens[i].startsWith('-')) {
+        values.push(flagTokens[i]);
         i++;
       }
       opts.set(token, values);
@@ -171,6 +184,7 @@ export class GitEngine {
       return {
         output: 'fatal: not a git repository (or any of the parent directories): .git',
         exitCode: 1,
+        hint: "run 'git init' first",
       };
     }
 
@@ -188,12 +202,20 @@ export class GitEngine {
           this.refs.createBranch('main', '');
           this.refs.attachHEAD('main');
         }
+        if (result.exitCode === 0 && !this.refs.resolveHEAD()) {
+          result.hint = "create a file with 'touch <name>', then 'git add' and 'git commit'";
+        }
         break;
       case 'add':
         result = cmdAdd(args, opts, this.vfs, this.objects, this.index, this.getCommittedTree());
         break;
 
       case 'commit':
+        if (opts.has('-a')) {
+          stageWorkingTree(this.vfs, this.objects, this.index, this.getCommittedTree(), {
+            includeUntracked: false,
+          });
+        }
         result = cmdCommit(
           args,
           opts,
@@ -202,6 +224,7 @@ export class GitEngine {
           this.index,
           () => this.getCommittedTree(),
           label,
+          this.getUntrackedFiles(),
         );
         break;
 
@@ -331,10 +354,21 @@ export class GitEngine {
   // Commit labels (C1, C2, …) — presentation/addressing layer over hashes
   // -------------------------------------------------------------------------
 
-  /** Friendly label for a commit hash, e.g. "C3". Falls back to short hash. */
+  /** Friendly label for a commit hash, e.g. "C3" or "C2'" for a rewrite. */
   commitLabel(hash: string): string {
-    const ordinal = this.objects.commitOrdinal(hash);
-    return ordinal !== null ? `C${ordinal}` : hash.slice(0, 7);
+    let current = hash;
+    let primes = 0;
+    const seen = new Set<string>();
+    while (this.objects.hasCommit(current) && !seen.has(current)) {
+      seen.add(current);
+      const c = this.objects.readCommit(current);
+      if (c.rewriteOf === undefined) break;
+      current = c.rewriteOf;
+      primes++;
+    }
+    const ordinal = this.objects.commitOrdinal(current);
+    if (ordinal === null) return current.slice(0, 7);
+    return `C${ordinal}` + "'".repeat(primes);
   }
 
   /** Resolve a label like "C3" (case-insensitive) to a commit hash, or null. */

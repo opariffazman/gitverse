@@ -130,10 +130,17 @@ export function executeCommand(command: string): void {
     isError: result.exitCode !== 0,
   };
 
+  const hintLine: TerminalLine | null = result.hint
+    ? { id: ++lineIdCounter, output: `hint: ${result.hint}`, color: 'dim' }
+    : null;
+
   terminalLines.update((lines) => {
     const updated = [...lines, inputLine];
     if (result.output !== '') {
       updated.push(outputLine);
+    }
+    if (hintLine) {
+      updated.push(hintLine);
     }
     return updated;
   });

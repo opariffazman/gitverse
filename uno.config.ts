@@ -7,7 +7,7 @@ export default defineConfig({
       terminal: {
         bg: '#0d1117',
         fg: '#c9d1d9',
-        dim: '#484f58',
+        dim: '#8b949e',
         green: '#3fb950',
         red: '#f85149',
         yellow: '#d29922',
