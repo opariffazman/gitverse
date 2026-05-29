@@ -184,6 +184,11 @@ feel) with a camera-style pan/zoom viewport.
 Hand-rolled with pointer events — no new dependency, consistent with the rest
 of the hand-built SVG. (d3-zoom is a possible alternative but is not used.)
 
+**DRY:** all four input sources (buttons, wheel, keyboard, pinch) route through
+one small set of helpers — `zoomBy(factor, centerPoint)`, `panBy(dx, dy)`,
+`fit()` — operating on a single `{ panX, panY, k }` state plus one `followHead`
+boolean. No input source reimplements the transform math.
+
 ### Camera behavior — Follow HEAD
 
 - **Auto (default):** zoom level fixed; on a new commit (or any layout change),
@@ -219,8 +224,9 @@ The pan/zoom widget is fully keyboard-operable (buttons + key bindings) and the
 
 ### Graph
 
-- `<svg>` gets a labelled container role + `<title>`/`<desc>` summarizing state
-  ("N commits, HEAD on main at C5").
+- `<svg>` gets `role="group"` + a single reactive `aria-label` summarizing
+  state ("Commit graph: N commits, HEAD on main at C5"). One string, no
+  separate `<title>`/`<desc>` restating the same thing.
 - **Roving tabindex:** the graph is a single tab stop; Arrow keys move focus
   between nodes (Home/End → first/last). Avoids one tab stop per commit.
 - `:focus-visible` outline on nodes.
