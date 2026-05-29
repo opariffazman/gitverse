@@ -3,6 +3,7 @@
   import { terminalLines, prompt, history, executeCommand } from '$store/engine';
   import { getCompletions } from '$shell/complete';
   import { engine } from '$store/engine';
+  import { pendingInput } from '$store/ui';
   import { get } from 'svelte/store';
   import Prompt from './Prompt.svelte';
 
@@ -10,6 +11,18 @@
   let cursorPos = $state(0);
   let inputEl: HTMLInputElement;
   let scrollEl: HTMLDivElement;
+
+  $effect(() => {
+    const cmd = $pendingInput;
+    if (cmd === null) return;
+    inputValue = cmd;
+    cursorPos = cmd.length;
+    pendingInput.set(null); // re-arm so re-selecting the same node works again
+    tick().then(() => {
+      inputEl?.focus();
+      inputEl?.setSelectionRange(cursorPos, cursorPos);
+    });
+  });
 
   const ghostText = $derived.by(() => {
     if (!inputValue) return '';

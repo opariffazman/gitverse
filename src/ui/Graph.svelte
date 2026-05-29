@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { engine, engineVersion, executeCommand } from '$store/engine';
+  import { engine, engineVersion } from '$store/engine';
+  import { prefillTerminal } from '$store/ui';
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import { buildActiveFlow, cubicSegment } from '$graph/flow';
@@ -151,24 +152,16 @@
 
   function selectNode(node: GraphNode) {
     if (node.type === 'phantom') return;
-
-    // Always show this node's detail.
     selectedHash = node.hash;
-
-    // Clicking the commit HEAD already points at is a no-op checkout — just show detail.
-    if (node.hash === headCommitHash) return;
-
     let command: string;
     if (node.branches.length > 0) {
-      // Attach to a branch at this commit; prefer the HEAD branch if it lives here.
       const branch =
         headBranch && node.branches.includes(headBranch) ? headBranch : node.branches[0];
       command = `git checkout ${branch}`;
     } else {
-      // Detach HEAD at the commit, addressed by its friendly label.
       command = `git checkout ${node.label ?? node.hash}`;
     }
-    executeCommand(command);
+    prefillTerminal(command);
   }
 
   function laneColor(lane: number): string {
