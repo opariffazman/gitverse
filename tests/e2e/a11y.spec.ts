@@ -134,3 +134,39 @@ test('reduced motion disables the HEAD pulse animation', async ({ page }) => {
   await expect(page.locator('circle[role="button"]')).toHaveCount(1);
   await expect(page.locator('circle animate')).toHaveCount(0);
 });
+
+test('empty-graph guide shows before and after init; placeholder is context-aware', async ({
+  page,
+}) => {
+  const input = page.locator('#terminal-input');
+
+  // Before init: placeholder suggests git init, guide visible.
+  await expect(input).toHaveAttribute('placeholder', /git init/);
+  await expect(page.getByText('No commits yet')).toBeVisible();
+  await expect(page.getByText(/git commit -m "init"/)).toBeVisible();
+
+  // After init (no commit yet): placeholder switches, guide STILL visible.
+  await input.click();
+  await input.fill('git init');
+  await input.press('Enter');
+  await expect(input).toHaveAttribute('placeholder', /touch readme\.md/);
+  await expect(page.getByText('No commits yet')).toBeVisible();
+
+  // After a commit: guide is gone.
+  await input.fill('touch readme.md');
+  await input.press('Enter');
+  await input.fill('git add readme.md');
+  await input.press('Enter');
+  await input.fill('git commit -m "first"');
+  await input.press('Enter');
+  await expect(page.getByText('No commits yet')).toHaveCount(0);
+});
+
+test('unknown command shows a dim hint line', async ({ page }) => {
+  const input = page.locator('#terminal-input');
+  await input.click();
+  await input.fill('frobnicate');
+  await input.press('Enter');
+  await expect(page.getByText(/command not found/)).toBeVisible();
+  await expect(page.getByText(/type 'help' to see available commands/)).toBeVisible();
+});
