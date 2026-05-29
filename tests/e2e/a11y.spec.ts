@@ -87,6 +87,38 @@ test('graph is keyboard navigable and fit works', async ({ page }) => {
   await expect(input).toHaveValue(/git checkout/);
 });
 
+test('recenter button reflects follow-HEAD mode through drag/recenter/fit', async ({ page }) => {
+  await makeCommit(page, 'a.txt', 'a', true);
+  await makeCommit(page, 'b.txt', 'b');
+
+  const btn = page.getByRole('button', { name: 'Recenter on HEAD and follow' });
+
+  // Following by default after committing.
+  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+
+  // Drag an empty area of the viewport — panning disengages follow. Aim well
+  // away from any commit node (top-left quadrant) so the drag starts on canvas,
+  // not on a circle[role=button].
+  const vp = page.locator('[role="application"]');
+  const box = await vp.boundingBox();
+  if (!box) throw new Error('viewport has no bounding box');
+  const startX = box.x + box.width * 0.2;
+  const startY = box.y + box.height * 0.2;
+  await page.mouse.move(startX, startY);
+  await page.mouse.down();
+  await page.mouse.move(startX + 120, startY + 80, { steps: 10 });
+  await page.mouse.up();
+  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+
+  // Recenter re-engages follow.
+  await btn.click();
+  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+
+  // Fit-all pauses follow.
+  await page.getByRole('button', { name: 'Fit graph to view' }).click();
+  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('reduced motion disables the HEAD pulse animation', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();

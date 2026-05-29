@@ -5,7 +5,14 @@
   import { computeLayout, NODE_SPACING_X, LANE_SPACING_Y } from '$graph/layout';
   import type { Orientation } from '$graph/layout';
   import { buildActiveFlow, cubicSegment } from '$graph/flow';
-  import { type Transform, zoomAt, panBy, fitTransform, followHeadPan } from '$graph/viewport';
+  import {
+    type Transform,
+    zoomAt,
+    panBy,
+    fitTransform,
+    followHeadPan,
+    clampZoom,
+  } from '$graph/viewport';
   import type { GraphNode, GraphEdge } from '$graph/types';
   import CommitDetail from './CommitDetail.svelte';
 
@@ -230,20 +237,43 @@
     transform = fitTransform(layout.width, layout.height, w, h, GRAPH_PADDING);
     followHead = false;
   }
+  // Single zoom entry point: while following, zoom keeps HEAD centered (cursor
+  // ignored); otherwise zoom toward (cx, cy).
+  function applyZoom(factor: number, cx: number, cy: number) {
+    if (followHead) {
+      const k = clampZoom(transform.k * factor);
+      const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+      const { w, h } = viewSize();
+      transform = headNode
+        ? followHeadPan({ ...transform, k }, headNode.x, headNode.y, w, h)
+        : { ...transform, k };
+    } else {
+      transform = zoomAt(transform, factor, cx, cy);
+    }
+  }
   function zoomButton(factor: number) {
     const { w, h } = viewSize();
-    transform = zoomAt(transform, factor, w / 2, h / 2);
-    followHead = false;
+    applyZoom(factor, w / 2, h / 2);
   }
   function onWheel(e: WheelEvent) {
     e.preventDefault();
     const rect = viewportEl.getBoundingClientRect();
     const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
-    transform = zoomAt(transform, factor, e.clientX - rect.left, e.clientY - rect.top);
-    followHead = false;
+    applyZoom(factor, e.clientX - rect.left, e.clientY - rect.top);
+  }
+  function recenter() {
+    followHead = true;
+    const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
+    if (!headNode) return;
+    const { w, h } = viewSize();
+    transform = followHeadPan(transform, headNode.x, headNode.y, w, h);
   }
   function onPointerDown(e: PointerEvent) {
-    if ((e.target as Element).getAttribute('role') === 'button') return; // let node clicks/keys work
+    // Let interactive children handle their own clicks/keys: SVG commit circles
+    // (role="button") and the overlaid zoom controls (native <button>). Without
+    // this, the bubbled pointerdown starts a viewport drag and the resulting
+    // pointer capture swallows the control's click.
+    if ((e.target as Element).closest('button, [role="button"]')) return;
     if (dragPointerId !== null) return; // already dragging with another pointer; ignore second finger
     dragPointerId = e.pointerId;
     dragging = true;
@@ -268,16 +298,25 @@
   }
   function onViewportKeydown(e: KeyboardEvent) {
     const STEP = 40;
+    // +/- route through zoomButton → applyZoom, so they stay follow-aware.
     if (e.key === '+' || e.key === '=') zoomButton(ZOOM_STEP_KEY);
     else if (e.key === '-' || e.key === '_') zoomButton(1 / ZOOM_STEP_KEY);
-    else if (e.key === '0') fit();
-    else if (e.key === 'ArrowUp') transform = panBy(transform, 0, STEP);
-    else if (e.key === 'ArrowDown') transform = panBy(transform, 0, -STEP);
-    else if (e.key === 'ArrowLeft') transform = panBy(transform, STEP, 0);
-    else if (e.key === 'ArrowRight') transform = panBy(transform, -STEP, 0);
-    else return;
+    else if (e.key === '0') recenter();
+    else if (e.key === 'f' || e.key === 'F') fit();
+    else if (e.key === 'ArrowUp') {
+      transform = panBy(transform, 0, STEP);
+      followHead = false;
+    } else if (e.key === 'ArrowDown') {
+      transform = panBy(transform, 0, -STEP);
+      followHead = false;
+    } else if (e.key === 'ArrowLeft') {
+      transform = panBy(transform, STEP, 0);
+      followHead = false;
+    } else if (e.key === 'ArrowRight') {
+      transform = panBy(transform, -STEP, 0);
+      followHead = false;
+    } else return;
     e.preventDefault();
-    if (e.key !== '0') followHead = false;
   }
   // Follow HEAD: when engine state changes and follow is engaged, recenter on HEAD.
   // Tracked deps are $engineVersion, followHead, layout, headCommitHash — NOT transform.
@@ -305,7 +344,7 @@
   bind:this={viewportEl}
   class="relative w-full h-full overflow-hidden bg-terminal-bg touch-none"
   role="application"
-  aria-label="Commit graph viewport. Arrow keys pan, plus and minus zoom, 0 fits."
+  aria-label="Commit graph viewport. Drag or arrow keys pan, plus and minus zoom, 0 recenters on HEAD, f fits the whole graph."
   tabindex="0"
   onwheel={onWheel}
   onpointerdown={onPointerDown}
@@ -556,6 +595,13 @@
       class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
       aria-label="Zoom out"
       onclick={() => zoomButton(1 / ZOOM_STEP_BTN)}>−</button
+    >
+    <button
+      type="button"
+      aria-label="Recenter on HEAD and follow"
+      aria-pressed={followHead}
+      class={`w-9 h-9 rounded border text-base leading-none focus-visible:ring-2 focus-visible:ring-terminal-green ${followHead ? 'border-[#22d3ee] text-[#22d3ee] bg-[#22d3ee]/10' : 'border-terminal-dim/40 text-terminal-fg bg-terminal-bg/90 hover:border-terminal-green'}`}
+      onclick={recenter}>◎</button
     >
     <button
       type="button"
