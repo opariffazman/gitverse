@@ -205,10 +205,13 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={scrollEl}
   class="h-full overflow-y-auto p-3 space-y-0.5 font-mono text-sm"
+  role="log"
+  aria-live="polite"
+  aria-label="Terminal output"
   onclick={focusInput}
 >
   {#each $terminalLines as line (line.id)}
@@ -232,14 +235,16 @@
   <div class="flex items-baseline leading-6">
     <Prompt segments={$prompt} />
     <div class="relative flex-1 ml-1">
+      <label for="terminal-input" class="sr-only">Terminal command input</label>
       <input
         bind:this={inputEl}
+        id="terminal-input"
         type="text"
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
         spellcheck={false}
-        class="w-full bg-transparent outline-none border-none text-terminal-fg caret-terminal-green font-mono text-sm"
+        class="w-full bg-transparent border-none text-terminal-fg caret-terminal-green font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-terminal-green/70 rounded-sm"
         value={inputValue}
         oninput={handleInput}
         onkeydown={handleKeydown}
