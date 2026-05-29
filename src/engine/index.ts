@@ -27,7 +27,7 @@ import { cmdInit } from './commands/init';
 // Command parsing
 // ---------------------------------------------------------------------------
 
-type ParsedCommand = {
+export type ParsedCommand = {
   command: string;
   args: string[];
   opts: Map<string, string[]>;
@@ -44,7 +44,7 @@ type ParsedCommand = {
  *     - The next token (if not another flag) is the option's value.
  *     - All other tokens are positional args.
  */
-function parseGitCommand(input: string): ParsedCommand {
+export function parseGitCommand(input: string): ParsedCommand {
   // Strip optional leading "git " prefix
   const stripped = input.startsWith('git ') ? input.slice(4) : input;
 
@@ -78,15 +78,27 @@ function parseGitCommand(input: string): ParsedCommand {
   const args: string[] = [];
   const opts: Map<string, string[]> = new Map();
 
-  let i = 1;
-  while (i < tokens.length) {
-    const token = tokens[i];
+  // Expand clustered short flags: "-am" -> "-a","-m". The value-collection loop
+  // below binds following values to the LAST flag, matching git (`-am "msg"`).
+  // Long flags ("--hard") and single short flags ("-m") are untouched.
+  const flagTokens: string[] = [];
+  for (let k = 1; k < tokens.length; k++) {
+    const t = tokens[k];
+    if (/^-[a-zA-Z]{2,}$/.test(t)) {
+      for (const ch of t.slice(1)) flagTokens.push(`-${ch}`);
+    } else {
+      flagTokens.push(t);
+    }
+  }
+
+  let i = 0;
+  while (i < flagTokens.length) {
+    const token = flagTokens[i];
     if (token.startsWith('-')) {
-      // Collect values for this flag until the next flag
       const values: string[] = [];
       i++;
-      while (i < tokens.length && !tokens[i].startsWith('-')) {
-        values.push(tokens[i]);
+      while (i < flagTokens.length && !flagTokens[i].startsWith('-')) {
+        values.push(flagTokens[i]);
         i++;
       }
       opts.set(token, values);
