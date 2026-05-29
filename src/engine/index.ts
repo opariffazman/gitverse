@@ -202,7 +202,7 @@ export class GitEngine {
           this.refs.createBranch('main', '');
           this.refs.attachHEAD('main');
         }
-        if (result.exitCode === 0) {
+        if (result.exitCode === 0 && !this.refs.resolveHEAD()) {
           result.hint = "create a file with 'touch <name>', then 'git add' and 'git commit'";
         }
         break;

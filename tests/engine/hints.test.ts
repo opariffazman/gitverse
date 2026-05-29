@@ -72,4 +72,15 @@ describe('onboarding tips', () => {
     expect(res.exitCode).toBe(0);
     expect(res.hint).toBeUndefined();
   });
+
+  it('re-init on a repo that already has commits does NOT repeat the create tip', () => {
+    const eng = new GitEngine();
+    eng.execute('git init');
+    eng.getVFS().createFile('a.txt', 'a');
+    eng.execute('git add a.txt');
+    eng.execute('git commit -m "first"');
+    const res = eng.execute('git init'); // reinit, commits exist
+    expect(res.exitCode).toBe(0);
+    expect(res.hint).toBeUndefined();
+  });
 });
