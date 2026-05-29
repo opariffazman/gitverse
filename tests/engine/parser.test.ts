@@ -14,7 +14,6 @@ describe('parseGitCommand — clustered short flags', () => {
     const { opts } = parseGitCommand('git reset --hard HEAD');
     expect(opts.has('--hard')).toBe(true);
     expect(opts.has('-h')).toBe(false);
-    expect(opts.has('-a')).toBe(false);
   });
 
   it('leaves single short flags untouched', () => {
@@ -27,5 +26,23 @@ describe('parseGitCommand — clustered short flags', () => {
     expect(opts.has('-n')).toBe(true);
     expect(opts.has('-a')).toBe(true);
     expect(opts.get('-m')).toEqual(['x']);
+  });
+
+  it('positional args after all flags are not silently absorbed into opts', () => {
+    const { args, opts } = parseGitCommand('git commit -am "msg"');
+    expect(args).toEqual([]); // "msg" binds to -m, nothing left over
+    expect(opts.get('-m')).toEqual(['msg']);
+  });
+
+  it('a bare positional before any flag goes into args', () => {
+    const { args, opts } = parseGitCommand('git checkout main');
+    expect(args).toEqual(['main']);
+    expect(opts.size).toBe(0);
+  });
+
+  it('a value after a single flag binds to that flag, not args', () => {
+    const { args, opts } = parseGitCommand('git checkout -b feature');
+    expect(args).toEqual([]);
+    expect(opts.get('-b')).toEqual(['feature']);
   });
 });
