@@ -2,17 +2,24 @@
   import Terminal from './Terminal.svelte';
   import Graph from './Graph.svelte';
   import ResetButton from './ResetButton.svelte';
+  import GithubLink from './GithubLink.svelte';
 </script>
 
 <div class="relative flex flex-col w-full h-full bg-terminal-bg">
-  <!-- Reset: top-left (logo sits top-right on desktop / top-center on mobile) -->
+  <!-- Reset: top-left. GitHub link: top-right corner. Logo sits between them
+       (just left of the link on desktop / top-center on mobile). -->
   <div class="absolute top-3 left-4 z-20">
     <ResetButton />
   </div>
 
-  <!-- Desktop: top-right -->
+  <!-- GitHub source link: top-right corner, above the decorative logo -->
+  <div class="absolute top-3 right-4 z-20">
+    <GithubLink />
+  </div>
+
+  <!-- Desktop: top-right, offset left so it clears the GitHub link button -->
   <pre
-    class="absolute top-3 right-4 z-10 font-mono text-terminal-dim/80 text-xs leading-tight select-none pointer-events-none max-sm:hidden">{` ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
+    class="absolute top-3 right-16 z-10 font-mono text-terminal-dim/80 text-xs leading-tight select-none pointer-events-none max-sm:hidden">{` ██████╗ ██╗████████╗██╗   ██╗███████╗██████╗ ███████╗███████╗
 ██╔════╝ ██║╚══██╔══╝██║   ██║██╔════╝██╔══██╗██╔════╝██╔════╝
 ██║  ███╗██║   ██║   ██║   ██║█████╗  ██████╔╝███████╗█████╗
 ██║   ██║██║   ██║   ╚██╗ ██╔╝██╔══╝  ██╔══██╗╚════██║██╔══╝

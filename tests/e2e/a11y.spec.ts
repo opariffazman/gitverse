@@ -170,3 +170,11 @@ test('unknown command shows a dim hint line', async ({ page }) => {
   await expect(page.getByText(/command not found/)).toBeVisible();
   await expect(page.getByText(/type 'help' to see available commands/)).toBeVisible();
 });
+
+test('GitHub source link points to the repo in a safe new tab', async ({ page }) => {
+  const link = page.getByRole('link', { name: 'View source on GitHub' });
+  await expect(link).toHaveAttribute('href', 'https://github.com/opariffazman/gitverse');
+  await expect(link).toHaveAttribute('target', '_blank');
+  // Opener isolation so the new tab can't navigate this one (tabnabbing).
+  await expect(link).toHaveAttribute('rel', /noopener/);
+});
