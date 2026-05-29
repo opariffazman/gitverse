@@ -1,4 +1,5 @@
 import type { GitEngine } from '$engine/index';
+import type { VirtualFileSystem } from '$engine/vfs';
 import type { ShellResult } from './types';
 
 // Auto-generated content templates for touch
@@ -14,6 +15,22 @@ const CONTENT_TEMPLATES = [
 function autoContent(filename: string): string {
   // Deterministic based on filename length
   return CONTENT_TEMPLATES[filename.length % CONTENT_TEMPLATES.length];
+}
+
+/** Returns an error result if `path`'s parent dir is missing, else null. (Flat + 1-level VFS.) */
+function missingDirError(
+  vfs: VirtualFileSystem,
+  path: string,
+  cmd: string,
+  verb: string,
+): { output: string; exitCode: number } | null {
+  const slashIdx = path.indexOf('/');
+  if (slashIdx === -1) return null;
+  const dir = path.substring(0, slashIdx);
+  if (!vfs.exists(dir + '/')) {
+    return { output: `${cmd}: cannot ${verb} '${path}': No such file or directory`, exitCode: 1 };
+  }
+  return null;
 }
 
 /**
@@ -80,16 +97,8 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         return { output: '', exitCode: 0 };
       }
       // Check if path includes a directory that doesn't exist
-      const slashIdx = path.indexOf('/');
-      if (slashIdx !== -1) {
-        const dir = path.substring(0, slashIdx);
-        if (!vfs.exists(dir + '/')) {
-          return {
-            output: `touch: cannot touch '${path}': No such file or directory`,
-            exitCode: 1,
-          };
-        }
-      }
+      const err = missingDirError(vfs, path, 'touch', 'touch');
+      if (err) return err;
       const content = autoContent(path.split('/').pop() ?? path);
       vfs.createFile(path, content);
       return { output: '', exitCode: 0 };
@@ -101,13 +110,13 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
       let gluedTarget = '';
       for (let i = 0; i < args.length; i++) {
         const a = args[i];
-        if (a === '>>' || a.startsWith('>>')) {
+        if (a.startsWith('>>')) {
           redirect = '>>';
           redirectIdx = i;
           gluedTarget = a.slice(2);
           break;
         }
-        if (a === '>' || a.startsWith('>')) {
+        if (a.startsWith('>')) {
           redirect = '>';
           redirectIdx = i;
           gluedTarget = a.slice(1);
@@ -115,13 +124,12 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         }
       }
 
-      if (redirect === null) {
-        return { output: args.join(' '), exitCode: 0 };
-      }
+      const contentTokens = redirect === null ? args : args.slice(0, redirectIdx);
+      // No quote-aware tokenizer here; quotes only group words, so drop them all.
+      const content = contentTokens.join(' ').replace(/"/g, '');
 
-      let content = args.slice(0, redirectIdx).join(' ');
-      if (content.length >= 2 && content.startsWith('"') && content.endsWith('"')) {
-        content = content.slice(1, -1);
+      if (redirect === null) {
+        return { output: content, exitCode: 0 };
       }
 
       const target = gluedTarget || args[redirectIdx + 1];
@@ -129,16 +137,8 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         return { output: 'echo: missing redirect target', exitCode: 1 };
       }
 
-      const slashIdx = target.indexOf('/');
-      if (slashIdx !== -1) {
-        const dir = target.substring(0, slashIdx);
-        if (!vfs.exists(dir + '/')) {
-          return {
-            output: `echo: cannot create '${target}': No such file or directory`,
-            exitCode: 1,
-          };
-        }
-      }
+      const dirErr = missingDirError(vfs, target, 'echo', 'create');
+      if (dirErr) return dirErr;
 
       if (redirect === '>') {
         vfs.createFile(target, content);

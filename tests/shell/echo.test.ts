@@ -42,4 +42,20 @@ describe('echo builtin', () => {
     expect(res.exitCode).not.toBe(0);
     expect(res.output).toContain('missing redirect target');
   });
+
+  it('strips quotes even across multiple quoted tokens', () => {
+    router.execute('echo "a" "b" > m.txt');
+    expect(engine.getVFS().readFile('m.txt')).toBe('a b');
+  });
+
+  it('overwrite after append resets the file', () => {
+    router.execute('echo one >> f.txt');
+    router.execute('echo two >> f.txt');
+    router.execute('echo fresh > f.txt');
+    expect(engine.getVFS().readFile('f.txt')).toBe('fresh');
+  });
+
+  it('no-redirect print strips quotes too', () => {
+    expect(router.execute('echo "hi there"').output).toBe('hi there');
+  });
 });
