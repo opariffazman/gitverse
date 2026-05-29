@@ -176,10 +176,15 @@ general suggestion engine):
 | Unknown command | `<cmd>: command not found` | `hint: type 'help' to see available commands` |
 | Git command before init | `fatal: not a git repository …` | `hint: run 'git init' first` |
 
-Implementation: append to the `output` string of the relevant `CommandResult`
-at its source (`status.ts`/commit path, `builtins.ts`/router unknown path,
-`index.ts` not-a-repo guard). The hint is part of the same output line block,
-rendered dim.
+Implementation: add an optional `hint?: string` to `CommandResult`
+(`src/engine/commands/types.ts`) and to the router's `ShellResult`
+(`src/shell/router.ts`), propagated through each router case. Set `hint` at the
+three sources (commit's nothing-to-commit return, the `index.ts` not-a-repo
+guard, and the router's `unknown` case). `executeCommand` (`src/store/engine.ts`)
+emits the hint as a **separate** terminal line with `color: 'dim'` after the
+output line — so it renders dim regardless of whether the main output was an
+error (red). Keeping `hint` separate from `output` also keeps the message and
+the nudge independently testable.
 
 ---
 
