@@ -39,8 +39,20 @@ describe('git commit -a / -am', () => {
 
   it('-a on a clean tree commits nothing', () => {
     const eng = repoWithCommit();
+    const before = eng.log().length;
     const res = eng.execute('git commit -am "nothing changed"');
     expect(res.output).toContain('nothing to commit');
     expect(res.exitCode).not.toBe(0);
+    expect(eng.log().length).toBe(before);
+  });
+
+  it('-a without -m returns the missing-message error and does not commit', () => {
+    const eng = repoWithCommit();
+    eng.getVFS().createFile('a.txt', 'changed');
+    const before = eng.log().length;
+    const res = eng.execute('git commit -a');
+    expect(res.exitCode).toBe(128);
+    expect(res.output).toContain("switch `m'");
+    expect(eng.log().length).toBe(before); // no commit created
   });
 });
