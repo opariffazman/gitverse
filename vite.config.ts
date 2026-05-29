@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import UnoCSS from 'unocss/vite';
@@ -5,6 +6,12 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   base: '/gitverse/',
+  // Vitest runs the headless unit/integration suite. Playwright specs live in
+  // tests/e2e/ and are driven by `playwright test`, so exclude them here to
+  // keep the two runners from fighting over the same files.
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', 'tests/e2e/**'],
+  },
   plugins: [
     UnoCSS(),
     svelte(),
