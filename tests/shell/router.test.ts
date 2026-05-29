@@ -98,8 +98,6 @@ describe('ShellRouter – unknown commands', () => {
 
 describe('router — unknown command hint', () => {
   it('unknown command suggests help', () => {
-    const eng = new GitEngine();
-    const router = new ShellRouter(eng);
     const res = router.execute('frobnicate');
     expect(res.output).toContain('command not found');
     expect(res.hint).toContain('help');

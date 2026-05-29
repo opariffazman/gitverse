@@ -1,6 +1,5 @@
 import type { GitEngine } from '$engine/index';
-
-export type ShellResult = { output: string; exitCode: number };
+import type { ShellResult } from './types';
 
 // Auto-generated content templates for touch
 const CONTENT_TEMPLATES = [
