@@ -2,7 +2,7 @@ import type { GitEngine } from '$engine/index';
 import { parseInput } from './parser';
 import { executeBuiltin } from './builtins';
 
-export type ShellResult = { output: string; exitCode: number };
+export type ShellResult = { output: string; exitCode: number; hint?: string };
 
 /**
  * Routes a raw input string to the appropriate handler:
@@ -23,7 +23,7 @@ export class ShellRouter {
 
       case 'git': {
         const result = this.engine.execute(parsed.raw);
-        return { output: result.output, exitCode: result.exitCode };
+        return { output: result.output, exitCode: result.exitCode, hint: result.hint };
       }
 
       case 'builtin':
@@ -33,6 +33,7 @@ export class ShellRouter {
         return {
           output: `${parsed.command}: command not found`,
           exitCode: 127,
+          hint: "type 'help' to see available commands",
         };
     }
   }

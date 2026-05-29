@@ -53,6 +53,7 @@ export function cmdCommit(
     return {
       output: 'On branch main\nnothing to commit, working tree clean',
       exitCode: 1,
+      hint: 'create or modify a file with touch, then git add',
     };
   }
 

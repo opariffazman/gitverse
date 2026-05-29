@@ -1,6 +1,7 @@
 export type CommandResult = {
   output: string;
   exitCode: number;
+  hint?: string;
 };
 
 /** Maps a commit hash to its friendly label (e.g. "C3"), or a short hash fallback. */

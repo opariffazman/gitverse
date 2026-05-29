@@ -184,6 +184,7 @@ export class GitEngine {
       return {
         output: 'fatal: not a git repository (or any of the parent directories): .git',
         exitCode: 1,
+        hint: "run 'git init' first",
       };
     }
 
