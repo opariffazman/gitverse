@@ -15,12 +15,13 @@
   $effect(() => {
     const cmd = $pendingInput;
     if (cmd === null) return;
+    const pos = cmd.length;
     inputValue = cmd;
-    cursorPos = cmd.length;
+    cursorPos = pos;
     pendingInput.set(null); // re-arm so re-selecting the same node works again
     tick().then(() => {
       inputEl?.focus();
-      inputEl?.setSelectionRange(cursorPos, cursorPos);
+      inputEl?.setSelectionRange(pos, pos);
     });
   });
 
