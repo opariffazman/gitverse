@@ -469,6 +469,84 @@ describe('git rebase — lineage', () => {
     expect(newTipCommit.rewriteOf).toBe(origFeatHash);
   });
 
+  it('sets rewriteOf on EACH of multiple replayed commits', () => {
+    const engine = engineWithBase(); // C1 base
+
+    // Create TWO feature commits
+    engine.execute('git checkout -b feature');
+    engine.getVFS().createFile('f1.txt', 'f1');
+    engine.execute('git add f1.txt');
+    engine.execute('git commit -m "feat1"');
+    const origFeat1Hash = engine.log()[0].hash;
+
+    engine.getVFS().createFile('f2.txt', 'f2');
+    engine.execute('git add f2.txt');
+    engine.execute('git commit -m "feat2"');
+    const origFeat2Hash = engine.log()[0].hash;
+
+    // Diverge main so there is something to rebase onto
+    engine.execute('git checkout main');
+    engine.getVFS().createFile('m1.txt', 'm1');
+    engine.execute('git add m1.txt');
+    engine.execute('git commit -m "main ahead"');
+
+    engine.execute('git checkout feature');
+    const result = engine.execute('git rebase main');
+    expect(result.exitCode).toBe(0);
+
+    // Collect all commits by hash for easy lookup
+    const byHash = new Map(engine.allCommits().map((c) => [c.hash, c]));
+
+    // Walk the two new feature commits from the tip
+    const newTipHash = engine.allBranches().get('feature')!;
+    const newTip = byHash.get(newTipHash)!;
+    expect(newTip).toBeDefined();
+
+    const newPenultHash = newTip.parents[0];
+    const newPenult = byHash.get(newPenultHash)!;
+    expect(newPenult).toBeDefined();
+
+    // Each replayed commit must carry rewriteOf pointing to its original
+    expect(newTip.rewriteOf).toBe(origFeat2Hash);
+    expect(newPenult.rewriteOf).toBe(origFeat1Hash);
+
+    // And both new hashes must differ from the originals
+    expect(newTipHash).not.toBe(origFeat2Hash);
+    expect(newPenultHash).not.toBe(origFeat1Hash);
+  });
+
+  it('commitLabel does not hang when rewriteOf forms a cycle', () => {
+    const engine = engineWithBase();
+
+    // Manufacture two commits with a cyclic rewriteOf via _restoreCommit
+    const baseHash = engine.log()[0].hash;
+    const baseCommit = engine.allCommits().find((c) => c.hash === baseHash)!;
+
+    const cycleA: import('$engine/objects').Commit = {
+      hash: 'aaa0001',
+      tree: baseCommit.tree,
+      parents: [baseHash],
+      message: 'cycle A',
+      timestamp: Date.now(),
+      rewriteOf: 'bbb0002',
+    };
+    const cycleB: import('$engine/objects').Commit = {
+      hash: 'bbb0002',
+      tree: baseCommit.tree,
+      parents: [baseHash],
+      message: 'cycle B',
+      timestamp: Date.now(),
+      rewriteOf: 'aaa0001',
+    };
+    engine._restoreCommit(cycleA);
+    engine._restoreCommit(cycleB);
+
+    // Must terminate and return a non-empty string (either a C-label or short hash)
+    const label = engine.commitLabel('aaa0001');
+    expect(typeof label).toBe('string');
+    expect(label.length).toBeGreaterThan(0);
+  });
+
   it('persists rewriteOf through serialize/restore', () => {
     const engine = engineWithBase(); // C1 base
 

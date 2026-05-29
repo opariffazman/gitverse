@@ -335,14 +335,16 @@ export class GitEngine {
   commitLabel(hash: string): string {
     let current = hash;
     let primes = 0;
-    while (this.objects.hasCommit(current)) {
+    const seen = new Set<string>();
+    while (this.objects.hasCommit(current) && !seen.has(current)) {
+      seen.add(current);
       const c = this.objects.readCommit(current);
       if (c.rewriteOf === undefined) break;
       current = c.rewriteOf;
       primes++;
     }
     const ordinal = this.objects.commitOrdinal(current);
-    if (ordinal === null) return hash.slice(0, 7);
+    if (ordinal === null) return current.slice(0, 7);
     return `C${ordinal}` + "'".repeat(primes);
   }
 
