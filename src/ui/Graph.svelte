@@ -10,7 +10,7 @@
   const NODE_RADIUS = 25;
   const GRAPH_PADDING = 80;
   const FLOW_COLOR = '#22d3ee';
-  const FLOW_PER_SEGMENT_SEC = 0.6;
+  const FLOW_PER_SEGMENT_SEC = 1.2;
 
   let isMobile = $state(false);
 
