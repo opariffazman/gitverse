@@ -344,7 +344,9 @@
   bind:this={viewportEl}
   class="relative w-full h-full overflow-hidden bg-terminal-bg touch-none"
   role="application"
-  aria-label="Commit graph viewport. Drag or arrow keys pan, plus and minus zoom, 0 recenters on HEAD, f fits the whole graph."
+  aria-label={commitNodes.length === 0
+    ? 'Commit graph area — no commits yet'
+    : 'Commit graph viewport. Drag or arrow keys pan, plus and minus zoom, 0 recenters on HEAD, f fits the whole graph.'}
   tabindex="0"
   onwheel={onWheel}
   onpointerdown={onPointerDown}
@@ -355,7 +357,7 @@
 >
   {#if commitNodes.length === 0}
     <div class="flex items-center justify-center w-full h-full">
-      <pre class="font-mono text-terminal-dim text-sm leading-6 select-none">{`No commits yet
+      <pre class="font-mono text-terminal-dim text-sm leading-6">{`No commits yet
 
  1. touch readme.md       create a file
  2. git add readme.md     stage it
