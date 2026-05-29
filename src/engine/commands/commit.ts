@@ -57,7 +57,7 @@ export function cmdCommit(
       return {
         output: `On branch ${branchLabel}\nnothing added to commit but untracked files present`,
         exitCode: 1,
-        hint: "use 'git add <file>' to track new files — commit -am only re-commits already-tracked files",
+        hint: "use 'git add <file>' to track new files — commit -am only stages changes to already-tracked files",
       };
     }
     return {
