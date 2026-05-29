@@ -78,7 +78,7 @@ test('graph is keyboard navigable and fit works', async ({ page }) => {
   // Focus the viewport and exercise pan/zoom keys + the fit affordance.
   await page.locator('[role="application"]').focus();
   await page.keyboard.press('Equal'); // zoom in (+)
-  await page.keyboard.press('0'); // fit
+  await page.keyboard.press('0'); // 0 recenters on HEAD
   await page.getByRole('button', { name: 'Fit graph to view' }).click();
 
   // Focus a commit node and activate it via keyboard.
@@ -91,32 +91,38 @@ test('recenter button reflects follow-HEAD mode through drag/recenter/fit', asyn
   await makeCommit(page, 'a.txt', 'a', true);
   await makeCommit(page, 'b.txt', 'b');
 
-  const btn = page.getByRole('button', { name: 'Recenter on HEAD and follow' });
+  // Stable locator: matches both follow states ("...currently following" /
+  // "...resume following") without depending on the changing name.
+  const recenterBtn = page.locator('button[aria-label^="Recenter on HEAD"]');
 
   // Following by default after committing.
-  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+  await expect(recenterBtn).toHaveAttribute('aria-label', /currently following/);
 
-  // Drag an empty area of the viewport — panning disengages follow. Aim well
-  // away from any commit node (top-left quadrant) so the drag starts on canvas,
-  // not on a circle[role=button].
+  // Drag an empty area of the viewport — panning disengages follow. Start at a
+  // small fixed pixel offset from the viewport's top-left corner: down the left
+  // edge, clear of the commit nodes (which center near the middle while
+  // following) AND below the overlaid "Reset sandbox" button in the top-left
+  // corner. onPointerDown bails when the press lands on a button/[role=button],
+  // so the start must be bare canvas for the drag (and its followHead=false) to
+  // register.
   const vp = page.locator('[role="application"]');
   const box = await vp.boundingBox();
   if (!box) throw new Error('viewport has no bounding box');
-  const startX = box.x + box.width * 0.2;
-  const startY = box.y + box.height * 0.2;
+  const startX = box.x + 24;
+  const startY = box.y + 140;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
-  await page.mouse.move(startX + 120, startY + 80, { steps: 10 });
+  await page.mouse.move(startX + 120, startY + 80, { steps: 8 });
   await page.mouse.up();
-  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+  await expect(recenterBtn).toHaveAttribute('aria-label', /resume following/);
 
   // Recenter re-engages follow.
-  await btn.click();
-  await expect(btn).toHaveAttribute('aria-pressed', 'true');
+  await recenterBtn.click();
+  await expect(recenterBtn).toHaveAttribute('aria-label', /currently following/);
 
   // Fit-all pauses follow.
   await page.getByRole('button', { name: 'Fit graph to view' }).click();
-  await expect(btn).toHaveAttribute('aria-pressed', 'false');
+  await expect(recenterBtn).toHaveAttribute('aria-label', /resume following/);
 });
 
 test('reduced motion disables the HEAD pulse animation', async ({ page }) => {

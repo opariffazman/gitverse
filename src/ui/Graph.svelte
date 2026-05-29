@@ -598,8 +598,9 @@
     >
     <button
       type="button"
-      aria-label="Recenter on HEAD and follow"
-      aria-pressed={followHead}
+      aria-label={followHead
+        ? 'Recenter on HEAD (currently following)'
+        : 'Recenter on HEAD and resume following'}
       class={`w-9 h-9 rounded border text-base leading-none focus-visible:ring-2 focus-visible:ring-terminal-green ${followHead ? 'border-[#22d3ee] text-[#22d3ee] bg-[#22d3ee]/10' : 'border-terminal-dim/40 text-terminal-fg bg-terminal-bg/90 hover:border-terminal-green'}`}
       onclick={recenter}>◎</button
     >
