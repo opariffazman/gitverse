@@ -14,6 +14,8 @@
   const GRAPH_PADDING = 80;
   const FLOW_COLOR = '#22d3ee';
   const FLOW_PER_SEGMENT_SEC = 2.4;
+  const ZOOM_STEP_KEY = 1.1; // finer zoom step for +/- keys
+  const ZOOM_STEP_BTN = 1.2; // coarser step for on-screen buttons
 
   let isMobile = $state(false);
 
@@ -164,6 +166,8 @@
   function onNodeKeydown(e: KeyboardEvent, node: GraphNode, index: number) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
+      // Stop the bubbled viewport handler from also acting on this key.
+      e.stopPropagation();
       selectNode(node);
       return;
     }
@@ -175,6 +179,8 @@
     else if (e.key === 'End') next = last;
     else return;
     e.preventDefault();
+    // Stop the bubbled viewport handler from also panning on this key.
+    e.stopPropagation();
     focusedIndex = next;
     const el = nodesGroupEl?.querySelector<SVGCircleElement>(`#commit-node-${next}`);
     el?.focus();
@@ -211,6 +217,7 @@
   let viewportEl: HTMLDivElement;
   let dragging = $state(false);
   let dragStart = { x: 0, y: 0, panX: 0, panY: 0 };
+  let dragPointerId: number | null = null;
 
   function viewSize() {
     return { w: viewportEl?.clientWidth ?? 800, h: viewportEl?.clientHeight ?? 600 };
@@ -234,12 +241,14 @@
   }
   function onPointerDown(e: PointerEvent) {
     if ((e.target as Element).getAttribute('role') === 'button') return; // let node clicks/keys work
+    if (dragPointerId !== null) return; // already dragging with another pointer; ignore second finger
+    dragPointerId = e.pointerId;
     dragging = true;
     dragStart = { x: e.clientX, y: e.clientY, panX: transform.panX, panY: transform.panY };
     viewportEl.setPointerCapture(e.pointerId);
   }
   function onPointerMove(e: PointerEvent) {
-    if (!dragging) return;
+    if (!dragging || e.pointerId !== dragPointerId) return;
     transform = {
       ...transform,
       panX: dragStart.panX + (e.clientX - dragStart.x),
@@ -248,13 +257,16 @@
     followHead = false;
   }
   function onPointerUp(e: PointerEvent) {
+    // Also routed from onpointercancel; cancel carries the active drag's pointerId, so this is safe.
+    if (e.pointerId !== dragPointerId) return;
     dragging = false;
+    dragPointerId = null;
     viewportEl.releasePointerCapture?.(e.pointerId);
   }
   function onViewportKeydown(e: KeyboardEvent) {
     const STEP = 40;
-    if (e.key === '+' || e.key === '=') zoomButton(1.1);
-    else if (e.key === '-' || e.key === '_') zoomButton(1 / 1.1);
+    if (e.key === '+' || e.key === '=') zoomButton(ZOOM_STEP_KEY);
+    else if (e.key === '-' || e.key === '_') zoomButton(1 / ZOOM_STEP_KEY);
     else if (e.key === '0') fit();
     else if (e.key === 'ArrowUp') transform = panBy(transform, 0, STEP);
     else if (e.key === 'ArrowDown') transform = panBy(transform, 0, -STEP);
@@ -273,6 +285,7 @@
     const headNode = layout.nodes.find((n) => n.hash === headCommitHash);
     if (!headNode) return;
     const { w, h } = viewSize();
+    if (w === 0 || h === 0) return; // not yet laid out / collapsed; avoid recentering to top-left
     const cur = untrack(() => transform);
     transform = followHeadPan(cur, headNode.x, headNode.y, w, h);
   });
@@ -295,6 +308,7 @@
   onpointerdown={onPointerDown}
   onpointermove={onPointerMove}
   onpointerup={onPointerUp}
+  onpointercancel={onPointerUp}
   onkeydown={onViewportKeydown}
 >
   {#if layout.nodes.length === 0}
@@ -532,13 +546,13 @@
       type="button"
       class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
       aria-label="Zoom in"
-      onclick={() => zoomButton(1.2)}>+</button
+      onclick={() => zoomButton(ZOOM_STEP_BTN)}>+</button
     >
     <button
       type="button"
       class="w-9 h-9 rounded bg-terminal-bg/90 border border-terminal-dim/40 text-terminal-fg text-lg leading-none hover:border-terminal-green focus-visible:ring-2 focus-visible:ring-terminal-green"
       aria-label="Zoom out"
-      onclick={() => zoomButton(1 / 1.2)}>−</button
+      onclick={() => zoomButton(1 / ZOOM_STEP_BTN)}>−</button
     >
     <button
       type="button"
