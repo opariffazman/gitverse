@@ -50,8 +50,10 @@ export function cmdCommit(
   }
 
   if (!hasChanges) {
+    const head = refs.getHEAD();
+    const branchLabel = head.attached ? head.target : 'HEAD (detached)';
     return {
-      output: 'On branch main\nnothing to commit, working tree clean',
+      output: `On branch ${branchLabel}\nnothing to commit, working tree clean`,
       exitCode: 1,
       hint: 'create or modify a file with touch, then git add',
     };
