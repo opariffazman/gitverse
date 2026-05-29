@@ -19,6 +19,7 @@ export type Commit = {
   parents: string[];
   message: string;
   timestamp: number;
+  rewriteOf?: string; // hash of the commit this one rewrote (rebase); never part of the hash
 };
 
 type WriteCommitInput = Omit<Commit, 'hash'>;

@@ -331,10 +331,19 @@ export class GitEngine {
   // Commit labels (C1, C2, …) — presentation/addressing layer over hashes
   // -------------------------------------------------------------------------
 
-  /** Friendly label for a commit hash, e.g. "C3". Falls back to short hash. */
+  /** Friendly label for a commit hash, e.g. "C3" or "C2'" for a rewrite. */
   commitLabel(hash: string): string {
-    const ordinal = this.objects.commitOrdinal(hash);
-    return ordinal !== null ? `C${ordinal}` : hash.slice(0, 7);
+    let current = hash;
+    let primes = 0;
+    while (this.objects.hasCommit(current)) {
+      const c = this.objects.readCommit(current);
+      if (c.rewriteOf === undefined) break;
+      current = c.rewriteOf;
+      primes++;
+    }
+    const ordinal = this.objects.commitOrdinal(current);
+    if (ordinal === null) return hash.slice(0, 7);
+    return `C${ordinal}` + "'".repeat(primes);
   }
 
   /** Resolve a label like "C3" (case-insensitive) to a commit hash, or null. */

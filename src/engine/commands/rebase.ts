@@ -208,6 +208,7 @@ export function cmdRebase(
       parents: [currentParent],
       message: commit.message,
       timestamp: Date.now(),
+      rewriteOf: commit.hash,
     });
 
     currentParent = newCommitHash;

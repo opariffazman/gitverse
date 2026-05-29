@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { GitEngine } from '$engine/index';
+import { serialize, deserialize } from '$persistence/serializer';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -437,5 +438,69 @@ describe('git revert', () => {
     const result = engine.execute(`git revert ${rootHash}`);
     expect(result.exitCode).not.toBe(0);
     expect(result.output).toMatch(/parent|root|cannot/i);
+  });
+});
+
+// ===========================================================================
+// git rebase — lineage (rewriteOf + prime labels)
+// ===========================================================================
+
+describe('git rebase — lineage', () => {
+  it('sets rewriteOf on each replayed commit', () => {
+    const engine = engineWithBase(); // C1 base
+
+    engine.execute('git checkout -b feature');
+    engine.getVFS().createFile('f1.txt', 'f1');
+    engine.execute('git add f1.txt');
+    engine.execute('git commit -m "feat"');
+    const origFeatHash = engine.log()[0].hash;
+
+    engine.execute('git checkout main');
+    engine.getVFS().createFile('m1.txt', 'm1');
+    engine.execute('git add m1.txt');
+    engine.execute('git commit -m "main ahead"');
+
+    engine.execute('git checkout feature');
+    engine.execute('git rebase main');
+
+    const newTipHash = engine.allBranches().get('feature')!;
+    const newTipCommit = engine.allCommits().find((c) => c.hash === newTipHash)!;
+    expect(newTipCommit).toBeDefined();
+    expect(newTipCommit.rewriteOf).toBe(origFeatHash);
+  });
+
+  it('persists rewriteOf through serialize/restore', () => {
+    const engine = engineWithBase(); // C1 base
+
+    engine.execute('git checkout -b feature');
+    engine.getVFS().createFile('f1.txt', 'f1');
+    engine.execute('git add f1.txt');
+    engine.execute('git commit -m "feat"');
+    const origFeatHash = engine.log()[0].hash;
+
+    engine.execute('git checkout main');
+    engine.getVFS().createFile('m1.txt', 'm1');
+    engine.execute('git add m1.txt');
+    engine.execute('git commit -m "main ahead"');
+
+    engine.execute('git checkout feature');
+    engine.execute('git rebase main');
+
+    const newTipHashBefore = engine.allBranches().get('feature')!;
+
+    // Serialize and restore
+    const json = serialize(engine);
+    const restored = deserialize(json);
+
+    const newTipHashAfter = restored.allBranches().get('feature')!;
+    expect(newTipHashAfter).toBe(newTipHashBefore);
+
+    // rewriteOf should survive round-trip
+    const restoredTipCommit = restored.allCommits().find((c) => c.hash === newTipHashAfter)!;
+    expect(restoredTipCommit).toBeDefined();
+    expect(restoredTipCommit.rewriteOf).toBe(origFeatHash);
+
+    // Prime label should also survive round-trip
+    expect(restored.commitLabel(newTipHashAfter)).toBe("C2'");
   });
 });
