@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { clampZoom, zoomAt, panBy, fitTransform, followHeadPan, MIN_K, MAX_K } from '$graph/viewport';
+import {
+  clampZoom,
+  zoomAt,
+  panBy,
+  fitTransform,
+  followHeadPan,
+  MIN_K,
+  MAX_K,
+} from '$graph/viewport';
 
 describe('viewport helpers', () => {
   it('clamps zoom into [MIN_K, MAX_K]', () => {

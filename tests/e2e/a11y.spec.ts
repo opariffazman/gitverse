@@ -3,7 +3,21 @@ import AxeBuilder from '@axe-core/playwright';
 
 // Navigate with a relative URL so it resolves against the `/gitverse/` base
 // path baked into `baseURL` (see playwright.config.ts), not the origin root.
-test.beforeEach(async ({ page }) => {
+//
+// The app calls hydrate() on load, which reads IndexedDB via idb-keyval. With
+// no custom store configured (see src/persistence/storage.ts), idb-keyval uses
+// its default database `keyval-store`. A prior test's auto-saved session would
+// otherwise leak in and break the clean-initial-state assumptions (axe scan,
+// reduced motion). addInitScript runs before page scripts on every navigation
+// in the context, so the delete happens before main.ts's hydrate() runs.
+test.beforeEach(async ({ context, page }) => {
+  await context.addInitScript(() => {
+    try {
+      indexedDB.deleteDatabase('keyval-store');
+    } catch {
+      // ignore – storage may be unavailable in some environments
+    }
+  });
   await page.goto('./');
 });
 
@@ -25,8 +39,11 @@ async function makeCommit(page: Page, file: string, message: string, init = fals
   await input.press('Enter');
   await input.fill(`git add ${file}`);
   await input.press('Enter');
-  await input.fill(`git commit -m ${message}`);
+  await input.fill(`git commit -m "${message}"`);
   await input.press('Enter');
+  // Wait for Svelte to render the new commit node before returning so callers
+  // don't race the next assertion against the (async) re-render.
+  await expect(page.locator('circle[role="button"]')).not.toHaveCount(0);
 }
 
 test('no WCAG 2.1 AA violations on initial view', async ({ page }) => {
