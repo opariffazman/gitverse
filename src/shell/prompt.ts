@@ -30,7 +30,7 @@ export function generatePrompt(engine: GitEngine): PromptSegment[] {
 
   // Branch name or detached hash
   if (!head.attached) {
-    segments.push({ text: head.target.slice(0, 7), color: 'red' });
+    segments.push({ text: engine.commitLabel(head.target), color: 'red' });
   } else {
     segments.push({ text: head.target, color: dirty ? 'yellow' : 'green' });
   }

@@ -91,17 +91,17 @@ describe('prompt — dirty state', () => {
   });
 });
 
-describe('prompt — detached HEAD', () => {
-  it('shows short hash in red when detached', () => {
+describe('prompt — detached HEAD (legacy checkout-by-hash)', () => {
+  it('shows Cx label in red when detached via raw hash', () => {
     engine.getVFS().createFile('a.txt', 'aaa');
     engine.execute('git add .');
     engine.execute('git commit -m "first"');
     const commitHash = engine.log()[0].hash;
     engine.execute('git checkout ' + commitHash);
     const segs = generatePrompt(engine);
-    const hash = segmentByText(segs, commitHash.slice(0, 7));
-    expect(hash).toBeDefined();
-    expect(hash?.color).toBe('red');
+    const label = segmentByText(segs, 'C1');
+    expect(label).toBeDefined();
+    expect(label?.color).toBe('red');
   });
 });
 
@@ -134,5 +134,27 @@ describe('prompt — deleted files', () => {
     const deleted = segmentByText(segs, '-1');
     expect(deleted).toBeDefined();
     expect(deleted?.color).toBe('red');
+  });
+});
+
+describe('prompt — detached HEAD', () => {
+  it('shows the Cx label, not a raw hash', () => {
+    engine.getVFS().createFile('a.txt', 'a');
+    engine.execute('git add a.txt');
+    engine.execute('git commit -m "first"');
+    engine.execute('git checkout C1'); // detach at C1
+
+    const segs = generatePrompt(engine);
+    expect(segmentByText(segs, 'C1')).toBeDefined();
+    expect(segs.some((s) => /^[0-9a-f]{7}$/.test(s.text))).toBe(false);
+  });
+
+  it('detached label is red', () => {
+    engine.getVFS().createFile('a.txt', 'a');
+    engine.execute('git add a.txt');
+    engine.execute('git commit -m "first"');
+    engine.execute('git checkout C1');
+    const segs = generatePrompt(engine);
+    expect(segmentByText(segs, 'C1')?.color).toBe('red');
   });
 });
