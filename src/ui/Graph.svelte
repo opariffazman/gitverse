@@ -199,7 +199,10 @@
         headBranch && node.branches.includes(headBranch) ? headBranch : node.branches[0];
       command = `git checkout ${branch}`;
     } else {
-      command = `git checkout ${node.label ?? node.hash}`;
+      // Prime labels (e.g. "C2'") are display-only and not addressable, so fall
+      // back to the hash for rewritten commits; the plain Cn label is fine.
+      const addressable = node.label && !node.label.includes("'");
+      command = `git checkout ${addressable ? node.label : node.hash}`;
     }
     prefillTerminal(command);
   }
