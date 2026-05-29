@@ -355,7 +355,11 @@
 >
   {#if layout.nodes.length === 0}
     <div class="flex items-center justify-center w-full h-full">
-      <p class="font-mono text-terminal-dim text-sm select-none">No commits yet</p>
+      <pre class="font-mono text-terminal-dim text-sm leading-6 select-none">{`No commits yet
+
+ 1. touch readme.md       create a file
+ 2. git add readme.md     stage it
+ 3. git commit -m "init"  commit it`}</pre>
     </div>
   {:else}
     <svg

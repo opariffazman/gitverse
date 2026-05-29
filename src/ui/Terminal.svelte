@@ -37,6 +37,12 @@
     return '';
   });
 
+  const placeholder = $derived(
+    $engine.isInitialized()
+      ? "type a command — try 'touch readme.md' or 'help'"
+      : "type a command — try 'git init'",
+  );
+
   function scrollToBottom() {
     tick().then(() => {
       if (scrollEl) {
@@ -244,8 +250,9 @@
         autocorrect="off"
         autocapitalize="off"
         spellcheck={false}
-        class="w-full bg-transparent border-none text-terminal-fg caret-terminal-green font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-terminal-green/70 rounded-sm"
+        class="w-full bg-transparent border-none text-terminal-fg placeholder:text-terminal-dim caret-terminal-green font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-terminal-green/70 rounded-sm"
         value={inputValue}
+        placeholder={placeholder}
         oninput={handleInput}
         onkeydown={handleKeydown}
       />
