@@ -90,7 +90,7 @@ export function cmdCheckout(
 
   if (!targetName) {
     return {
-      output: 'error: you must specify a branch name after -b',
+      output: `error: you must specify a branch name after ${opts.has('-b') ? '-b' : '-c'}`,
       exitCode: 1,
     };
   }

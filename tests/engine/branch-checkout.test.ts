@@ -325,4 +325,19 @@ describe('git switch -c / checkout -c', () => {
     expect(eng.execute('git checkout -b feat3').exitCode).toBe(0);
     expect(eng.getHEAD().target).toBe('feat3');
   });
+
+  it('-c with no name errors and names -c (not -b)', () => {
+    const eng = repo();
+    const res = eng.execute('git switch -c');
+    expect(res.exitCode).not.toBe(0);
+    expect(res.output).toContain('-c');
+    expect(res.output).not.toContain('-b');
+  });
+
+  it('-b with no name still names -b', () => {
+    const eng = repo();
+    const res = eng.execute('git checkout -b');
+    expect(res.exitCode).not.toBe(0);
+    expect(res.output).toContain('-b');
+  });
 });
