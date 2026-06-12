@@ -1,5 +1,9 @@
 # Gitverse
 
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Gitverse demo — git init, commit, branch, and merge rendered live in an interactive SVG DAG" width="100%">
+</p>
+
 Browser-based git sandbox. Live DAG visualization. Full three-area model (working dir → staging index → committed tree). Virtual file system, interactive SVG graph. No tutorials, no levels — pure sandbox.
 
 **Stack:** Svelte 5 · TypeScript (strict) · UnoCSS · d3-dag · Vite · GitHub Pages
@@ -17,6 +21,18 @@ Engine (pure TS) ← Shell (router) ← Renderer (Svelte 5)
 - **Engine** — zero DOM deps. VFS + git object model + command processor. Testable headless.
 - **Shell** — command routing, file builtins, history, tab autocomplete, powerlevel10k-style prompt.
 - **Renderer** — Svelte 5 components. SVG graph + terminal UI + file panel.
+
+## Showcase
+
+<p align="center">
+  <img src="docs/assets/desktop.png" alt="Gitverse on desktop — a branching DAG (main C1→C2→C5→C6 merge, feature C3→C4) with branch labels, a v1.0 tag, and git log output in the powerlevel10k terminal" width="100%">
+</p>
+<p align="center"><em>Desktop — live DAG with branch labels, tags, and the three-area terminal below.</em></p>
+
+<p align="center">
+  <img src="docs/assets/mobile.png" alt="Gitverse on mobile — the same git DAG re-oriented vertically with the terminal docked below" width="300">
+</p>
+<p align="center"><em>Mobile — the graph re-orients top-to-bottom, terminal docks underneath.</em></p>
 
 ## Git Commands
 
