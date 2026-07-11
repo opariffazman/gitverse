@@ -29,7 +29,9 @@ describe('exampleFileCommands', () => {
 
   it('planned commands all execute successfully through the router', () => {
     for (const cmd of exampleFileCommands(engine)) run(cmd);
-    expect(engine.getVFS().allFilePaths()).toEqual(['README.md', 'index.html', 'src/app.js'].sort());
+    expect(engine.getVFS().allFilePaths()).toEqual(
+      ['README.md', 'index.html', 'src/app.js'].sort(),
+    );
   });
 
   it('is idempotent — skips whatever already exists', () => {

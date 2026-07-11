@@ -13,9 +13,7 @@ test.beforeEach(async ({ context, page }) => {
   await page.goto('./');
 });
 
-test('explorer drives the full beginner flow: seed → stage → commit → modify', async ({
-  page,
-}) => {
+test('explorer drives the full beginner flow: seed → stage → commit → modify', async ({ page }) => {
   const input = page.locator('#terminal-input');
   const explorer = page.getByRole('complementary', { name: 'File explorer' });
 

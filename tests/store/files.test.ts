@@ -59,9 +59,7 @@ describe('buildFileTree', () => {
     engine.execute('git add a.txt');
     engine.execute('git commit -m "add"');
     engine.getVFS().deleteFile('a.txt');
-    expect(flat(engine)).toEqual([
-      { path: 'a.txt', name: 'a.txt', dir: null, status: 'deleted' },
-    ]);
+    expect(flat(engine)).toEqual([{ path: 'a.txt', name: 'a.txt', dir: null, status: 'deleted' }]);
   });
 
   it('groups directory files under dirs, root files under rootFiles', () => {
