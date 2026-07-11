@@ -67,20 +67,23 @@ src/
 ├── shell/            # Command routing + builtins
 │   ├── parser.ts     # Input tokenization
 │   ├── router.ts     # Git vs builtin dispatch
-│   ├── builtins.ts   # ls, cat, touch, rm, mv, clear, help
+│   ├── builtins.ts   # ls, cat, touch, rm, mv, mkdir, clear, help
 │   ├── history.ts    # Command history
 │   ├── complete.ts   # Tab autocomplete
 │   └── prompt.ts     # Powerlevel10k-style prompt
 ├── ui/               # Svelte 5 components
 │   ├── Terminal.svelte
 │   ├── Graph.svelte
-│   ├── FilePanel.svelte
+│   ├── FileTree.svelte
 │   ├── Layout.svelte
 │   ├── Prompt.svelte
 │   ├── CommitDetail.svelte
-│   └── MobileToolbar.svelte
+│   ├── GithubLink.svelte
+│   └── ResetButton.svelte
 ├── graph/            # D3 layout logic
 ├── store/            # Svelte stores
+│   ├── files.ts      # File-tree model derived from engine state
+│   └── actions.ts    # Command planners for explorer buttons
 ├── persistence/      # IndexedDB save/load
 ├── App.svelte
 └── main.ts
@@ -93,7 +96,7 @@ tests/
 ## Key Design Decisions
 
 - **No shell emulation** — terminal handles git commands + minimal file builtins only
-- **Simulated file changes** — no text editing; "Simulate Changes" button/command mutates tracked files
+- **Simulated file changes** — no text editing; the explorer's "✎ Simulate changes" button appends a line to tracked files via real `echo >>` commands run through the terminal
 - **Flat + 1 level VFS** — files and one level of directories max
 - **Left-to-right DAG** — mermaid gitGraph style, SVG rendered by Svelte, d3-dag for layout
 - **Layered UI** — graph as background, terminal as semi-transparent overlay, toggle focus

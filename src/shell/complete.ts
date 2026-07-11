@@ -46,7 +46,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 
   // --- pre-init filter: only allow builtins + git init ---
   if (!engine.isInitialized()) {
-    const TOP_LEVEL_PREINIT = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help'];
+    const TOP_LEVEL_PREINIT = ['git', 'ls', 'cat', 'touch', 'mkdir', 'rm', 'mv', 'clear', 'help'];
     if (tokens.length <= 1) {
       return TOP_LEVEL_PREINIT.filter((c) => c.startsWith(partial)).map((c) => c + ' ');
     }
@@ -104,7 +104,7 @@ export function getCompletions(input: string, engine: GitEngine): string[] {
 
   // --- top-level command completion ---
   if (!trimmed.includes(' ')) {
-    const allCommands = ['git', 'ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help'];
+    const allCommands = ['git', 'ls', 'cat', 'touch', 'mkdir', 'rm', 'mv', 'clear', 'help'];
     return allCommands.filter((c) => c.startsWith(trimmed) && c !== trimmed);
   }
 

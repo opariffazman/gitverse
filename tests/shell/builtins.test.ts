@@ -255,6 +255,56 @@ describe('getDeletedFiles', () => {
   });
 });
 
+describe('mkdir', () => {
+  it('creates a directory listable via ls', () => {
+    const r = executeBuiltin(engine, 'mkdir', ['src']);
+    expect(r.exitCode).toBe(0);
+    expect(r.output).toBe('');
+    expect(executeBuiltin(engine, 'ls', []).output).toContain('src/');
+  });
+
+  it('accepts a trailing slash', () => {
+    const r = executeBuiltin(engine, 'mkdir', ['docs/']);
+    expect(r.exitCode).toBe(0);
+    expect(executeBuiltin(engine, 'ls', []).output).toContain('docs/');
+  });
+
+  it('errors on missing operand', () => {
+    const r = executeBuiltin(engine, 'mkdir', []);
+    expect(r.exitCode).toBe(1);
+    expect(r.output).toBe('mkdir: missing operand');
+  });
+
+  it('rejects nested paths (flat + 1 level VFS)', () => {
+    const r = executeBuiltin(engine, 'mkdir', ['a/b']);
+    expect(r.exitCode).toBe(1);
+    expect(r.output).toBe(
+      "mkdir: cannot create directory 'a/b': only one level of nesting is supported",
+    );
+  });
+
+  it('errors when the entry already exists', () => {
+    executeBuiltin(engine, 'mkdir', ['src']);
+    const r = executeBuiltin(engine, 'mkdir', ['src']);
+    expect(r.exitCode).toBe(1);
+    expect(r.output).toBe("mkdir: cannot create directory 'src': File exists");
+  });
+
+  it('errors when a file with the same name exists', () => {
+    engine.getVFS().createFile('src', 'i am a file');
+    const r = executeBuiltin(engine, 'mkdir', ['src']);
+    expect(r.exitCode).toBe(1);
+    expect(r.output).toBe("mkdir: cannot create directory 'src': File exists");
+  });
+
+  it('routes through the shell router and enables touch into it', () => {
+    const router = new ShellRouter(engine);
+    expect(router.execute('mkdir lib').exitCode).toBe(0);
+    expect(router.execute('touch lib/util.js').exitCode).toBe(0);
+    expect(executeBuiltin(engine, 'ls', ['lib']).output).toContain('util.js');
+  });
+});
+
 describe('unknown command', () => {
   it('returns command not found', () => {
     const r = executeBuiltin(engine, 'foobar', []);
