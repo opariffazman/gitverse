@@ -32,7 +32,7 @@
 
   const hasTracked = $derived(
     [...$fileTree.rootFiles, ...$fileTree.dirs.flatMap((d) => d.files)].some(
-      (f) => f.status !== 'untracked',
+      (f) => f.status !== 'untracked' && f.status !== 'deleted',
     ),
   );
 
