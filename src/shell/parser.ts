@@ -1,4 +1,4 @@
-const BUILTINS = new Set(['ls', 'cat', 'touch', 'rm', 'mv', 'clear', 'help', 'echo']);
+const BUILTINS = new Set(['ls', 'cat', 'touch', 'mkdir', 'rm', 'mv', 'clear', 'help', 'echo']);
 
 export type ParsedInput =
   | { type: 'git'; raw: string }

@@ -104,6 +104,25 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
       return { output: '', exitCode: 0 };
     }
 
+    case 'mkdir': {
+      if (args.length === 0) {
+        return { output: 'mkdir: missing operand', exitCode: 1 };
+      }
+      const raw = args[0];
+      const name = raw.endsWith('/') ? raw.slice(0, -1) : raw;
+      if (name.includes('/')) {
+        return {
+          output: `mkdir: cannot create directory '${raw}': only one level of nesting is supported`,
+          exitCode: 1,
+        };
+      }
+      if (vfs.exists(name + '/') || vfs.exists(name)) {
+        return { output: `mkdir: cannot create directory '${raw}': File exists`, exitCode: 1 };
+      }
+      vfs.createDir(name);
+      return { output: '', exitCode: 0 };
+    }
+
     case 'echo': {
       let redirect: '>' | '>>' | null = null;
       let redirectIdx = -1;
@@ -223,6 +242,7 @@ export function executeBuiltin(engine: GitEngine, command: string, args: string[
         '    ls [dir]          — list files',
         '    cat <file>        — show file content',
         '    touch <file>      — create file (hint: use this to add files!)',
+        '    mkdir <dir>       — create a folder (one level max)',
         '    echo <text> > <file>   — write text to a file (overwrite)',
         '    echo <text> >> <file>  — append text (use to modify tracked files!)',
         '    rm <file>         — delete file',

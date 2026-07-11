@@ -114,4 +114,9 @@ describe('parseInput – unknown', () => {
       args: ['hello'],
     });
   });
+
+  it('classifies mkdir as a builtin', () => {
+    const p = parseInput('mkdir src');
+    expect(p).toEqual({ type: 'builtin', command: 'mkdir', args: ['src'] });
+  });
 });
