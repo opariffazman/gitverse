@@ -78,7 +78,8 @@ src/
 │   ├── Layout.svelte
 │   ├── Prompt.svelte
 │   ├── CommitDetail.svelte
-│   └── MobileToolbar.svelte
+│   ├── GithubLink.svelte
+│   └── ResetButton.svelte
 ├── graph/            # D3 layout logic
 ├── store/            # Svelte stores
 │   ├── files.ts      # File-tree model derived from engine state

@@ -74,8 +74,11 @@ export const fileTree = derived([engine, engineVersion], ...); // thin wrapper
 
 **Status precedence** (one badge per file, beginner-simple):
 `deleted` > `modified` > `staged` > `untracked` > `clean`.
-A file both staged and re-modified shows `M` — the working-tree change is
-what the beginner must act on next, matching VS Code's single-letter habit.
+A committed file that is staged and then re-modified shows `M` — the
+working-tree change is what the beginner must act on next, matching VS
+Code's single-letter habit. (A staged-but-never-committed file keeps `●`
+after an edit: the engine's modified-detection compares against the
+committed tree only. Extending it is a possible fast-follow engine change.)
 
 Deleted files still appear in the tree (name struck through, `D` badge) until
 the deletion is committed — they come from `getDeletedFiles()`, not the VFS.
