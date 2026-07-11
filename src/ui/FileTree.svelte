@@ -3,6 +3,9 @@
   import type { FileStatus, TreeEntry } from '$store/files';
   import { prefillTerminal } from '$store/ui';
   import { SvelteSet } from 'svelte/reactivity';
+  import { get } from 'svelte/store';
+  import { engine, executeCommand } from '$store/engine';
+  import { exampleFileCommands, simulateChangeCommands } from '$store/actions';
 
   // Per-dir collapse is throwaway view state — component-local, not persisted.
   // SvelteSet is deeply reactive on its own; no $state wrapper needed.
@@ -26,6 +29,20 @@
   const hasFiles = $derived(
     $fileTree.rootFiles.length > 0 || $fileTree.dirs.some((d) => d.files.length > 0),
   );
+
+  const hasTracked = $derived(
+    [...$fileTree.rootFiles, ...$fileTree.dirs.flatMap((d) => d.files)].some(
+      (f) => f.status !== 'untracked',
+    ),
+  );
+
+  function createExamples() {
+    for (const cmd of exampleFileCommands(get(engine))) executeCommand(cmd);
+  }
+
+  function simulateChanges() {
+    for (const cmd of simulateChangeCommands(get(engine))) executeCommand(cmd);
+  }
 </script>
 
 {#snippet fileRow(f: TreeEntry, indented: boolean)}
@@ -57,14 +74,17 @@
 
   <div class="flex flex-col gap-1 px-2 pb-2">
     <button
-      class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      disabled
-      title="coming in the next step">＋ Example files</button
+      class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors"
+      onclick={createExamples}
+      title="create README.md, index.html and src/app.js via touch/mkdir">＋ Example files</button
     >
     <button
       class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      disabled
-      title="coming in the next step">✎ Simulate changes</button
+      onclick={simulateChanges}
+      disabled={!hasTracked}
+      title={hasTracked
+        ? 'append a line to tracked files so there is something to git add'
+        : 'commit a file first — nothing is tracked yet'}>✎ Simulate changes</button
     >
   </div>
 
