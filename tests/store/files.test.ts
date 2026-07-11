@@ -110,6 +110,13 @@ describe('buildFileTree', () => {
     expect(t.rootFiles.map((f) => f.name)).toEqual(['a.txt', 'b.txt']);
   });
 
+  it('shows dot-directories other than .git', () => {
+    engine.getVFS().createDir('.config');
+    const t = buildFileTree(engine);
+    expect(t.dirs).toContainEqual({ name: '.config', files: [] });
+    expect(t.dirs.map((d) => d.name)).not.toContain('.git');
+  });
+
   it('works before git init (all files untracked)', () => {
     const fresh = new GitEngine();
     fresh.getVFS().createFile('a.txt', 'hi');

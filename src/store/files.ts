@@ -57,7 +57,7 @@ export function buildFileTree(eng: GitEngine): FileTreeModel {
   const dirNames = new Set(
     vfs
       .listDir()
-      .filter((e) => e.endsWith('/') && !e.startsWith('.'))
+      .filter((e) => e.endsWith('/') && e !== '.git/')
       .map((e) => e.slice(0, -1)),
   );
   for (const e of entries) {
