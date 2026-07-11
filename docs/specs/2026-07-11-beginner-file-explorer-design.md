@@ -94,7 +94,7 @@ dirs-first, then root files, both alphabetical.
   terminal palette:
   - `U` untracked — green
   - `M` modified — yellow
-  - `●` staged — cyan (git's "ready" color in the existing prompt)
+  - `●` staged — blue (theme cyan is visually identical to green, so blue disambiguates from U)
   - `D` deleted — red, name struck through
   - clean — dim, no badge
 - Badge `title` tooltip spells it out (e.g. "modified — not staged").
