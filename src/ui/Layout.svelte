@@ -22,7 +22,7 @@
   <div class="relative flex flex-col flex-1 min-w-0 h-full">
     <!-- Reset: top-left. GitHub link: top-right corner. Logo sits between them
          (just left of the link on desktop / top-center on mobile). -->
-    <div class="absolute top-3 left-4 z-20 flex items-center gap-2">
+    <div class="absolute top-3 left-4 z-20 max-sm:z-40 flex items-center gap-2">
       <ResetButton />
       <button
         class="sm:hidden rounded-lg border border-terminal-dim/40 bg-terminal-bg/80 px-3 py-1.5 font-mono text-xs text-terminal-dim hover:text-terminal-fg hover:border-terminal-dim/70 transition-colors backdrop-blur"
