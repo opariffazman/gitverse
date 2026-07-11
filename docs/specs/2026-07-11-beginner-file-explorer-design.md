@@ -67,7 +67,8 @@ export type TreeEntry = {
   status: FileStatus;
 };
 
-export function buildFileTree(engine: GitEngine): TreeEntry[]; // pure fn
+export type FileTreeModel = { dirs: { name: string; files: TreeEntry[] }[]; rootFiles: TreeEntry[] };
+export function buildFileTree(engine: GitEngine): FileTreeModel; // pure fn
 export const fileTree = derived([engine, engineVersion], ...); // thin wrapper
 ```
 
