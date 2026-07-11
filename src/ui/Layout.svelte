@@ -4,18 +4,31 @@
   import ResetButton from './ResetButton.svelte';
   import GithubLink from './GithubLink.svelte';
   import FileTree from './FileTree.svelte';
+  import { explorerOpen, toggleExplorer } from '$store/ui';
+  import { onMount } from 'svelte';
+
+  onMount(() => {
+    if (window.matchMedia('(max-width: 639px)').matches) {
+      explorerOpen.set(false);
+    }
+  });
 </script>
 
 <div class="flex w-full h-full bg-terminal-bg">
-  <div class="max-sm:hidden h-full">
+  <div class="h-full max-sm:contents">
     <FileTree />
   </div>
 
   <div class="relative flex flex-col flex-1 min-w-0 h-full">
     <!-- Reset: top-left. GitHub link: top-right corner. Logo sits between them
          (just left of the link on desktop / top-center on mobile). -->
-    <div class="absolute top-3 left-4 z-20">
+    <div class="absolute top-3 left-4 z-20 flex items-center gap-2">
       <ResetButton />
+      <button
+        class="sm:hidden rounded-lg border border-terminal-dim/40 bg-terminal-bg/80 px-3 py-1.5 font-mono text-xs text-terminal-dim hover:text-terminal-fg hover:border-terminal-dim/70 transition-colors backdrop-blur"
+        onclick={toggleExplorer}
+        aria-label="Toggle file explorer">📁</button
+      >
     </div>
 
     <!-- GitHub source link: top-right corner, above the decorative logo -->

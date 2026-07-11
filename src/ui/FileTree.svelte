@@ -1,7 +1,7 @@
 <script lang="ts">
   import { fileTree } from '$store/files';
   import type { FileStatus, TreeEntry } from '$store/files';
-  import { prefillTerminal } from '$store/ui';
+  import { explorerOpen, prefillTerminal, toggleExplorer } from '$store/ui';
   import { SvelteSet } from 'svelte/reactivity';
   import { get } from 'svelte/store';
   import { engine, executeCommand } from '$store/engine';
@@ -66,59 +66,76 @@
   </button>
 {/snippet}
 
-<aside
-  class="flex h-full w-[230px] shrink-0 flex-col border-r border-terminal-dim/30 bg-terminal-bg font-mono text-xs"
-  aria-label="File explorer"
->
-  <div class="px-3 py-2 tracking-widest text-terminal-dim select-none">EXPLORER</div>
+{#if $explorerOpen}
+  <aside
+    class="flex h-full w-[230px] shrink-0 flex-col border-r border-terminal-dim/30 bg-terminal-bg font-mono text-xs max-sm:absolute max-sm:inset-y-0 max-sm:left-0 max-sm:z-30 max-sm:shadow-2xl"
+    aria-label="File explorer"
+  >
+    <div class="flex items-center justify-between px-3 py-2 select-none">
+      <span class="tracking-widest text-terminal-dim">EXPLORER</span>
+      <button
+        class="rounded px-1 text-terminal-dim hover:text-terminal-fg transition-colors"
+        onclick={toggleExplorer}
+        aria-label="Collapse file explorer">«</button
+      >
+    </div>
 
-  <div class="flex flex-col gap-1 px-2 pb-2">
+    <div class="flex flex-col gap-1 px-2 pb-2">
+      <button
+        class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors"
+        onclick={createExamples}
+        title="create README.md, index.html and src/app.js via touch/mkdir">＋ Example files</button
+      >
+      <button
+        class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        onclick={simulateChanges}
+        disabled={!hasTracked}
+        title={hasTracked
+          ? 'append a line to tracked files so there is something to git add'
+          : 'commit a file first — nothing is tracked yet'}>✎ Simulate changes</button
+      >
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-2 pb-2">
+      {#if !hasFiles}
+        <p class="px-1.5 py-4 text-terminal-dim">
+          No files yet — click ＋ Example files, or type <code class="text-terminal-fg">touch &lt;name&gt;</code> in the terminal.
+        </p>
+      {:else}
+        {#each $fileTree.dirs as d (d.name)}
+          <button
+            class="flex w-full items-center rounded px-1.5 py-0.5 text-left text-terminal-fg hover:bg-terminal-dim/15 transition-colors"
+            onclick={() => toggleDir(d.name)}
+            aria-expanded={!collapsedDirs.has(d.name)}
+          >
+            <span class="pr-1 text-terminal-dim">{collapsedDirs.has(d.name) ? '▸' : '▾'}</span>
+            {d.name}/
+          </button>
+          {#if !collapsedDirs.has(d.name)}
+            {#each d.files as f (f.path)}
+              {@render fileRow(f, true)}
+            {/each}
+          {/if}
+        {/each}
+        {#each $fileTree.rootFiles as f (f.path)}
+          {@render fileRow(f, false)}
+        {/each}
+      {/if}
+    </div>
+
+    <div class="border-t border-terminal-dim/30 px-3 py-2 text-[10px] text-terminal-dim select-none">
+      <span class="text-terminal-green">U</span> new ·
+      <span class="text-terminal-yellow">M</span> modified ·
+      <span class="text-terminal-blue">●</span> staged ·
+      <span class="text-terminal-red">D</span> deleted
+    </div>
+  </aside>
+{:else}
+  <div class="flex h-full w-9 shrink-0 flex-col items-center border-r border-terminal-dim/30 bg-terminal-bg pt-2 max-sm:hidden">
     <button
-      class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors"
-      onclick={createExamples}
-      title="create README.md, index.html and src/app.js via touch/mkdir">＋ Example files</button
-    >
-    <button
-      class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-      onclick={simulateChanges}
-      disabled={!hasTracked}
-      title={hasTracked
-        ? 'append a line to tracked files so there is something to git add'
-        : 'commit a file first — nothing is tracked yet'}>✎ Simulate changes</button
+      class="rounded px-1 font-mono text-terminal-dim hover:text-terminal-fg transition-colors"
+      onclick={toggleExplorer}
+      aria-label="Expand file explorer">»</button
     >
   </div>
-
-  <div class="flex-1 overflow-y-auto px-2 pb-2">
-    {#if !hasFiles}
-      <p class="px-1.5 py-4 text-terminal-dim">
-        No files yet — click ＋ Example files, or type <code class="text-terminal-fg">touch &lt;name&gt;</code> in the terminal.
-      </p>
-    {:else}
-      {#each $fileTree.dirs as d (d.name)}
-        <button
-          class="flex w-full items-center rounded px-1.5 py-0.5 text-left text-terminal-fg hover:bg-terminal-dim/15 transition-colors"
-          onclick={() => toggleDir(d.name)}
-          aria-expanded={!collapsedDirs.has(d.name)}
-        >
-          <span class="pr-1 text-terminal-dim">{collapsedDirs.has(d.name) ? '▸' : '▾'}</span>
-          {d.name}/
-        </button>
-        {#if !collapsedDirs.has(d.name)}
-          {#each d.files as f (f.path)}
-            {@render fileRow(f, true)}
-          {/each}
-        {/if}
-      {/each}
-      {#each $fileTree.rootFiles as f (f.path)}
-        {@render fileRow(f, false)}
-      {/each}
-    {/if}
-  </div>
-
-  <div class="border-t border-terminal-dim/30 px-3 py-2 text-[10px] text-terminal-dim select-none">
-    <span class="text-terminal-green">U</span> new ·
-    <span class="text-terminal-yellow">M</span> modified ·
-    <span class="text-terminal-blue">●</span> staged ·
-    <span class="text-terminal-red">D</span> deleted
-  </div>
-</aside>
+{/if}
