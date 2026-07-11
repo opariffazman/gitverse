@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/gitverse/pr-preview/pr-15/sw.js', { scope: '/gitverse/pr-preview/pr-15/' })})}
