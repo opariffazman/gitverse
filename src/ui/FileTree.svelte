@@ -47,7 +47,7 @@
 
 {#snippet fileRow(f: TreeEntry, indented: boolean)}
   <button
-    class="flex w-full items-center justify-between rounded px-1.5 py-0.5 text-left hover:bg-terminal-dim/15 transition-colors {indented ? 'pl-6' : ''}"
+    class="flex w-full items-center justify-between rounded bg-transparent px-1.5 py-0.5 text-left hover:bg-terminal-dim/15 transition-colors {indented ? 'pl-6' : ''}"
     data-status={f.status}
     disabled={f.status === 'deleted'}
     onclick={() => prefillTerminal(`cat ${f.path}`)}
@@ -74,7 +74,7 @@
     <div class="flex items-center justify-between px-3 py-2 select-none">
       <span class="tracking-widest text-terminal-dim">EXPLORER</span>
       <button
-        class="rounded px-1 text-terminal-dim hover:text-terminal-fg transition-colors"
+        class="rounded bg-transparent px-1 text-terminal-dim hover:text-terminal-fg transition-colors"
         onclick={toggleExplorer}
         aria-label="Collapse file explorer">«</button
       >
@@ -82,12 +82,12 @@
 
     <div class="flex flex-col gap-1 px-2 pb-2">
       <button
-        class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors"
+        class="rounded border border-terminal-dim/40 bg-transparent px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors"
         onclick={createExamples}
         title="create README.md, index.html and src/app.js via touch/mkdir">＋ Example files</button
       >
       <button
-        class="rounded border border-terminal-dim/40 px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        class="rounded border border-terminal-dim/40 bg-transparent px-2 py-1 text-terminal-fg hover:border-terminal-dim/70 hover:bg-terminal-dim/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         onclick={simulateChanges}
         disabled={!hasTracked}
         title={hasTracked
@@ -104,7 +104,7 @@
       {:else}
         {#each $fileTree.dirs as d (d.name)}
           <button
-            class="flex w-full items-center rounded px-1.5 py-0.5 text-left text-terminal-fg hover:bg-terminal-dim/15 transition-colors"
+            class="flex w-full items-center rounded bg-transparent px-1.5 py-0.5 text-left text-terminal-fg hover:bg-terminal-dim/15 transition-colors"
             onclick={() => toggleDir(d.name)}
             aria-expanded={!collapsedDirs.has(d.name)}
           >
@@ -133,7 +133,7 @@
 {:else}
   <div class="flex h-full w-9 shrink-0 flex-col items-center border-r border-terminal-dim/30 bg-terminal-bg pt-2 max-sm:hidden">
     <button
-      class="rounded px-1 font-mono text-terminal-dim hover:text-terminal-fg transition-colors"
+      class="rounded bg-transparent px-1 font-mono text-terminal-dim hover:text-terminal-fg transition-colors"
       onclick={toggleExplorer}
       aria-label="Expand file explorer">»</button
     >
